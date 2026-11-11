@@ -49,7 +49,7 @@ export type { EventContext, EventMap, EventName, Listener } from './events.ts';
 export type { BorrowableRole, Grant } from './custom-roles.ts';
 export type { Param, Row } from './db.ts';
 export type { UserColumn } from './data.ts';
-export type { WebDeps, WebRequest, WebResult } from './http.ts';
+export type { StaffRequest, WebDeps, WebRequest, WebResult } from './http.ts';
 export type { GroupKey, Kpi, KpiTone } from './look.ts';
 export type { NavParts } from './navigation.ts';
 export type { AssignedSurveyorsReader } from './assigned-surveyors.ts';

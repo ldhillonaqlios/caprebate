@@ -11,13 +11,15 @@
  *   4  C11: an election that splits out the integral features caps each pool, not only the total
  *   5  C26, C28: a landlord barred by s.35 is not an entitled seller; a charity or other non-taxpayer seller is asked
  *   6  item 7: the legal check and the route read who claims — a tenant, a landlord, a role not known, a lease ended
+ *   7  Phase 162 (carried by Phase 161m): each of the four readings this check reads itself, run both ways, on and off,
+ *      through assessLegalUnder; a reading not named is the register's, so naming none is the pack's own check
  */
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { testApp } from '../helpers.ts';
 import * as C from '../../src/modules/crm/crm.ts';
-import { assessLegal, legalAllows, legalQuestions, LEGAL_READINGS } from '../../src/modules/survey/pack-legal.ts';
+import { assessLegal, assessLegalUnder, legalAllows, legalQuestions, LEGAL_READINGS, type LegalReadings } from '../../src/modules/survey/pack-legal.ts';
 import { stillOwned } from '../../src/modules/claims/claim-route.ts';
 
 const NOW = '2026-10-10T09:00:00.000Z';
@@ -166,5 +168,88 @@ describe('6 · item 7 — the legal check and the route read who claims', () => 
     app.db.run("UPDATE properties SET lease_end_date = '2045-03-31' WHERE id = ?", [p]);
     assert.equal(stillOwned(app.db, { id: claim, business_id: b, property_id: p }, NOW).value, null);
     app.close();
+  });
+});
+
+/* PHASE 162 (carried by Phase 161m: rules are versioned data, 09-app/docs/ARCHITECTURE.md rule 6). The four readings the
+   legal check reads itself were run only ON, as the pack holds them. Each is now run both ways through assessLegalUnder,
+   which takes any of the six; the paths are this file's own, from sections 2, 3 and 5. */
+describe('7 · Phase 162 — the four readings the legal check reads itself, each run both ways', () => {
+  const under = (r: Partial<LegalReadings>, answers: Record<string, unknown>) =>
+    assessLegalUnder(r, 'gp', new Map(Object.entries(answers)), NOW, 'company');
+  const ids = (qs: readonly { id: string }[]) => qs.map((q) => q.id);
+
+  test('naming no reading is the pack’s own check, and the four are the register’s', () => {
+    const a = { ...PURCHASE('2019-06-01'), G11: 'no', G12: 'residential_landlord', G14s: 'sale' };
+    assert.deepEqual(under({}, a), ask(a));
+    assert.deepEqual(under({ ...LEGAL_READINGS }, a), ask(a));
+  });
+
+  test('s35_seller_not_entitled — on, a landlord barred by s.35 is looked past to an earlier owner; off, it is read as a seller who could claim', () => {
+    const asked = { ...PURCHASE('2019-06-01'), G11: 'no', G12: 'residential_landlord', G14s: 'sale' };
+    const on = under({ s35_seller_not_entitled: true }, asked);
+    const off = under({ s35_seller_not_entitled: false }, asked);
+    assert.ok(ids(on.unanswered).includes('G12b'), 'on: the earlier-owner question is asked');
+    assert.ok(!ids(off.asked).includes('G12b'), 'off: the earlier-owner question is not asked');
+    assert.ok(ids(off.unanswered).includes('G14') && ids(off.unanswered).includes('G14fvr'), 'off: the election questions for a seller who could claim are asked');
+    const none = { ...asked, G12b: 'no' };
+    assert.equal(under({ s35_seller_not_entitled: true }, none).verdict.level, 'GREEN');
+    assert.equal(under({ s35_seller_not_entitled: false }, none).verdict.level, 'AMBER');
+  });
+
+  test('non_taxpayer_seller — on, "a private individual / other" is asked whether it pays no UK tax; off, that question is never asked', () => {
+    const other = { ...PURCHASE('2025-06-01'), G11: 'no', G12: 'other', G14s: 'sale' };
+    assert.ok(ids(under({ non_taxpayer_seller: true }, other).unanswered).includes('LC-seller-nontax'));
+    assert.ok(!ids(under({ non_taxpayer_seller: false }, other).asked).includes('LC-seller-nontax'));
+    const charity = { ...other, 'LC-seller-nontax': 'yes', G12b: 'no' };
+    assert.equal(under({ non_taxpayer_seller: true }, charity).verdict.level, 'GREEN', 'on: a charity seller could never claim');
+    const off = under({ non_taxpayer_seller: false }, charity);
+    assert.equal(off.verdict.level, 'AMBER', 'off: the charity answer is not read, so the seller is one who could claim');
+    assert.ok(ids(off.unanswered).includes('G14'));
+  });
+
+  test('lease_route — on, a new lease with no joint election from a landlord who could claim is RED; off, it is read as a sale', () => {
+    const lease = { ...PURCHASE('2025-06-01'), G11: 'yes', G12: 'taxpaying', G14: 'no', G14s: 'lease_premium', G14fvr: 'no', G14po: 'sold_market', G14s3: 'no' };
+    const on = under({ lease_route: true }, lease);
+    assert.equal(on.verdict.level, 'RED');
+    assert.match(on.verdict.headline, /fixtures stay the landlord’s/);
+    const off = under({ lease_route: false }, lease);
+    assert.notEqual(off.verdict.level, 'RED');
+    assert.doesNotMatch(off.verdict.headline, /landlord’s/);
+    assert.equal(under({ lease_route: true }, { ...lease, G14s3: 'unsure' }).verdict.level, 'AMBER');
+    assert.notEqual(under({ lease_route: false }, { ...lease, G14s3: 'unsure' }).verdict.level, 'AMBER');
+  });
+
+  test('s185_earlier_cap — on, the value fixed when the earlier owner sold on is needed and caps the claim; off, neither', () => {
+    const chain = { G8: ['purchase'], G8a: 'property', G9d: '2025-06-01', G11: 'yes', G12: 'nhs', G12b: 'yes', G14: 'held', G14s: 'sale', G14sx: 'unsure',
+      G14d: '2025-06-01', G14n: '2025-09-01', G14pod: '2019-06-01', G14fvr: 'yes', G14po: 'new_lease_premium', G14pol: 'no', G14pold: '2019-06-01', G14iv: 'no',
+      G14rs: 'split', G14rsv: 50000, G14sc: 'all_fixtures', G14mp: 'no', G14c: ['amount'], G14v: 60000, G15: 'no' };
+    const unknownOn = under({ s185_earlier_cap: true }, chain);
+    assert.equal(unknownOn.verdict.level, 'AMBER');
+    assert.match(unknownOn.verdict.headline, /Section 185 caps the claim/);
+    const unknownOff = under({ s185_earlier_cap: false }, chain);
+    assert.notEqual(unknownOff.verdict.level, 'AMBER');
+    assert.doesNotMatch(unknownOff.verdict.headline, /Section 185/);
+    const known = { ...chain, G12bv: 30_000 };
+    const on = under({ s185_earlier_cap: true }, known);
+    assert.equal(on.verdict.cap_pence, 3_000_000);
+    assert.match(on.verdict.cap_words ?? '', /section 185/);
+    assert.equal(legalAllows(on.verdict, 4_000_000).ok, false);
+    const off = under({ s185_earlier_cap: false }, known);
+    assert.equal(off.verdict.cap_pence, null);
+    assert.equal(legalAllows(off.verdict, 4_000_000).ok, true);
+  });
+
+  test('the readings are held for the one call only: the register’s are read again after it, and after a throw', () => {
+    const other = { ...PURCHASE('2025-06-01'), G11: 'no', G12: 'other', G14s: 'sale' };
+    // The non-taxpayer question's own showIf, asked outside any call: it reads whatever readings are held.
+    const q = legalQuestions('gp').find((x) => x.id === 'LC-seller-nontax');
+    const shown = () => Boolean(q?.showIf?.({ __seller_answer: 'other' }));
+    assert.equal(shown(), true);
+    under({ non_taxpayer_seller: false }, other);
+    assert.equal(shown(), true, 'an override outlived its call');
+    assert.throws(() => assessLegalUnder({ non_taxpayer_seller: false }, 'gp', null as never, NOW, 'company'));
+    assert.equal(shown(), true, 'an override outlived a call that threw');
+    assert.ok(ids(ask(other).unanswered).includes('LC-seller-nontax'));
   });
 });

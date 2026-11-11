@@ -5,6 +5,9 @@
  * postcode table: each connector run on recorded answers (test/fixtures/phase146c/, shaped from the suppliers' published
  * documentation, invented values), with no key and no network. And the wiring: "Run the research" hands a connector a
  * lookup only when the gates allow it, which today is never.
+ *
+ * PHASE 162 (carried by Phase 161m): REGISTER_SWITCHES.BCIS was run only off, and REGISTER_SWITCHES.POSTCODES_IO never
+ * on. Each is now run both ways, on the research panel and through "Run the research" (the last describe).
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
@@ -804,4 +807,49 @@ describe('only fields both registers permit; the supplier docs recorded and date
     assert.match(row?.what ?? '', /Phase 146c/);
     assert.match(row?.what ?? '', /switched off/);
   });
+});
+
+/* ================================================================== *
+ * PHASE 162 · BCIS AND POSTCODES_IO, EACH RUN BOTH WAYS
+ * ================================================================== */
+
+/* Carried by Phase 161m (rules are versioned data, 09-app/docs/ARCHITECTURE.md rule 6). Neither switch has a connector
+   behind it: BCIS's rates come from the file Lakhbir imports (src/modules/survey/bcis-data.ts), and the postcode check
+   belongs to the address question (POSTCODE_CHECK). So what each switch moves is what the research panel says about it;
+   and either way, "Run the research" contacts nobody for it and spends nothing. */
+describe('Phase 162 — REGISTER_SWITCHES.BCIS and REGISTER_SWITCHES.POSTCODES_IO, each run on and off', () => {
+  async function client(app: Awaited<ReturnType<typeof testApp>>): Promise<string> {
+    const r = await seed(app.db, app.hasher, app.now);
+    const id = r.businesses[0]!.id;
+    app.db.run("UPDATE properties SET address_line_1 = '12 Invented Road', town = 'Nowhere', postcode = 'ZZ1 1ZZ', jurisdiction = 'england' WHERE business_id = ?", [id]);
+    return id;
+  }
+
+  for (const source of ['BCIS', 'POSTCODES_IO'] as const) {
+    test(`${source}: on, the research panel says it is switched on, and off it says not; either way nothing is contacted and nothing spent`, async () => {
+      const app = await testApp();
+      try {
+        const id = await client(app);
+        assert.equal(C.REGISTER_SWITCHES[source], false, 'shipped off');
+        const entry = R.catalogue().find((e) => e.source_id === source)!;
+        assert.ok(entry, `${source} is not on the research panel`);
+        for (const on of [true, false]) {
+          const switches = Object.freeze({ ...C.REGISTER_SWITCHES, [source]: on });
+          const panel = R.sourcesFor(app.db, actor('ADMIN'), id, { switches });
+          const row = panel.sources.find((x) => x.source_id === source)!;
+          assert.equal(row.switched_on, on, `${source} ${on ? 'on' : 'off'}: the panel says otherwise`);
+          for (const x of panel.sources.filter((y) => y.source_id !== source)) assert.equal(x.switched_on, false, x.source_id);
+          assert.equal(panel.cost_before_pence, 0, `${source} ${on ? 'on' : 'off'}: a price was put on a lookup with no connector`);
+          const t = fixtureTransport({});
+          const out = await R.consultAllowed({ db: app.db, audit: app.audit, now: app.now, newId, outside: { transport: t, secrets: KEYS, switches, postcodeStore: STORE } },
+            actor('ADMIN'), id, [{ entry, ...ALLOWED }], { free_gate_open: true, engagement_signed: true });
+          assert.deepEqual([out[0]?.state, out[0]?.bundle, out[0]?.cost_pence, t.seen.length], ['NOT_RUN', null, 0, 0], `${source} ${on ? 'on' : 'off'}`);
+          if (source === 'POSTCODES_IO') {
+            assert.match(out[0]?.detail ?? '', /the postcode check is made at the address question/);
+            assert.doesNotMatch(out[0]?.detail ?? '', /It is switched off/, 'the panel must not say the check is off when its switch is on');
+          }
+        }
+      } finally { app.close(); }
+    });
+  }
 });

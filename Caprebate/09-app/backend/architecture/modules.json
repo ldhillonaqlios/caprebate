@@ -526,6 +526,10 @@
    "area": "admin",
    "kind": "logic"
   },
+  "src/modules/admin/routes.ts": {
+   "area": "admin",
+   "kind": "routes"
+  },
   "src/modules/admin/rules-page.ts": {
    "area": "admin",
    "kind": "page"
@@ -545,6 +549,10 @@
   "src/modules/admin/templates.ts": {
    "area": "admin",
    "kind": "logic"
+  },
+  "src/modules/admin/users-pages.ts": {
+   "area": "admin",
+   "kind": "page"
   },
   "src/modules/admin/vocabularies.ts": {
    "area": "admin",
@@ -1341,6 +1349,10 @@
   "src/modules/finance/nav.ts": {
    "area": "finance",
    "kind": "other"
+  },
+  "src/modules/finance/routes.ts": {
+   "area": "finance",
+   "kind": "routes"
   },
   "src/modules/finance/vat.ts": {
    "area": "finance",

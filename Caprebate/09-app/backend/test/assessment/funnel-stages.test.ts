@@ -5,6 +5,9 @@
  * reveal ... a climbing number" with three ways to be reached; one record per company, linked as one enquiry.
  * The figures below are the engine's sector bands (CB_BAND): a care home bought for £1,500,000 is up to £600,000
  * (20%-40%), and a dental fit-out of £500,000 up to £450,000 (50%-90%).
+ *
+ * PHASE 162 (carried by Phase 161m): COMPANY_SEARCH was run only on, as shipped. "stage 3 lookups" now runs it both
+ * ways, on and off, at the details page and in searchCompanies itself.
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,7 +18,9 @@ import { createApp } from '../../src/app/server.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
 import { fixtureTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
-import { COMPANY_SEARCH } from '../../src/integrations/connectors/company-search.ts';
+import { COMPANY_SEARCH, searchCompanies } from '../../src/integrations/connectors/company-search.ts';
+import { POSTCODE_CHECK } from '../../src/integrations/connectors/postcode-check.ts';
+import { freeGate } from '../../src/modules/assessment/address-check.ts';
 import { ADDRESS_LOOKUP, addressLookupMissing, readAddresses } from '../../src/integrations/connectors/address-lookup.ts';
 import { CALL_POLICIES } from '../../src/integrations/connectors/sources.ts';
 import { MAX_DAYS } from '../../src/modules/clients/slot-picker.ts';
@@ -483,6 +488,48 @@ describe('stage 3 lookups, switched on for testing', () => {
       assert.match(page, /We found the postcode LE10 1DA: Hinckley and Bosworth, East Midlands, England\./);
       assert.doesNotMatch(page, /Somewhere Road/, 'more than the permitted fields reached the page');
     } finally { made.app.outside = was.outside; made.app.secrets = was.secrets; }
+  });
+
+  test('Phase 162 — COMPANY_SEARCH both ways at the details page: on, "Find this company" is offered and asks for the name; off, it is not offered and nothing is sent', async () => {
+    const was = { outside: made.app.outside, secrets: made.app.secrets, startLookups: made.app.startLookups };
+    try {
+      const t = fixtureTransport({ 'GET /search/companies': SEARCH });
+      made.app.outside = t;
+      made.app.secrets = secretsFromValues({ COMPANIES_HOUSE_API_KEY: 'invented-companies-house-key-000' });
+      made.app.startLookups = { gate: freeGate(), company: COMPANY_SEARCH, postcode: POSTCODE_CHECK };
+      const on = client();
+      await toDetails(on);
+      assert.match((await on.req('/assessment/details')).body, /Find this company/);
+      await on.post('/assessment/details', { ...DETAILS, b0_business: 'invented care homes', find: 'company:0' });
+      assert.equal(t.seen.filter((x) => x.url.includes('/search/companies')).length, 1, 'on: Companies House was not asked');
+      assert.match((await on.req('/assessment/details')).body, /INVENTED CARE HOMES LIMITED/);
+
+      made.app.startLookups = { gate: freeGate(), company: { ...COMPANY_SEARCH, enabled: false }, postcode: POSTCODE_CHECK };
+      const off = client();
+      await toDetails(off);
+      assert.doesNotMatch((await off.req('/assessment/details')).body, /Find this company/);
+      const before = t.seen.length;
+      await off.post('/assessment/details', { ...DETAILS, b0_business: 'invented care homes', find: 'company:0' });
+      assert.equal(t.seen.length, before, 'off: a name went to Companies House');
+      assert.doesNotMatch((await off.req('/assessment/details')).body, /INVENTED CARE HOMES LIMITED/);
+    } finally {
+      made.app.outside = was.outside; made.app.secrets = was.secrets;
+      if (was.startLookups === undefined) delete made.app.startLookups; else made.app.startLookups = was.startLookups;
+    }
+  });
+
+  test('Phase 162 — COMPANY_SEARCH both ways in searchCompanies itself: on, the match; off, no call and it says to switch it on', async () => {
+    const t = fixtureTransport({ 'GET /search/companies': SEARCH });
+    const go = (config: typeof COMPANY_SEARCH) => searchCompanies({ name: 'invented care homes', gate: freeGate(),
+      deps: { audit: made.app.audit, now: made.app.now, transport: t }, secrets: secretsFromValues({ COMPANIES_HOUSE_API_KEY: 'invented-key' }), config });
+    const on = await go(COMPANY_SEARCH);
+    assert.equal(on.state, 'FOUND');
+    assert.equal(on.state === 'FOUND' ? on.candidates[0]?.number : null, '12345678');
+    const asked = t.seen.length;
+    assert.ok(asked >= 1);
+    const off = await go({ ...COMPANY_SEARCH, enabled: false });
+    assert.deepEqual(off, { state: 'NOT_SEARCHED', why: 'Then switch the company search on.' });
+    assert.equal(t.seen.length, asked, 'off: a name went to Companies House');
   });
 });
 

@@ -19,6 +19,10 @@
  * follow the shell's, as they did when they sat after the shell's own function in router.ts. A routes function nobody
  * calls keeps its routes, as a group of its own, so nothing can drop out of the list unseen.
  *
+ * THE STAFF PAGES' DISPATCH IS FOLLOWED THE SAME WAY (Phase 162). src/app/staff.ts asks finance's and admin's routes
+ * files at the points where their addresses have always been matched, so it is read as a shell too: its own group, with
+ * each routes function's routes put in where it is called.
+ *
  *   node tools/route-list.cjs            print the list
  *   node tools/route-list.cjs --write    write test/fixtures/route-list.txt (the snapshot the test compares with)
  */
@@ -43,7 +47,7 @@ function routesOf(text) {
   return out;
 }
 
-const SHELL = 'src/app/router.ts';
+const SHELLS = ['src/app/router.ts', 'src/app/staff.ts'];
 const ROUTES_FILE = /^src\/modules\/[^/]+\/routes\.ts$/;
 
 /** The top-level functions of a routes file, each with its own lines (from its first line to its closing brace). */
@@ -97,7 +101,7 @@ function routeList(backend) {
   const used = new Set();
   const groups = [];
   for (const f of files.filter((x) => !ROUTES_FILE.test(x))) {
-    const r = f === SHELL ? shellRoutes(read(f), fns, used) : routesOf(read(f));
+    const r = SHELLS.includes(f) ? shellRoutes(read(f), fns, used) : routesOf(read(f));
     if (r.length) groups.push(r);
   }
   for (const f of [...new Set(fileOf.values())]) {

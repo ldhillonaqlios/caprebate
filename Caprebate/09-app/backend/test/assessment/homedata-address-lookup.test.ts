@@ -8,6 +8,9 @@
  * Recorded answers only. The two real ones in test/fixtures/phase156f/ were captured by ONE logged test lookup on a public
  * address (10 Downing Street, SW1A 2AA, UPRN 100023336956), 6 Oct 2026, under Lakhbir's five conditions; Homedata's opaque
  * uprn_token was taken out. Everything else here is invented.
+ *
+ * PHASE 162 (carried by Phase 161m): ADDRESS_LOOKUP was run only on, as shipped. It is now run both ways, on and off, at
+ * the box (the details page and its search) and in findAddresses itself.
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -164,6 +167,49 @@ describe('B1 and B2 — the box on the assessment, and the £1 a day cap', () =>
     const js = await c.req('/assets/address-lookup.js');
     assert.equal(js.status, 200);
     assert.match(js.type ?? '', /javascript/);
+  });
+
+  test('Phase 162 — ADDRESS_LOOKUP both ways at the box: on, "Find my address", its script and one search; off, none of them and nothing sent', async () => {
+    const was = made.app.addressLookup;
+    try {
+      made.app.addressLookup = { config: ADDRESS_LOOKUP };
+      const on = client();
+      await toDetails(on);
+      const pageOn = await on.req('/assessment/details');
+      assert.match(pageOn.body, /Find my address/);
+      assert.match(pageOn.body, /<script src="\/assets\/address-lookup\.js" defer><\/script>/);
+      assert.equal(pageOn.csp, ADDRESS_PAGE_CSP);
+      let before = t.seen.length;
+      const found = await on.post('/assessment/details/addresses', { building: '0', postcode: 'SW1A 2AA' });
+      assert.equal(found.status, 200);
+      assert.equal((JSON.parse(found.body) as { addresses: unknown[] }).addresses.length, 1);
+      assert.equal(t.seen.length, before + 1, 'on: Homedata was not asked');
+
+      made.app.addressLookup = { config: { ...ADDRESS_LOOKUP, enabled: false } };
+      const off = client();
+      await toDetails(off);
+      const pageOff = await off.req('/assessment/details');
+      assert.equal(pageOff.status, 200);
+      assert.doesNotMatch(pageOff.body, /Find my address|address-lookup\.js/);
+      assert.notEqual(pageOff.csp, ADDRESS_PAGE_CSP);
+      before = t.seen.length;
+      const refused = await off.post('/assessment/details/addresses', { building: '0', postcode: 'SW1A 2AA' });
+      assert.equal(refused.status, 404);
+      assert.deepEqual(JSON.parse(refused.body), { addresses: [], why: 'Please type your address below.' });
+      await off.post('/assessment/details', { b0_business: 'Invented Care Homes Limited', b0_entity: 'ltd', b0_postcode: 'SW1A 2AA', b0_line1: '', b0_town: '', find: 'address:0' });
+      assert.equal(t.seen.length, before, 'off: a postcode went to Homedata');
+    } finally { if (was === undefined) delete made.app.addressLookup; else made.app.addressLookup = was; }
+  });
+
+  test('Phase 162 — ADDRESS_LOOKUP both ways in findAddresses itself: on, one call and the list; off, no call and it says to switch it on', async () => {
+    const tt = routes([[/^api\.homedata\.co\.uk\/address\/postcode\/SW1A%202AA\/$/, POSTCODE_ANSWER]]);
+    const deps: CallDeps = { audit: made.app.audit, now: made.app.now, transport: tt, limiter: new RateLimiter() };
+    const used = { today: 0, visitor: 0 };
+    const on = await findAddresses({ postcode: 'SW1A 2AA', deps, secrets: KEYS, used, config: ADDRESS_LOOKUP });
+    assert.deepEqual([on.state, on.searched, tt.seen.length], ['FOUND', true, 1]);
+    const off = await findAddresses({ postcode: 'SW1A 2AA', deps, secrets: KEYS, used, config: { ...ADDRESS_LOOKUP, enabled: false } });
+    assert.deepEqual([off.state, off.searched, tt.seen.length], ['NOT_LOOKED_UP', false, 1]);
+    assert.match(off.state === 'NOT_LOOKED_UP' ? off.why : '', /Then switch the address lookup on\./);
   });
 
   test('a complete postcode fills the list (one 2p search); the same postcode again costs nothing; the pick carries the UPRN onto the property', async () => {

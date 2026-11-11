@@ -200,7 +200,7 @@ function cookiesBody(choice: ConsentChoice | null, saved: boolean, analytics: bo
     ? 'You have rejected non-essential cookies.' : 'You have not answered yet, so the answer is no.'}
   You can change your answer here at any time. "Accept all" turns Google Analytics on for you, if we use it. "Reject
   non-essential" turns it off and stops it at once.</p>
-  ${choiceForm('/cookies/#choice')}
+  <link rel="stylesheet" href="/assets/cookie-banner.css">${choiceForm('/cookies/#choice')}
 
   <h2>Removing cookies yourself</h2>
   <p>Your browser's settings let you see and delete cookies. If you delete ours, you will be signed out and asked about

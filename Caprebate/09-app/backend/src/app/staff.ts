@@ -26,22 +26,18 @@
 
 import type { EngagementSigning } from '../modules/claims/index.ts';
 import { handleWhatsAppImport } from '../modules/crm/index.ts';
-import { handleConnections, handleRulesPage } from '../modules/admin/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
-import { APP_ROLES, AuthError, IMAGE_LIMITS, PHOTO_HEADERS, SESSION_COOKIE_NAME, WELCOME_JOBS, changeOwnPassword, clearPhoto, customRoleOf, dismissWelcome, findById, getSessionsIdByTokenHashRevokedAt, getUsersNById, hashToken, keepSectionChoice, kpiRow, lateBadge, navContext, nobodyBadge, photoFor, piecesPage, readPhoto, refillForm, setPhoto, setSubMenu, singleFile, staffHelp, typedValues, welcomeShown } from '../core/index.ts';
-import type { Actor, App } from '../core/index.ts';
-import { handleRoleEditor, madeRoleChoices } from '../modules/admin/index.ts';
-import { handleBilling } from '../modules/finance/index.ts';
+import { AuthError, IMAGE_LIMITS, PHOTO_HEADERS, SESSION_COOKIE_NAME, WELCOME_JOBS, changeOwnPassword, clearPhoto, dismissWelcome, findById, getSessionsIdByTokenHashRevokedAt, getUsersNById, hashToken, keepSectionChoice, kpiRow, lateBadge, navContext, nobodyBadge, piecesPage, readPhoto, refillForm, setPhoto, setSubMenu, singleFile, staffHelp, typedValues, welcomeShown } from '../core/index.ts';
+import type { Actor, App, StaffRequest } from '../core/index.ts';
+import { adminConfiguration, adminConnections, adminPeopleAndKeys, adminRulesPage, adminSettingsTiles } from '../modules/admin/index.ts';
+import { financeBilling, financePages } from '../modules/finance/index.ts';
 import type { FsObjectStore } from '../shared/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
 /* Straight from these three core files, not the core's door: each reads business modules as it loads (the menus, the
    back office's views, the saved keys), so the door cannot name them (see src/core/index.ts). */
-import { staffShell, portalShell, opens, filterBar, LEAD_FILTERS } from '../core/index.ts';
-import { settingsBody, settingsTiles } from '../modules/admin/index.ts';
+import { staffShell, portalShell, filterBar, LEAD_FILTERS } from '../core/index.ts';
 import { dashboard, dashView, homeRows } from '../modules/crm/index.ts';
 import { addBlock, removeBlock } from '../modules/clients/index.ts';
-import { saveKey } from '../modules/admin/index.ts';
 import { mayReadQueue, readRepliesIfDue } from '../modules/crm/index.ts';
 import { welcomeCard, why } from '../shared/index.ts';
 import { settingsModule as S } from '../modules/admin/index.ts';
@@ -56,7 +52,6 @@ import { handleSurveyPack } from '../modules/survey/index.ts';
 import { handleReportStaff } from '../modules/survey/index.ts';
 import { handleAccountantConfirmStaff } from '../modules/portal/index.ts';
 import { handleStaffEvidence } from '../modules/survey/index.ts';
-import { handleFinance } from '../modules/finance/index.ts';
 import { handleCrm } from '../modules/crm/index.ts';
 import { handlePipeline } from '../modules/crm/index.ts';
 import { handleTasks } from '../modules/crm/index.ts';
@@ -66,7 +61,6 @@ import { handleClaimRecord } from '../modules/claims/index.ts';
 import { handleCompliance } from '../modules/compliance/index.ts';
 import { handleDashboard } from '../modules/crm/index.ts';
 import { handleLists } from '../modules/crm/index.ts';
-import { handleConfiguration } from '../modules/admin/index.ts';
 import { HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, addLocalDays, clockToMinutes, distinctMoments, startOfLocalDay, staffSlots, type Availability, type WorkingTimeInput } from '../modules/clients/index.ts';
 import {
   localClock, localDate, localPartsOf, localStamp, localWhen, zoneNotice,
@@ -216,6 +210,10 @@ export async function handleStaff(
   const path = url.pathname;
   const db = d.app.db;
   const now = d.app.now;
+  // The request as finance's and admin's routes read it (src/modules/{finance,admin}/routes.ts), each asked below at the
+  // point where its addresses have always been matched; each answers 'handled', or undefined when the address is not its own.
+  const w: StaffRequest = { d, req, res, url, path, method, actor, form, body, nav, stamp, problem };
+  let mine: WebResult | undefined;
 
   /**
    * THE BACK OFFICE'S FRONT DOOR, ASKED ONCE FOR THE WHOLE PREFIX.
@@ -275,10 +273,7 @@ export async function handleStaff(
     redirect(res, r.to); return 'handled';
   }
   /* ------------------------------------------ · Settings, one page of tiles (Admin) */
-  if (path === '/staff/admin' && method === 'GET') {
-    const tiles = settingsTiles(actor, opens);
-    html(res, 200, page({ title: 'Settings', nav: nav(actor), wide: true, body: settingsBody(tiles) })); return 'handled';
-  }
+  if ((mine = await adminSettingsTiles(w)) !== undefined) return mine;
   if (path === '/staff/help' && method === 'GET') {
     const help = staffHelp(url.searchParams.get('screen') ?? 'B0');
     // The welcome card lives here now, on Help's own landing section, until the person hides it.
@@ -410,8 +405,7 @@ export async function handleStaff(
   }
 
   /* ------------------------------------------------ · Accounting's clients area, and chasing an invoice */
-  const billing = await handleBilling({ app: d.app, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
-  if (billing === 'handled') return 'handled';
+  if ((mine = await financeBilling(w)) !== undefined) return mine;
 
   /* ------------------ SECTION 3 · a free-typed email to a company or a lead */
   const freeEmail = await handleFreeEmail({ app: d.app, store: d.store, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
@@ -422,12 +416,10 @@ export async function handleStaff(
   if (waImport === 'handled') return 'handled';
 
   /* ------------------ · every outside service on one page, and the care regulators' lists (Admin) */
-  const conn = await handleConnections({ app: d.app, nav, problem }, req, res, url, method, actor, body);
-  if (conn === 'handled') return 'handled';
+  if ((mine = await adminConnections(w)) !== undefined) return mine;
 
   /* ------------------ · every rule in force, its version and who approves it, read only (Admin; Phase 161m) */
-  const rulesShown = await handleRulesPage({ nav, problem }, req, res, url, method, actor);
-  if (rulesShown === 'handled') return 'handled';
+  if ((mine = await adminRulesPage(w)) !== undefined) return mine;
 
   /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort */
   const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form);
@@ -466,10 +458,7 @@ export async function handleStaff(
   if (evidence === 'handled') return 'handled';
 
   /* ------------------------------ SECTION 5 · Caprebate's finance */
-  const finance = await handleFinance(
-    { app: d.app, nav, stamp, problem }, req, res, url, method, actor, form,
-  );
-  if (finance === 'handled') return 'handled';
+  if ((mine = await financePages(w)) !== undefined) return mine;
 
   /* ------ SECTION 5a · search, list views and CSV export (CRM 9 of 10) — before the sections whose prefixes they share */
   const lists = await handleLists({ app: d.app, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
@@ -518,8 +507,7 @@ export async function handleStaff(
   if (compliance === 'handled') return 'handled';
 
   /* ------ SECTION 14 · the admin settings screen (CRM 9 of 10) */
-  const configuration = await handleConfiguration({ app: d.app, newId: d.newId, nav, problem }, req, res, url, method, actor, form);
-  if (configuration === 'handled') return 'handled';
+  if ((mine = await adminConfiguration(w)) !== undefined) return mine;
 
   /* ------ SECTION 13 · the management dashboard (CRM 9 of 10) */
   const dash = await handleDashboard({ app: d.app, nav }, req, res, url, method, actor);
@@ -535,108 +523,8 @@ export async function handleStaff(
     return 'handled';
   }
 
-  /* ------------------------------------------------ · SUPER ADMIN ONLY · the roles they make */
-  const roles = await handleRoleEditor({ app: d.app, nav, problem }, req, res, url, method, actor, form);
-  if (roles === 'handled') return 'handled';
-
-  /* ------------------------------------------------ ADMIN ONLY · users */
-  if (path === '/staff/users' && method === 'GET') {
-    html(res, 200, usersPage(actor, S.staffList(db, actor), undefined, madeRoleChoices(d.app, actor), url.searchParams.get('add') === '1')); return 'handled';
-  }
-
-  if (path === '/staff/users/create' && method === 'POST') {
-    const f = await form(req);
-    /* The system makes a TEMPORARY password, shown once, here, to hand over. The
-       person chooses their own at their first sign-in, and sets up their second step. Nobody types a password here. */
-    const password = SI.temporaryPassword();
-    const until = SI.temporaryUntil(now());
-    let created;
-    try {
-      created = await S.createStaffUser(
-        { db, audit: d.app.audit, now, hash: (p) => d.app.hasher.hash(p) },
-        actor,
-        {
-          email: f.get('email') ?? '', display_name: f.get('display_name') ?? '',
-          role: f.get('role') ?? '', password, temporary_until: until,
-          business_id: f.get('business_id'),
-        },
-      );
-    } catch (e) {
-      if (e instanceof S.SettingsError) return problem(res, actor, 'Not created', e.message, '/staff/users', e.field);
-      throw e;
-    }
-    html(res, 200, temporaryPasswordPage(actor, created.display_name, created.email, roleName(created.role), password, until, true)); return 'handled';
-  }
-
-  /* The super user gives somebody a new temporary password (a forgotten one, or none to hand), or clears
-     their second step (a lost phone). Either ends their sessions. */
-  const tempMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/temporary-password$/.exec(path);
-  if (tempMatch && method === 'POST') {
-    const r = await SI.issueTemporaryPassword(d.app, actor, tempMatch[1] ?? '');
-    html(res, 200, temporaryPasswordPage(actor, r.user.display_name, r.user.email, roleName(r.user.role), r.password, r.until, false)); return 'handled';
-  }
-  const mfaMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/reset-two-factor$/.exec(path);
-  if (mfaMatch && method === 'POST') {
-    SI.resetTwoFactor(d.app, actor, mfaMatch[1] ?? '');
-    redirect(res, '/staff/users?done=two-factor'); return 'handled';
-  }
-
-  const roleMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/role$/.exec(path);
-  if (roleMatch && method === 'POST') {
-    const f = await form(req);
-    try {
-      S.assignRole(d.app.deps, actor, roleMatch[1] ?? '', f.get('role') ?? '');
-    } catch (e) {
-      if (e instanceof S.SettingsError) return problem(res, actor, 'Not changed', e.message, '/staff/users');
-      throw e;
-    }
-    redirect(res, '/staff/users?done=role'); return 'handled';
-  }
-
-  const disableMatch = /^\/staff\/users\/([A-Za-z0-9-]+)\/disable$/.exec(path);
-  if (disableMatch && method === 'POST') {
-    // "Archive" on Home's Admin tab posts here too, and goes back there.
-    const fromHome = (await form(req)).get('back') === '/staff?view=admin';
-    try {
-      S.disableUser(d.app.deps, actor, disableMatch[1] ?? '');
-    } catch (e) {
-      if (e instanceof S.SettingsError) return problem(res, actor, 'Not disabled', e.message, '/staff/users');
-      throw e;
-    }
-    /* A leaver's photo is deleted when their account is disabled
-       — the row and the file, by the same clearPhoto a person uses on their own, which fails rather than report a file
-       gone that is still on disk. Only once the account is disabled: a refused disable deletes nothing. */
-    const hadPhoto = photoFor(db, disableMatch[1] ?? '') !== undefined;
-    await clearPhoto({ db, store: d.store }, disableMatch[1] ?? '');
-    if (hadPhoto) {
-      d.app.audit.append({
-        at: now(), kind: 'USER_UPDATED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
-        object_type: 'user', object_id: disableMatch[1] ?? '', detail: { photo_deleted: true, because: 'ACCOUNT_DISABLED' },
-      });
-    }
-    redirect(res, fromHome ? '/staff?view=admin&done=archived#people' : '/staff/users?done=disabled'); return 'handled';
-  }
-
-  /* ------------------------------------------ · Admin saves an API key, sealed (src/core/saved-keys.ts) */
-  const keyMatch = /^\/staff\/keys\/([A-Z0-9_]{1,64})(\/unsave)?$/.exec(path);
-  if (keyMatch && method === 'POST') {
-    const f = await form(req);
-    const unsave = keyMatch[2] !== undefined;
-    const r = await saveKey(d.app, actor, keyMatch[1] ?? '', unsave ? null : (f.get('value') ?? ''), f.get('password') ?? '');
-    if (!r.ok) return problem(res, actor, 'Not saved', r.why, '/staff?view=admin#keys');
-    redirect(res, `/staff?view=admin&done=${unsave ? 'key-unsaved' : 'key-saved'}#key-${keyMatch[1] ?? ''}`); return 'handled';
-  }
-
-  /* ---------------------------------- · addresses we cannot email */
-  if (path === '/staff/email-addresses' && method === 'GET') {
-    html(res, 200, stoppedAddressesPage(actor, S.stoppedAddresses(db, actor), url.searchParams.get('done') ?? undefined));
-    return 'handled';
-  }
-  if (path === '/staff/email-addresses/lift' && method === 'POST') {
-    const f = await form(req);
-    const r = S.liftStoppedAddress({ db, audit: d.app.audit, now }, actor, f.get('address') ?? '');
-    redirect(res, `/staff/email-addresses?done=${r.lifted ? 'lifted' : 'not-stopped'}`); return 'handled';
-  }
+  /* ------------------------------------------------ · the roles a super admin makes, users, saved keys, addresses we cannot email */
+  if ((mine = await adminPeopleAndKeys(w)) !== undefined) return mine;
 
   return 'not-mine';
 }
@@ -1337,148 +1225,5 @@ function settingsPage(
             <td>${m.business_id !== null && ON_EMAIL_PAGE.includes(m.kind)
               ? h`<a href="/staff/clients/${m.business_id}/email">Open the Email page</a>` : raw('')}</td></tr>`)}</tbody></table>`}`
       : h`<p><a href="/portal">Back to your claim</a></p>`}`,
-  });
-}
-
-/**
- * ADDRESSES WE CANNOT EMAIL. Admin only.
- *
- * An address the mail server refused for good is stopped, and nothing more is sent to it. That was built
- * with no way back: `liftSuppression` existed and no screen called it. This is the screen.
- *
- * A LIFT IS A NEW ROW, not an edit. The bounce stays on record and so does the stop; the lift sits after them with
- * who pressed the button and when. Pressing it for an address that is not stopped is not an error and says so.
- */
-function stoppedAddressesPage(actor: Actor, rows: readonly S.StoppedAddress[], done: string | undefined): string {
-  return page({
-    title: 'Addresses we cannot email', nav: nav(actor), wide: true,
-    body: h`
-      <h1>Addresses we cannot email</h1>
-      ${done === 'lifted' ? h`<p class="help">Done. We can email that address again.</p>`
-        : done === 'not-stopped' ? h`<p class="help">That address was not stopped, so nothing changed.</p>` : raw('')}
-      <p class="help">An email came back saying the address does not work, so we stopped sending to it.
-      <strong>Check with the person first.</strong> If they tell you the address is right, or they give you a new
-      one, press the button. Nothing is deleted: the bounce stays on record, and so does your lift.</p>
-      ${rows.length === 0
-        ? h`<p class="help">No addresses are stopped.</p>`
-        : h`<table><thead><tr><th>Address</th><th>Stopped</th><th>Code</th><th>The email</th><th></th></tr></thead>
-          <tbody>${rows.map((r) => h`<tr>
-            <td>${r.address}</td><td class="when">${stamp(r.at)}</td><td>${r.status}</td>
-            <td>${r.subject ?? 'not recorded'}</td>
-            <td><form method="post" action="/staff/email-addresses/lift" class="inline">
-              <input type="hidden" name="address" value="${r.address}">
-              <button class="linkish" type="submit">This address works again</button></form></td>
-          </tr>`)}</tbody></table>`}
-      <p><a href="/staff/settings">Back to your account</a></p>`,
-  });
-}
-
-/** A role as a person reads it: a built-in role's own word, or the name the super admin gave a made one. */
-function roleName(role: string): string {
-  return customRoleOf(role)?.name ?? role;
-}
-
-/** The temporary password, shown ONCE, to be handed over by the super user. Never stored in clear. */
-function temporaryPasswordPage(actor: Actor, name: string, email: string, role: string, password: string, until: string, isNew: boolean): string {
-  return page({
-    title: 'Temporary password', nav: nav(actor),
-    body: h`
-      <h1>${isNew ? `${name}’s account is ready` : `A new temporary password for ${name}`}</h1>
-      <p>Give ${name} these sign-in details yourself — in person or by telephone, not by email.</p>
-      <table><tbody>
-        <tr><th>Username</th><td><code>${email}</code></td></tr>
-        <tr><th>Temporary password</th><td><strong><code id="temporary-password">${password}</code></strong></td></tr>
-        <tr><th>Role</th><td>${role}</td></tr>
-        <tr><th>Works until</th><td>${localWhen(until)}</td></tr>
-      </tbody></table>
-      <div class="gate"><strong>This password is shown once.</strong> We do not keep it, so it cannot be shown again. If it
-      is lost, give a new temporary password from the Users page.</div>
-      <p class="help">When ${name} first signs in, they choose their own password${role === 'CLIENT' ? '' : ' and set up their second step: an authenticator app or an email code'}.</p>
-      <p><a href="/staff/users">Back to users</a></p>`,
-  });
-}
-
-/** Where Add a user lands — the form, opened. Home's "Add a person" card links here too. */
-export const ADD_USER_HREF = '/staff/users?add=1#create-user';
-
-/** The counts over the users list. "Staff" leaves out client logins; turned off accounts count apart. */
-export function userCounts(rows: readonly Pick<S.StaffRow, 'user' | 'working_periods'>[]): {
-  staff: number; clients: number; off: number; no_hours: number;
-} {
-  const on = rows.filter((r) => !r.user.disabled);
-  const staff = on.filter((r) => r.user.role !== 'CLIENT');
-  return {
-    staff: staff.length, clients: on.length - staff.length, off: rows.length - on.length,
-    no_hours: staff.filter((r) => r.working_periods === 0).length,
-  };
-}
-
-/**
- * USERS AND ROLES. Was 5,000 px: a block of six role buttons for every person, then
- * the create form. Now: a header with Make or change a role and Add a user, four boxes, and one table that stacks on a
- * phone — each person's name over their username, their role as a label, Active in green or Turned off in red, and their
- * actions: the three that were there, and Change role, folded in their own row, a list of the roles instead of six
- * buttons. Add a user is folded until its button, a link to it, or a refusal opens it. Nobody's own row offers a role.
- */
-function usersPage(actor: Actor, rows: readonly S.StaffRow[], error: string | undefined,
-  made: readonly { key: string; name: string }[] = [], adding = false): string {
-  // The roles the super admin made are offered beside the built-in ones, by their own names.
-  const staffOnly = made.map((m) => ({ value: m.key, label: m.name }));
-  const all = [...APP_ROLES.map((r) => ({ value: r as string, label: r as string })), ...staffOnly];
-  const n = userCounts(rows);
-  return page({
-    title: 'Users and roles', nav: nav(actor), wide: true,
-    body: h`
-      <div class="pagehead"><div><h1>Users and roles</h1>
-        <p class="lede">Add a user, change a role, or turn an account off.</p></div>
-        <p><a class="btn" href="/staff/admin/roles">Make or change a role</a> <a class="btn btn-primary" href="${ADD_USER_HREF}">Add a user</a></p></div>
-      ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
-      ${kpiRow([
-        { label: 'Staff', value: String(n.staff), tone: 'total' },
-        { label: 'Client logins', value: String(n.clients), tone: 'plain' },
-        { label: 'Turned off', value: String(n.off), tone: 'plain' },
-        { label: 'Staff with no working hours', value: String(n.no_hours), tone: 'plain' },
-      ])}
-      <p class="help"><strong>You cannot change someone's name, username or photo.</strong> Only they can, from their
-      own account. Changing a role signs that person out at once. They sign in again with the new role.</p>
-
-      <div class="tablewrap"><table class="stack userlist"><thead><tr><th>Name</th><th>Role</th><th>Hours set</th><th>Photo</th><th>State</th><th></th></tr></thead>
-      <tbody>${rows.map((r) => h`<tr>
-        <td>${r.user.display_name}<br><span class="help">${r.user.email}</span></td>
-        <td data-label="Role"><span class="badge b-info">${roleName(r.user.role)}</span></td>
-        <td data-label="Hours set">${r.working_periods === 0 ? h`<span class="help">none</span>` : r.working_periods}</td>
-        <td data-label="Photo">${r.has_photo ? 'yes' : 'no'}</td>
-        <td data-label="State">${r.user.disabled ? h`<span class="badge b-late">Turned off</span>` : h`<span class="badge b-ok">Active</span>`}</td>
-        <td>${r.user.disabled ? raw('') : h`
-          <form method="post" action="/staff/users/${r.user.id}/disable" class="inline">
-            <button class="linkish" type="submit">Disable</button></form>
-          <form method="post" action="/staff/users/${r.user.id}/temporary-password" class="inline">
-            <button class="linkish" type="submit">New temporary password</button></form>
-          <form method="post" action="/staff/users/${r.user.id}/reset-two-factor" class="inline">
-            <button class="linkish" type="submit">Reset second step</button></form>
-          ${r.user.id === actor.id ? raw('') : h`<details class="formfold rolefold"><summary>Change role</summary>
-            <form method="post" action="/staff/users/${r.user.id}/role">
-              <label>New role for ${r.user.display_name} <select name="role">${all.map((role) => h`
-                <option value="${role.value}"${role.value === r.user.role ? raw(' selected') : raw('')}>${role.label}</option>`)}</select></label>
-              <button type="submit">Assign</button></form></details>`}`}</td>
-      </tr>`)}</tbody></table></div>
-
-      <details class="pblock recordlead" id="create-user"${adding ? raw(' open') : raw('')}><summary class="pnum">Add a user</summary>
-      <form method="post" action="/staff/users/create">
-        <label class="fl" for="new-user-email">Username — an email address</label>
-        <input class="fi" id="new-user-email" name="email" required>
-        <label class="fl" for="new-user-display-name">Display name</label>
-        <input class="fi" id="new-user-display-name" name="display_name" required>
-        <label class="fl" for="new-user-role">Role</label>
-        <select class="fi" id="new-user-role" name="role"><option value="">choose a role</option>${all.map((role) => h`
-          <option value="${role.value}">${role.label}</option>`)}</select>
-        <label class="fl" for="new-user-business">Business — for a CLIENT account only</label>
-        <input class="fi" id="new-user-business" name="business_id" placeholder="leave empty for a staff account">
-        <button class="cta" type="submit">Create</button>
-      </form>
-      <p class="help">We make a temporary password for the new person and show it to you once. Give it to them
-      yourself, not by email. It works for ${SI.TEMPORARY_PASSWORD_DAYS} days. When they first sign in, they choose their own
-      password and set up their second step.</p></details>
-      <p><a href="/staff/settings">Back to settings</a></p>`,
   });
 }

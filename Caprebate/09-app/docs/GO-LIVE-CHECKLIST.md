@@ -31,4 +31,4 @@ _Phase 161h, 7 November 2026. This is the gate of Phase 161n ("Go live"). Tick a
 16. [ ] A staff sign-in asks for **a second step**; a timer called without its word answers **401**; the three timers show a run each in the function log (`timer ...:`).
 17. [ ] **A backup made and restored on a copy** from the live bucket (runbook section 7), the audit chain intact.
 18. [ ] **The switches that stay off are off** on the live website: the free and paid lookups' gates, document reading, engagement signing (until the solicitor confirms), Google Analytics (Lakhbir dropped it, 4 Oct 2026), the WhatsApp live connection (manual upload only, 5 Oct 2026). The Connections page's switch list (`/staff/connections/switches.json`, Admin only) is saved with the date.
-19. [ ] **Run the sweep (Phase 162) before the first client**, and its findings closed or written into a phase.
+19. [ ] **Run the sweep (the last phase on the run sheet; Phase 163 since 11 Nov 2026) before the first client**, and its findings closed or written into a phase.

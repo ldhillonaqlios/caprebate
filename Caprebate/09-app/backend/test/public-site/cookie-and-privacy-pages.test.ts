@@ -160,6 +160,15 @@ describe('Phase 161g item 1: one cookie choice, and Google Analytics only after 
     assert.match(legalPageHtml('/cookies/', null) ?? '', /You have not answered yet, so the answer is no\./);
     assert.match(cookieBanner('/', true), /Nothing of Google’s loads unless you press “Accept all”\./);
   });
+
+  test('the cookie policy page styles its two buttons whether or not the visitor has answered (Phase 162)', () => {
+    // Until Phase 162 the stylesheet came only with the banner, so once a visitor had answered, the page's
+    // "Accept all" and "Reject non-essential" fell back to the browser's own grey buttons, of different widths.
+    for (const choice of [null, 'all', 'essential'] as const) {
+      const html = legalPageHtml('/cookies/', choice) ?? '';
+      assert.match(html, /<link rel="stylesheet" href="\/assets\/cookie-banner\.css">\s*<form class="cookie-choice"/, String(choice));
+    }
+  });
 });
 
 /* ======================================================================== 2 */

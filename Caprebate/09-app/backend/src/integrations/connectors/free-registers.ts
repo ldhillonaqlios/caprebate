@@ -132,9 +132,11 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
      not as one lookup for the client — so this row points at the site area lines, which say what happened. */
   HMLR_INSPIRE: 'allowed. The land boundary is read for each property by its own step of this button, and the site area ' +
     'lines above say what happened. It is switched off. Nothing was contacted',
-  /* The free postcode check belongs to the address question the client answers, not to this button. */
+  /* The free postcode check belongs to the address question the client answers, not to this button. Phase 162: it no
+     longer says "It is switched off", which was untrue whenever the register's switch was on; this button never runs
+     it either way. */
   POSTCODES_IO: 'allowed, but the postcode check is made at the address question, when the client types their postcode, ' +
-    'not by this button. It is switched off. Nothing was contacted',
+    'not by this button. This button never runs it. Nothing was contacted',
 });
 
 /* ================================================================== *

@@ -19,6 +19,9 @@ export { handleConnections, listsToImport } from './connections.ts';
 // Phase 161m: every rule in force, read only.
 export { handleRulesPage, positionWords, rulesInForcePage, RULES_IN_FORCE_PATH } from './rules-page.ts';
 export { handleRoleEditor, madeRoleChoices } from './role-editor-pages.ts';
+// Phase 162: its addresses, as the staff pages' dispatch asks them (src/app/staff.ts), and the users pages they draw.
+export { adminConfiguration, adminConnections, adminPeopleAndKeys, adminRulesPage, adminSettingsTiles } from './routes.ts';
+export { ADD_USER_HREF, userCounts } from './users-pages.ts';
 export { keysView, refreshSavedKeys, saveKey, serviceOn } from './saved-keys.ts';
 export * as settingsModule from './settings.ts';
 export * as templatesModule from './templates.ts';

@@ -50,6 +50,7 @@ import { newDot } from './client-layout.ts';
 import { keysView } from '../admin/index.ts';
 import { repliesStale } from './inbound-email.ts';
 import { listsToImport } from '../admin/index.ts';
+import { storageReason } from '../compliance/index.ts';
 import { listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole } from '../../core/index.ts';
 
 import { getContactsFullNamePhoneByBusinessId } from '../clients/index.ts';
@@ -341,6 +342,18 @@ function repliesWarning(app: App, actor: Actor, now: string): Safe {
   return why === null ? raw('') : h`<div class="flag" role="alert" id="replies-stale"><strong>Email replies are not being read.</strong> ${why}</div>`;
 }
 
+/**
+ * Admin is told, on whichever home view, when this copy of the website keeps its records in memory because its lasting
+ * database did not open (Phase 162). The sweep of 11 Nov 2026 found the test website doing so: each copy seeded its own
+ * invented records, and a sign-in lasted only while the next page reached the same copy. Until then it was said only
+ * where a sign-in step or an identity check was lost. Shown only when the server gave a reason (api/index.mjs sets
+ * `storageWhy` when the lasting database is not in use), so a test's own database in memory shows nothing.
+ */
+export function memoryWarning(app: App, actor: Actor): Safe {
+  if (actor.role !== 'ADMIN' || app.db.kind !== 'memory' || app.storageWhy === undefined) return raw('');
+  return h`<div class="flag" role="alert" id="records-in-memory"><strong>This website is keeping its records in memory.</strong> Each copy of it has its own, so records and sign-ins are lost when the next page reaches another copy. ${storageReason(app.storageWhy)}</div>`;
+}
+
 /** Admin is reminded, on whichever home view, to import each care regulator's new monthly list. */
 function listsWarning(app: App, actor: Actor): Safe {
   if (actor.role !== 'ADMIN') return raw('');
@@ -352,7 +365,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
   const now = app.now();
   const lateJobs = todayItems(actor, app, now).filter((t) => t.late === true).length;
   if (view === 'admin') {
-    return h`${head(now, lateJobs)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${adminView(app, actor, q.done)}`;
+    return h`${head(now, lateJobs)}${memoryWarning(app, actor)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${adminView(app, actor, q.done)}`;
   }
   const from = startOfLocalDay(now);
   const calls = callsBetween(app, actor, from, addLocalDays(from, 1)).length;
@@ -370,7 +383,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
     const docCard = documentsCard(app, actor, now);
     const record = can(actor, 'lead.write', { type: 'lead', id: '__lead_section__', business_id: null })
       ? h`<p><a class="btn btn-primary" href="/staff/leads?record=1#record-lead">Record a lead</a></p>` : raw('');
-    return h`${head(now, lateJobs, record)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([
+    return h`${head(now, lateJobs, record)}${memoryWarning(app, actor)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([
       lateBox,
       { label: leads.length === 1 ? 'New lead' : 'New leads', value: String(leads.length), tone: leads.length > 0 ? 'win' : 'plain', href: '#row-new-leads' },
       { label: msgs === 1 ? 'New message' : 'New messages', value: String(msgs), tone: msgs > 0 ? 'warn' : 'plain', href: '#new-messages' },
@@ -391,7 +404,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
         { label: f.expected.claims.length === 1 ? 'Claim ready for our fee' : 'Claims ready for our fee', value: String(f.expected.claims.length), tone: f.expected.claims.length > 0 ? 'warn' : 'plain', href: '/staff/finance#to-invoice' },
       );
     }
-    return h`${head(now, lateJobs)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([...boxes, callBox])}${columns(
+    return h`${head(now, lateJobs)}${memoryWarning(app, actor)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([...boxes, callBox])}${columns(
       [todayRow(actor, app, now), todayActivities(app, actor)],
       [...moneyRow(actor, app, now), calendarCard(app, actor, view, q.week, q.done)],
     )}`;
@@ -405,7 +418,7 @@ export function dashboard(app: App, actor: Actor, view: DashView, q: { week: str
       { label: jobs.length === 1 ? 'Survey job' : 'Survey jobs', value: String(jobs.length), tone: 'survey', href: '/staff/survey' },
     );
   }
-  return h`${head(now, lateJobs)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([...boxes, callBox])}${columns(
+  return h`${head(now, lateJobs)}${memoryWarning(app, actor)}${repliesWarning(app, actor, now)}${listsWarning(app, actor)}${kpiRow([...boxes, callBox])}${columns(
     [todayRow(actor, app, now), todayActivities(app, actor)],
     [...jobsRow(actor, app), calendarCard(app, actor, view, q.week, q.done)],
   )}`;
