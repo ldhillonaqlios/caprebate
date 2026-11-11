@@ -32,8 +32,9 @@
  * ───────────────────────────────────────────────────────────────────────────
  * WHY IT IS OFF — ENGAGEMENT_SIGNING
  *
- *   1. Our solicitor has not yet confirmed that a typed name, with a tick for authority, is a good enough signature for
- *      this letter. It is asked in the Word questions document under the solicitor, under SIGNING_QUESTION's title.
+ *   1. Settled 11 November 2026: Lakhbir confirmed that a typed name, with a tick for authority, is a good enough
+ *      signature for this letter (no solicitor; clause 17 says an electronic signature binds). It was asked in the Word
+ *      questions document under SIGNING_QUESTION's title. What is left is his approval of the letter's final wording.
  *   2. A letter with a term in square brackets, or specimen wording, is not signed, whatever the switch says: that
  *      refusal is here, not on the page. Since Phase 161m1 (11 November 2026) the letter itself has no bracket left;
  *      the specimen client, number and range are replaced from the client's record, and refused where they are not.

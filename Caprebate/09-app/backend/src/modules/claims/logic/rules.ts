@@ -72,7 +72,7 @@ export function claimsRules(): readonly RuleEntry[] {
     switchEntry({ id: 'claims.MANDATORY_DOCUMENTS', title: 'The documents a claim needs before it moves on', approver: 'Lakhbir', approval: 'On, on Lakhbir\'s answer.',
       settings: MANDATORY_DOCUMENTS, home: `${HOME}mandatory-documents.ts`, tested_in: 'test/crm/introducer-source-claim-team.test.ts' }),
     switchEntry({ id: 'claims.ENGAGEMENT_SIGNING', title: 'A client signs the engagement letter in the portal', approver: 'Lakhbir',
-      approval: 'Not approved yet: switched off until Lakhbir approves the letter\'s final wording, which says an electronic signature binds (no solicitor, 11 Nov 2026).',
+      approval: 'Not approved yet: Lakhbir confirmed on 11 Nov 2026 that a typed name with a tick for authority is a good enough signature (no solicitor); switched off until he approves the letter\'s final wording.',
       settings: ENGAGEMENT_SIGNING, home: `${HOME}signing.ts`, tested_in: 'test/claims/signing-for-testing.test.ts' }),
     switchEntry({ id: 'claims.ENGAGEMENT_SIGNING_TEST', title: 'Signing the test copy of the letter, on the test website only', approver: 'Lakhbir',
       approval: 'On for testing on Lakhbir\'s word (6 Oct 2026); the real letter cannot be signed under it.',
