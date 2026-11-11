@@ -213,3 +213,19 @@ export type WebRequest = {
   /** The legal pages are served on the test website (`notices`) or wherever the `legal` setting is on. */
   readonly legalServed: boolean;
 };
+
+/**
+ * One request inside the back office, as the staff pages' dispatch (src/app/staff.ts) has read it, for a module's
+ * routes to answer (finance's and admin's, Phase 162). The person is signed in and let into the back office already;
+ * `nav` and `problem` are the staff pages' own header and refusal page, lent so every section draws them the same.
+ */
+export type StaffRequest = {
+  readonly d: { readonly app: App; readonly store: FsObjectStore; readonly newId: () => string };
+  readonly req: IncomingMessage; readonly res: ServerResponse; readonly url: URL;
+  readonly path: string; readonly method: string; readonly actor: Actor;
+  readonly form: (r: IncomingMessage) => Promise<URLSearchParams>;
+  readonly body: (r: IncomingMessage, max?: number) => Promise<Buffer>;
+  readonly nav: (actor: Actor) => Safe;
+  readonly stamp: (iso: string) => string;
+  readonly problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
+};

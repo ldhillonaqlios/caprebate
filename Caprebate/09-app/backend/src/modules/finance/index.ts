@@ -12,6 +12,8 @@ export { handleBilling } from './billing.ts';
 export { assertFinanceSection, billingViewFor, clientsAreaGate, financeSectionObj } from './finance.permissions.ts';
 export { getInvoiceCreditNotesIdInvoiceIdById, getInvoiceCreditNotesNByInvoiceId, getInvoiceCreditNotesNByIssuedOn, getInvoiceNumbersSeqByInvoiceIdKind, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimIdInvoiceStatus, getInvoicesFeeCountByClaimId, getInvoicesIdBusinessIdById2, getInvoicesIdBusinessIdById4, getInvoicesIdClaimIdById, getInvoicesSentOnByClaimIdKind, insertFinanceSettings, insertInvoicePayments, insertInvoices2, listInvoicesCreatedAtInvoiceStatusByBusinessIdClaimId } from './data.ts';
 export { handleFinance } from './finance-pages.ts';
+// Phase 162: its addresses, as the staff pages' dispatch asks them (src/app/staff.ts).
+export { financeBilling, financePages } from './routes.ts';
 export { INVOICE_WORDS, PAYMENT_WORDS } from './finance.ts';
 export { allocateNumber, claimMoneyLines, CREDIT_BASES, financeDashboard, formatInvoiceNumber, INVOICE_KINDS } from './invoices.ts';
 export type { ClaimMoneyLine, FinanceDashboard } from './invoices.ts';
