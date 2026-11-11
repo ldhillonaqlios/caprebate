@@ -193,7 +193,7 @@ describe('item 2 (L15) — a filing per return', () => {
     assert.match(closing(app, w.claim)?.why ?? '', /period ending 31 Dec 2024.*has not confirmed it is filed.*period ending 31 Dec 2025.*not due until 31 Dec 2026/);
     // The 2024 return, by its own link: the email and the page ask about that return alone.
     assert.equal(send(app, w.claim, w.contact, '2024-12-31').ok, true);
-    assert.match(app.db.get<{ body: string }>('SELECT body FROM outbox ORDER BY rowid DESC LIMIT 1')?.body ?? '', /The tax return for the period ending 31 Dec 2024, carrying its part of this claim, has been filed\./);
+    assert.match(app.db.get<{ body: string }>('SELECT body FROM outbox ORDER BY rowid DESC LIMIT 1')?.body ?? '', /Please confirm the amended tax return for the period ending 31 Dec 2024, carrying its part of the claim, has been filed/); // PHASE 161m2: the approved wording
     const v = AC.confirmLinkView(app.db, app.now(), tokenIn(app));
     assert.equal(v.state === 'OPEN' ? v.period_end : null, '2024-12-31');
     assert.equal(answer(app, '2026-08-20').ok, true);

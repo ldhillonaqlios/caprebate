@@ -454,7 +454,8 @@ describe('3 · a new message tells the other side — only while sending is on',
     assert.equal(n.length, 2);
     assert.equal(n[1]?.to_email, 'client@example.invalid');
     assert.equal(n[1]?.subject, 'You have a new message from Cap Rebate');
-    assert.match(n[1]?.body ?? '', /waiting for you in your Cap Rebate portal/);
+    // Phase 161m2: the approved words (emails.py "new-message"), on the branded layout
+    assert.match(n[1]?.body ?? '', /There is a new message from us waiting in your Cap Rebate portal\./);
     assert.match(n[1]?.body ?? '', /\/portal\/messages/);
     for (const x of n) assert.doesNotMatch(`${x.subject} ${x.body}`, /secret words/, 'an alert carried the words');
     assert.doesNotMatch(`${n[1]?.subject} ${n[1]?.body}`, /Corvale/, 'an alert to the client carried the company name');

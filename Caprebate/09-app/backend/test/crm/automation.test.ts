@@ -330,6 +330,36 @@ describe('stage entered and owner changed', () => {
       assert.match(app.db.get<{ subject: string }>('SELECT subject FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT 1')?.subject ?? '', /^.+: a claim is now at Engagement \(CR-\d{4}-\d{4}\)$/);
     } finally { app.close(); }
   });
+
+  test('PHASE 161m2: the owner’s notice is a back-office email on the branded layout, and its link is the site’s full address where the site knows it', async () => {
+    const before = process.env['CAPREBATE_PUBLIC_ORIGIN'];
+    const app = await testApp();
+    try {
+      staff(app);
+      const org = organisation(app);
+      const notice = (): { subject: string; body: string; html_body: string | null } =>
+        app.db.get<{ subject: string; body: string; html_body: string | null }>("SELECT subject, body, html_body FROM outbox WHERE to_email = 'admin@example.invalid' ORDER BY rowid DESC LIMIT 1")!;
+      process.env['CAPREBATE_PUBLIC_ORIGIN'] = 'https://caprebate.example.invalid';
+      const known = claimAt(app, org, 'ASSESSMENT');
+      assert.equal(C.updateClaim(deps(app), actor('SALES'), known, { owner_id: 'u-ADMIN' }).ok, true);
+      const a = notice();
+      assert.match(a.subject, /: you now own a claim \(CR-\d{4}-\d{4}\)$/);
+      assert.match(a.html_body ?? '', /<h1[^>]*>[^<]+: you now own a claim/);
+      assert.ok((a.html_body ?? '').includes(`<a href="https://caprebate.example.invalid/staff/claims/${known}"`), 'the button is not the full address');
+      assert.match(a.html_body ?? '', />BACK OFFICE</);
+      assert.match(a.body, new RegExp(`^Open it in the back office: https://caprebate\\.example\\.invalid/staff/claims/${known}$`, 'm'));
+      assert.match(a.body, /^Sent by the Cap Rebate back office\./m);
+      delete process.env['CAPREBATE_PUBLIC_ORIGIN'];
+      const unknown = claimAt(app, org, 'ASSESSMENT');
+      assert.equal(C.updateClaim(deps(app), actor('SALES'), unknown, { owner_id: 'u-ADMIN' }).ok, true);
+      const b = notice();
+      assert.equal(/<a href=/.test(b.html_body ?? ''), false, 'a link to nowhere');
+      assert.match(b.body, new RegExp(`^Open it in the back office: /staff/claims/${unknown}$`, 'm'));
+    } finally {
+      if (before === undefined) delete process.env['CAPREBATE_PUBLIC_ORIGIN']; else process.env['CAPREBATE_PUBLIC_ORIGIN'] = before;
+      app.close();
+    }
+  });
 });
 
 /* ================================================================== *
@@ -521,12 +551,15 @@ describe('email templates — merged into the outbox, and nowhere else', () => {
       const r = M.queueTemplate(deps(app), actor('SALES'), c, { template_id: 'template-next-step', contact_id: contact });
       assert.ok(r.ok, r.ok ? '' : r.why);
       assert.deepEqual(r.gaps, ['property_address']);
-      const row = app.db.get<{ subject: string; body: string; kind: string; sent_at: string | null; transport: string; business_id: string }>(
-        'SELECT subject, body, kind, sent_at, transport, business_id FROM outbox WHERE id = ?', [r.id]);
+      const row = app.db.get<{ subject: string; body: string; html_body: string | null; kind: string; sent_at: string | null; transport: string; business_id: string }>(
+        'SELECT subject, body, html_body, kind, sent_at, transport, business_id FROM outbox WHERE id = ?', [r.id]);
       assert.ok(row);
       assert.deepEqual([row.kind, row.sent_at, row.transport, row.business_id], ['TEMPLATE', null, 'STUB', org.business]);
-      assert.ok(row.body.includes('Dear &lt;b&gt;Finance&lt;/b&gt; &amp; Co,'), 'the contact’s name was not escaped');
-      assert.equal(row.body.includes('<b>'), false);
+      // PHASE 161m2: the plain text carries the name as recorded ("&" reads "&", never "&amp;"); the HTML version escapes it.
+      assert.ok(row.body.includes('Dear <b>Finance</b> & Co,'), 'the plain text did not carry the name as recorded');
+      assert.equal(row.body.includes('&amp;') || row.body.includes('&lt;'), false, 'the plain text was HTML-escaped');
+      assert.ok(row.html_body !== null && row.html_body.includes('Dear &lt;b&gt;Finance&lt;/b&gt; &amp; Co,'), 'the contact’s name was not escaped in the HTML');
+      assert.equal((row.html_body ?? '').includes('<b>'), false);
       assert.ok(row.body.includes('on [property address not recorded].'), 'the missing address is not a visible gap');
       assert.ok(row.body.includes('The next step is: the next action. We expect it by 31 Dec 2026.')); // Phase 133c: UK dates
       assert.equal(/\{\{|\}\}/.test(row.subject + row.body), false, 'a merge field was left unfilled');

@@ -41,6 +41,12 @@ import { can, REGISTERED_ACTIONS } from '../../src/core/authz.ts';
 import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES } from '../../src/modules/clients/schedule.ts';
 import { localClock, localWhen } from '../../src/shared/localtime.ts';
 
+/** "Wednesday 24 Sep 2026" and "10:30 BST", as the call emails write a time (Phase 161m2). */
+function callWhen(iso: string): { date: string; time: string } {
+  const w = localWhen(iso); const at = w.lastIndexOf(' at ');
+  return { date: w.slice(0, at), time: w.slice(at + 4) };
+}
+
 const PASSWORD = 'a-very-long-development-password';
 const T = '2026-09-08T00:00:00.000Z';
 
@@ -302,7 +308,8 @@ describe('a client may move their own call, and only their own', () => {
         'SELECT kind, sent_at, body FROM outbox ORDER BY created_at DESC LIMIT 1');
       assert.equal(msg?.kind, 'CALENDAR_INVITE');
       assert.equal(msg?.sent_at, null, 'the stub claimed to have sent something');
-      assert.match(msg?.body ?? '', /moved this call themselves/);
+      // Phase 161m2: the email is sent TO the client, so it speaks to them (call-changed, emails.py).
+      assert.match(msg?.body ?? '', /^Your call has been moved\n/);
     } finally { h.close(); }
   });
 });
@@ -596,7 +603,7 @@ describe('a client may cancel their own call outright, at any time', () => {
         const msg = h.app.db.get<{ sent_at: string | null; body: string }>(
           'SELECT sent_at, body FROM outbox ORDER BY created_at DESC LIMIT 1');
         assert.equal(msg?.sent_at, null);
-        assert.match(msg?.body ?? '', /cancelled this call themselves/);
+        assert.match(msg?.body ?? '', /^Your call has been cancelled\n/);
 
         /* THE ENQUIRY STAYS OPEN. */
         assert.deepEqual(
@@ -721,6 +728,104 @@ describe('the times a client is shown are UK time, like everything else', () => 
       assert.match(first, /Z$/);
       assert.equal(page.body.includes(`value="${first}"`), true);
       void localClock;
+    } finally { h.close(); }
+  });
+});
+
+/* ================================================================== *
+ * PHASE 161m2, 11 November 2026: THE CALL EMAILS SPEAK TO THE CLIENT (emails.py: call-changed, call-booked-phone).
+ * Proved red on the code before it: the portal's email read "The client moved this call themselves, through the
+ * portal" while being sent to the client, no call email had an HTML version, and none had a link to the portal.
+ * ================================================================== */
+
+describe('161m2 · the call emails, in the branded layout and in the second person', () => {
+  type Mail = { subject: string; body: string; html: string | null; kind: string };
+  const lastCallEmail = (h: Booked) => h.app.db.get<Mail>(
+    "SELECT subject, body, html_body AS html, kind FROM outbox WHERE kind = 'CALENDAR_INVITE' ORDER BY rowid DESC LIMIT 1");
+  const count = (h: Booked) => h.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM outbox WHERE kind = 'CALENDAR_INVITE'")?.n ?? 0;
+  const branded = (m: Mail | undefined, heading: string, button: string) => {
+    assert.ok(m?.html != null && m.html.includes(`>${heading}</h1>`), `no branded HTML version headed ${heading}`);
+    assert.ok(m.html.includes('/portal#appointment"'), 'the button does not open the portal\'s calls');
+    assert.ok(m.html.includes(`>${button}</a>`), `no ${button} button`);
+    assert.doesNotMatch(m.body, /[Tt]he client|themselves/, 'it talks about the client, to the client');
+  };
+
+  test('call-changed, moved by the client: the new time and the old one', async () => {
+    const h = await booked();
+    try {
+      const target = (await h.offered()).at(-1) ?? '';
+      const before = count(h);
+      assert.equal((await h.client.post(`/portal/bookings/${h.booking_id}`, { starts_at: target })).status, 303);
+      assert.equal(count(h), before + 1, 'not exactly one email');
+      const m = lastCallEmail(h);
+      const now = callWhen(target), was = callWhen(h.starts_at);
+      assert.equal(m?.subject, `Your call with Cap Rebate has been moved to ${now.date}`);
+      assert.ok(m?.body.startsWith(`Your call has been moved\n\nNew time: ${now.date}, ${now.time}\nWas: ${was.date}, ${was.time}\n`), m?.body);
+      branded(m, 'Your call has been moved', 'See your calls');
+    } finally { h.close(); }
+  });
+
+  test('call-changed, the time given back: a new time is needed', async () => {
+    const h = await booked();
+    try {
+      assert.equal((await h.client.post(`/portal/bookings/${h.booking_id}`, { release: 'on' })).status, 303);
+      const m = lastCallEmail(h);
+      assert.equal(m?.subject, 'Your call with Cap Rebate: a new time is needed');
+      assert.ok(m?.body.includes(`You gave back the time for your call on ${callWhen(h.starts_at).date}.`), m?.body);
+      branded(m, 'Your call needs a new time', 'See your calls');
+    } finally { h.close(); }
+  });
+
+  test('call-changed, cancelled by the client: which call, and that a new time can be booked', async () => {
+    const h = await booked();
+    try {
+      assert.equal((await h.client.post(`/portal/bookings/${h.booking_id}`, { cancel: 'on' })).status, 303);
+      const m = lastCallEmail(h);
+      assert.equal(m?.subject, 'Your call with Cap Rebate has been cancelled');
+      assert.ok(m?.body.includes(`Your call on ${callWhen(h.starts_at).date} is cancelled. You can book a new time in your portal whenever suits you.`), m?.body);
+      branded(m, 'Your call has been cancelled', 'See your calls');
+    } finally { h.close(); }
+  });
+
+  test('call-booked-phone, given its first time by our team: when, how long, and the number we will ring', async () => {
+    const h = await booked();
+    try {
+      assert.equal((await h.client.post(`/portal/bookings/${h.booking_id}`, { release: 'on' })).status, 303);
+      const staff = await h.signIn('SALES');
+      const when = /name="starts_at" value="([^"]+)"/.exec((await staff.req(`/staff/calendar/${h.booking_id}`)).body)?.[1] ?? '';
+      assert.notEqual(when, '', 'the staff page offers no time');
+      const before = count(h);
+      assert.equal((await staff.post(`/staff/calendar/${h.booking_id}/schedule`, { starts_at: when })).status, 303);
+      assert.equal(count(h), before + 1, 'not exactly one email');
+      const m = lastCallEmail(h);
+      const w = callWhen(when);
+      assert.equal(m?.subject, `Your call with Cap Rebate on ${w.date}`);
+      assert.ok(m?.body.startsWith(`Your call is booked\n\nWhen: ${w.date}, ${w.time}\nHow long: ${SLOT_MINUTES} minutes\nHow: We will ring you on 01632 960111\n`), m?.body);
+      branded(m, 'Your call is booked', 'Manage your call');
+    } finally { h.close(); }
+  });
+
+  test('call-changed, moved by our team: the same email, to the client', async () => {
+    const h = await booked();
+    try {
+      const target = (await h.offered()).at(-2) ?? '';
+      const staff = await h.signIn('SALES');
+      assert.equal((await staff.post(`/staff/calendar/${h.booking_id}/schedule`, { starts_at: target })).status, 303);
+      const m = lastCallEmail(h);
+      assert.equal(m?.subject, `Your call with Cap Rebate has been moved to ${callWhen(target).date}`);
+      branded(m, 'Your call has been moved', 'See your calls');
+    } finally { h.close(); }
+  });
+
+  test('an organisation marked do not contact gets no call email; the move still stands', async () => {
+    const h = await booked();
+    try {
+      h.app.db.run("UPDATE businesses SET client_status = 'DO_NOT_CONTACT' WHERE id = ?", [h.business_id]);
+      const target = (await h.offered()).at(-1) ?? '';
+      const before = count(h);
+      assert.equal((await h.client.post(`/portal/bookings/${h.booking_id}`, { starts_at: target })).status, 303);
+      assert.equal(heldAt(h), target);
+      assert.equal(count(h), before, 'a do-not-contact organisation was written to');
     } finally { h.close(); }
   });
 });

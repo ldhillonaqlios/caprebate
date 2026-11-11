@@ -23,7 +23,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
-import type { EmailTransport } from '../../integrations/index.ts';
+import type { BrandedEmail, EmailTransport } from '../../integrations/index.ts';
+import { brandedEmail } from '../../integrations/index.ts';
+import { signedOffByAddress } from '../survey/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
 import { localDate, ukDate } from '../../shared/index.ts';
 // Read inside functions only: pipeline.ts reads this module's need the same way, so the loop is never touched at load.
@@ -80,22 +82,42 @@ export function accountantContacts(db: Db, business_id: string): { id: string; n
   return listContactsIdNameByBusinessIdContactType<{ id: string; name: string; email: string }>(db, [business_id]);
 }
 
-function emailBody(name: string, company: string, ref: string, kind: ConfirmKind, link: string, expires: string, period_end: string | null): string {
-  return [
-    `Dear ${name},`,
-    '',
-    `We are working with ${company} on their capital allowances claim (our reference ${ref}). You signed off its figures, or you look after their tax return.`,
-    '',
-    'Please tell us, for yourself, whether this is true:',
-    askFor(kind, period_end),
-    '',
-    kind === 'FILED' ? 'If it is, give us the day it was filed. If not, tell us why.' : 'If it is not, tell us why.',
-    link,
-    '',
-    `The link is for you alone. It works once, until ${ukDate(localDate(expires))}.`,
-    '',
-    'Cap Rebate',
-  ].join('\n');
+/**
+ * THE EMAIL (Phase 161m2, accountant-confirm in 05-reports-and-templates/emails/emails.py, the approved wording): on the
+ * branded layout, in its two variants. RETURN_FIT thanks the accountant for signing off only where they signed the
+ * claim's report through their own link; otherwise it says who we are working with. The period is named where the
+ * claim goes into one return (a FILED link always names its own); otherwise the return is not dated.
+ */
+export function confirmEmail(
+  f: { name: string; company: string; kind: ConfirmKind; link: string; period_end: string | null; signed: boolean; publicOrigin: string | null },
+): BrandedEmail {
+  const period = f.period_end === null ? '' : ` for the period ending ${ukDate(f.period_end)}`;
+  const opening = f.signed
+    ? `Thank you for signing off the capital allowances report for ${f.company}.`
+    : `We are working with ${f.company} on their capital allowances claim.`;
+  const subject = `${CONFIRM_ASKS[f.kind].subject}: ${f.company}`;
+  const blocks = f.kind === 'RETURN_FIT'
+    ? [
+      `Dear ${f.name},`,
+      `${opening} Please confirm the claim fits the tax return${period}.`,
+      'If something needs to change, you can tell us on the same page.',
+      `**When the return has been filed**, we send a second email with the subject "${CONFIRM_ASKS.FILED.subject}: ${f.company}" and the same button.`,
+    ]
+    : [
+      `Dear ${f.name},`,
+      f.period_end === null
+        ? `${opening} Please confirm the amended tax return carrying the claim has been filed, and give us the day it was filed.`
+        : `${opening} Please confirm the amended tax return${period}, carrying its part of the claim, has been filed, and give us the day it was filed.`,
+      'If it has not been filed yet, you can tell us on the same page.',
+    ];
+  return brandedEmail({
+    subject,
+    preheader: 'One click to confirm, or tell us what needs to change.',
+    heading: CONFIRM_ASKS[f.kind].subject,
+    blocks,
+    button: { label: 'Confirm', href: f.link },
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin: f.publicOrigin });
 }
 
 /** Email one of the company's accountants a private link for one confirmation. */
@@ -128,13 +150,23 @@ export function sendConfirmRequest(
       period_end = returns[0]?.period_end ?? null;
     }
   }
+  /* The email names the return: a FILED link its own; RETURN_FIT the one return a claim goes into, where it goes into
+     exactly one (the request itself keeps no period for RETURN_FIT, as before). */
+  let email_period: string | null = period_end;
+  if (kind === 'RETURN_FIT') {
+    const returns = returnsOf(d.db, c.id, d.now()) ?? [];
+    if (returns.length === 1) email_period = returns[0]?.period_end ?? null;
+  }
   const token = randomBytes(32).toString('base64url');
   const at = d.now();
   const expires = new Date(Date.parse(at) + CONFIRM_LINK_DAYS * 86_400_000).toISOString();
+  const e = confirmEmail({
+    name: who.name, company: c.company, kind, link: `${f.origin}/confirm/${token}`, period_end: email_period,
+    signed: kind === 'RETURN_FIT' && signedOffByAddress(d.db, c.id, who.email), publicOrigin: f.origin,
+  });
   return d.db.tx(() => {
     const sent = d.email.send({
-      to_email: who.email.trim(), subject: `${CONFIRM_ASKS[kind].subject}: ${c.company}`,
-      body: emailBody(who.name, c.company, c.claim_ref, kind, `${f.origin}/confirm/${token}`, expires, period_end),
+      to_email: who.email.trim(), subject: e.subject, body: e.text, html: e.html,
       kind: 'REPORT_FOR_SIGNOFF', business_id: c.business_id, contact_id: who.id, written_by: actor.id, claim_id: c.id,
     });
     if (sent.id === null) return { ok: false as const, why: 'This company asked us not to contact them. Nothing was sent.' };

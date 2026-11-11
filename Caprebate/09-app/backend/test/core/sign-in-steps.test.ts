@@ -84,7 +84,7 @@ async function world() {
     'SELECT id, mfa_method, mfa_secret, password_temporary_until FROM users WHERE email_canonical = ?', [email]);
   const pendingSecret = () => db.get<{ pending_secret: string }>("SELECT pending_secret FROM sign_in_steps WHERE finished_at IS NULL AND pending_secret IS NOT NULL ORDER BY rowid DESC LIMIT 1")!.pending_secret;
   const lastEmail = (subject: string) => db.get<{ to_email: string; body: string }>('SELECT to_email, body FROM outbox WHERE subject = ? ORDER BY rowid DESC LIMIT 1', [subject]);
-  const emailedCode = () => /code is (\d{6})/.exec(lastEmail('Your Cap Rebate sign-in code')?.body ?? '')?.[1] ?? '';
+  const emailedCode = () => /^(\d{6})$/m.exec(lastEmail('Your Cap Rebate sign-in code')?.body ?? '')?.[1] ?? '';
   const appCode = (secret: string, ahead = 0) => codeAt(secret, stepAt(NOW_MS) + ahead);
   /** PHASE 151m: setting a second step up now answers 200 with the recovery codes, shown once; its one link goes where
    *  the redirect used to. This is where that link points, or null if the answer is not that page. */

@@ -143,11 +143,15 @@ describe('"Tell the client and move on"', () => {
     assert.match(r.location ?? '', /done=told(-emailed)?/);
     assert.doesNotMatch(r.location ?? '', /told-moved/, 'moved before "survey done" was told');
     assert.equal(db().get<{ s: string }>('SELECT stage AS s FROM claims WHERE id = ?', [branch])!.s, 'SURVEY');
-    const mail = db().get<{ to_email: string; subject: string; body: string }>("SELECT to_email, subject, body FROM outbox WHERE kind = 'NOTIFICATION' ORDER BY rowid DESC LIMIT 1");
+    const mail = db().get<{ to_email: string; subject: string; body: string; html_body: string | null }>("SELECT to_email, subject, body, html_body FROM outbox WHERE kind = 'NOTIFICATION' ORDER BY rowid DESC LIMIT 1");
     assert.equal(db().get<{ n: number }>('SELECT count(*) AS n FROM outbox')!.n, outboxBefore + 1);
     assert.ok(mail !== undefined);
-    assert.equal(mail.subject, 'Cap Rebate news: we have booked your survey');
-    assert.match(mail.body, /^Cap Rebate has booked your survey\./);
+    // Phase 161m2: the approved words (emails.py "survey-booked"), on the branded layout
+    assert.equal(mail.subject, 'Your survey is booked');
+    assert.match(mail.body, /^Your survey is booked\n/);
+    assert.match(mail.body, /The surveyor will need to see each room, including plant rooms and the roof space where safe\./);
+    assert.match(mail.html_body ?? '', /<h1 [^>]*>Your survey is booked<\/h1>/, 'the branded HTML version, with its heading');
+    assert.match(mail.html_body ?? '', /<a href="https:\/\/caprebate\.example\.invalid\/portal" [^>]*>See your claim<\/a>/);
     assert.match(mail.body, /https:\/\/caprebate\.example\.invalid\/portal/);
     assert.doesNotMatch(mail.body, /£|\d{2,}\s*sq|surveyor_job|SURVEY_/, 'a figure or an internal word in the email');
     const portal = await as('client4').get('/portal');
@@ -163,7 +167,8 @@ describe('"Tell the client and move on"', () => {
       assert.equal(stage, 'VALUATION', 'said moved but did not move');
       assert.equal(db().get<{ n: number }>('SELECT count(*) AS n FROM claim_stage_moves WHERE claim_id = ?', [branch])!.n, movesBefore + 1, 'the move was not recorded like every other');
       const mail = db().get<{ body: string }>("SELECT body FROM outbox WHERE kind = 'NOTIFICATION' ORDER BY rowid DESC LIMIT 1");
-      assert.match(mail?.body ?? '', /We are now moving on to the next phase: /);
+      // Phase 161m2: survey-done's approved words say what comes next ("What happens next"), not the phase's name
+      assert.match(mail?.body ?? '', /^Your survey is done\n[\s\S]*What happens next/);
       // Now at Valuation, whose one step ("survey done") is already told: it does not move by itself, and the card says why.
       const page = await as('sales').get(`/staff/clients/${dunmarrow}`);
       const card = /<section class="cnext"[\s\S]*?<\/section>/.exec(page.body)?.[0] ?? '';

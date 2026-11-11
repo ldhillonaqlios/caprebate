@@ -315,7 +315,7 @@ export async function handleStaff(
     }
     const hadTime = getBookingsSById<{ s: string | null }>(db, [id])?.s ?? null;
     const r = B.scheduleBooking(
-      { db, audit: d.app.audit, email: d.app.email, now, newId: d.newId },
+      { db, audit: d.app.audit, email: d.app.email, now, newId: d.newId, origin: d.publicOrigin },
       actor,
       { booking_id: id, starts_at: starts, assigned_to: f.get('assigned_to') },
     );
@@ -466,13 +466,13 @@ export async function handleStaff(
 
   /* ------ SECTION 6 · organisations, properties and claims (CRM 1 of 10) */
   const crm = await handleCrm(
-    { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
+    { app: d.app, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form,
   );
   if (crm === 'handled') return 'handled';
 
   /* ------------------------- SECTION 7 · leads and the pipeline (CRM 2 of 10) */
   const pipeline = await handlePipeline(
-    { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
+    { app: d.app, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form,
   );
   if (pipeline === 'handled') return 'handled';
 
@@ -484,7 +484,7 @@ export async function handleStaff(
 
   /* ---------- SECTION 9 · documents on the claim, types and requests (CRM 4 of 10) */
   const documents = await handleDocuments(
-    { app: d.app, store: d.store, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form, body,
+    { app: d.app, store: d.store, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form, body,
   );
   if (documents === 'handled') return 'handled';
 
@@ -502,7 +502,7 @@ export async function handleStaff(
 
   /* ------ SECTION 12 · the compliance registers (CRM 8 of 10) */
   const compliance = await handleCompliance(
-    { app: d.app, newId: d.newId, nav, stamp, problem }, req, res, url, method, actor, form,
+    { app: d.app, newId: d.newId, nav, stamp, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form,
   );
   if (compliance === 'handled') return 'handled';
 

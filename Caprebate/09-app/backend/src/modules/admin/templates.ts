@@ -18,7 +18,8 @@
  * A template naming anything else is refused by the store: a merge field nobody
  * fills in is a gap waiting to be sent.
  *
- * EVERY MERGED VALUE IS ESCAPED, and a subject line loses its line breaks. A
+ * EVERY MERGED VALUE IS ESCAPED WHERE IT IS HTML (Phase 161m2: by the branded layout, and left as recorded in the
+ * plain text), and a subject line loses its line breaks. A
  * MISSING VALUE IS A VISIBLE GAP — "[property address not recorded]" — and never
  * an empty string, because "Dear ," is what a person sends when a gap is silent.
  * A claim with no property and a property with no address read identically: the
@@ -39,9 +40,8 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { outboxTransport } from '../../integrations/index.ts';
+import { brandedEmail, outboxTransport, type BrandedEmail } from '../../integrations/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
-import { escapeHtml } from '../../shared/index.ts';
 import { localStamp, ukDate } from '../../shared/index.ts';
 import { claimObjFor } from '../claims/index.ts';
 import { type Fields } from '../clients/index.ts';
@@ -242,11 +242,18 @@ export function mergeValues(db: Db, claim_id: string, contact_id: string | null)
  */
 export function companyFirst(subject: string, organisation: string | null): string {
   if (organisation === null) return subject;
-  const name = escapeHtml(organisation).replace(/[\r\n]+/g, ' ');
+  // Phase 161m2: the name as recorded. A subject is plain text; the branded layout escapes it where it is HTML.
+  const name = organisation.replace(/[\r\n]+/g, ' ');
   return subject.startsWith(name) ? subject : `${name}: ${subject}`;
 }
 
-/** Merge a text. Escaped values; a visible gap for a missing one; no line break in a subject. */
+/**
+ * Merge a text. The values as recorded; a visible gap for a missing one; no line break in a subject.
+ *
+ * PHASE 161m2: THE VALUES ARE NOT ESCAPED HERE ANY MORE. The merged text is a plain-text email, so escaping put
+ * "Smith &amp; Co" in front of the client. The HTML version is drawn by the branded layout (`templateEmail`), which
+ * escapes every value there, so a name like "<b>Finance</b>" can never make a tag.
+ */
 export function mergeText(text: string, v: MergeValues, subjectLine: boolean): { text: string; gaps: string[] } {
   const gaps: string[] = [];
   const out = text.replace(PLACEHOLDER, (_m, raw: string) => {
@@ -256,10 +263,31 @@ export function mergeText(text: string, v: MergeValues, subjectLine: boolean): {
       gaps.push(name);
       return gapFor(name);
     }
-    const escaped = escapeHtml(value);
-    return subjectLine ? escaped.replace(/[\r\n]+/g, ' ') : escaped;
+    return subjectLine ? value.replace(/[\r\n]+/g, ' ') : value;
   });
   return { text: out, gaps };
+}
+
+/** A paragraph that only signs the email ("Cap Rebate"): the layout signs it, so it is not said twice. */
+const SIGN_ONLY = /^(?:kind regards,?\s*)?(?:the\s+)?cap\s?rebate(?:\s+team)?\.?$/i;
+
+/**
+ * A MERGED TEMPLATE ON THE BRANDED LAYOUT (Phase 161m2). The subject is the template's, merged and led by the company;
+ * the heading is that subject; the body's paragraphs are its text split on blank lines, with a last paragraph that only
+ * signs it ("Cap Rebate") left to the layout's own sign-off. Every value is escaped by the layout in the HTML version
+ * and left as recorded in the plain text.
+ */
+export function templateEmail(subject: string, body: string, publicOrigin: string | null): BrandedEmail {
+  const paragraphs = body.replace(/\r\n?/g, '\n').split(/\n[ \t]*\n+/).map((p) => p.trim()).filter((p) => p !== '');
+  while (paragraphs.length > 1 && SIGN_ONLY.test(paragraphs[paragraphs.length - 1] ?? '')) paragraphs.pop();
+  const lead = paragraphs.find((p) => !/^dear\b/i.test(p)) ?? subject;
+  return brandedEmail({
+    subject,
+    preheader: lead.length > 140 ? `${lead.slice(0, 137).trimEnd()}...` : lead,
+    heading: subject,
+    blocks: paragraphs,
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin });
 }
 
 export type QueueResult =
@@ -290,8 +318,9 @@ export function queueTemplate(d: TemplateDeps, actor: Actor, claim_id: string, i
   const subject = mergeText(t.subject, v, true);
   const body = mergeText(t.body, v, false);
   const gaps = [...new Set([...subject.gaps, ...body.gaps])];
+  const e = templateEmail(companyFirst(subject.text, v.organisation ?? null), body.text, process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? null);
   const sent = outboxTransport(d.db, d.newId, d.now).send({
-    to_email: ct.email, subject: companyFirst(subject.text, v.organisation ?? null), body: body.text, kind: 'TEMPLATE', business_id: c.business_id,
+    to_email: ct.email, subject: e.subject, body: e.text, html: e.html, kind: 'TEMPLATE', business_id: c.business_id,
   });
   if (sent.id === null) {
     return { ok: false, why: 'This company is marked do not contact, so nothing was saved to send.' };

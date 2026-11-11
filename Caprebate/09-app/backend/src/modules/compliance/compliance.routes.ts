@@ -36,6 +36,8 @@ export type CompliancePageDeps = {
   nav: (actor: Actor) => Safe;
   stamp: (iso: string) => string;
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
+  /** The website's public address, for the links in the emails these screens send (Phase 161m2). Absent: CAPREBATE_PUBLIC_ORIGIN. */
+  publicOrigin?: string;
 };
 
 const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
@@ -147,11 +149,14 @@ export async function handleCompliance(
     const business_id = f['business_id'] ?? '';
     const cdd = sendFromCheck ? (sendFromCheck[1] ?? '') : null;
     const at = cdd !== null ? `/staff/compliance/aml/checks/${cdd}` : `/staff/clients/${business_id}`;
-    const r = await sendIdentityCheck({ app: d.app, newId: d.newId }, actor, {
+    const r = await sendIdentityCheck({ app: d.app, newId: d.newId, ...(d.publicOrigin === undefined ? {} : { origin: d.publicOrigin }) }, actor, {
       business_id, contact_id: f['contact_id'] ?? '', cdd_check_id: cdd, first_name: f['first_name'] ?? '', last_name: f['last_name'] ?? '',
       // Phase 161m1: an Admin sending it to someone who is not a director or an owner; sendIdentityCheck decides
       bypass: f['bypass'] === 'yes' ? { reason: f['bypass_reason'] ?? '' } : null,
+      // Phase 161m2: and email the link to them (id-check), where the rule allows
+      email_link: f['email_link'] === 'yes',
     });
+    if (r.ok && r.email !== undefined && !r.email.queued) return d.problem(res, actor, 'Identity check sent, not emailed', r.email.why ?? '', at);
     return r.ok ? redirect(res, cdd !== null ? `${at}?done=identity-sent` : `${at}?done=identity-sent#identity`) : d.problem(res, actor, 'Identity check not sent', r.why, at);
   }
   const checkAct = m(`/aml/checks/${ID}(|/owners|/psc-decisions|/complete|/withdraw)`);

@@ -313,6 +313,10 @@ export function insertIdentityCheckResults(db: Db, params: readonly Param[] = []
 export function getIdentityChecksIdBusinessIdBySessionId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id, business_id, cdd_check_id FROM identity_checks WHERE session_id = ?', params);
 }
+// Phase 161m2: whom a check was sent to, for its emails (the link, and "complete" on a pass).
+export function getIdentityChecksContactIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, business_id, contact_id, link FROM identity_checks WHERE id = ?', params);
+}
 export function getIdentityChecksIdBySessionId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id FROM identity_checks WHERE session_id = ?', params);
 }

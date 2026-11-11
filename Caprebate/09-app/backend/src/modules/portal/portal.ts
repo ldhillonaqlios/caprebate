@@ -16,12 +16,10 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
-import { STUB_NOTICE } from '../../integrations/index.ts';
-import { bookingInviteFile } from '../clients/index.ts';
+import { bookingInviteFile, callChangedEmail, callsLink, drawCallEmail } from '../clients/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { BOOKING } from '../../shared/index.ts';
 import { booksATime } from '../clients/index.ts';
-import { localWhen } from '../../shared/index.ts';
 import { CLIENT_MOVE_NOTICE_MINUTES, SLOT_MINUTES, isBookable } from '../clients/index.ts';
 import { claimStage, progressFor, type Progress } from '../../shared/index.ts';
 // Read inside functions only, so the import loop through pipeline.ts is never touched while the modules load.
@@ -359,6 +357,8 @@ export type MoveDeps = {
   email: EmailTransport;
   now: () => string;
   newId: () => string;
+  /** The site's address, for the link in the client's email. Absent: CAPREBATE_PUBLIC_ORIGIN, then http://localhost:8103. */
+  origin?: string | undefined;
 };
 
 /**
@@ -557,7 +557,6 @@ function notify(
   call?: { booking_id: string; was_starts_at: string | null; was_ends_at: string | null },
 ): void {
   const business = getBusinessesContactEmailNameById2<{ contact_email: string | null; name: string }>(d.db, [business_id]);
-  const readable = startsAt === null ? null : localWhen(startsAt);
   /* THE INVITATION. Moved: a new REQUEST, the same UID, a higher SEQUENCE, so it replaces the old one in
      the client's calendar. Given back or cancelled: a CANCEL for the time they held. No time held, no invitation. */
   const invite = call === undefined ? null
@@ -568,23 +567,14 @@ function notify(
         ? bookingInviteFile(d.db, d.now, { booking_id: call.booking_id, method: 'CANCEL', starts_at: call.was_starts_at,
           ends_at: call.was_ends_at, to: business?.contact_email })
         : null;
+  /* call-changed (emails.py): it is sent TO the client, so it speaks to them ("Your call has been moved"), never about
+     them. Moved, cancelled, or the time given back. */
+  const site = d.origin ?? process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? 'http://localhost:8103';
+  const e = drawCallEmail(callChangedEmail({ what, starts_at: startsAt, was_starts_at: call?.was_starts_at ?? null, invite: invite !== null,
+    portalLink: callsLink(site) }), d.origin ?? process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? null);
   d.email.send({
     to_email: business?.contact_email ?? 'no-address-recorded@example.invalid',
-    subject: what === 'moved'
-      ? `Your call with Cap Rebate has been moved — ${readable ?? ''}`
-      : what === 'cancelled'
-        ? 'Your call with Cap Rebate has been cancelled'
-        : 'Your call with Cap Rebate — a new time is needed',
-    body: (what === 'moved'
-      ? `The client moved this call themselves, through the portal. It is now ${readable}, ` +
-        `lasting ${SLOT_MINUTES} minutes.\n\n`
-      : what === 'cancelled'
-        ? 'The client cancelled this call themselves, through the portal. The enquiry is still ' +
-          'open, and the cancelled call is listed in the back office calendar.\n\n'
-        : 'The client released the time they held, through the portal, and asked us to arrange ' +
-          'another. The enquiry is open and the call is now waiting for a time in the back ' +
-          'office calendar.\n\n')
-      + STUB_NOTICE,
+    subject: e.subject, body: e.text, html: e.html,
     kind: 'CALENDAR_INVITE',
     // CRM 1 of 10: named, so a DO_NOT_CONTACT organisation is refused by id.
     business_id,

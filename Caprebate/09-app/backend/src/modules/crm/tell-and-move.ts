@@ -23,11 +23,13 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { Actor } from '../../core/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
+import { brandedEmail, type EmailBlock, type EmailContent } from '../../integrations/index.ts';
+import { loadClaimRow, type StepDef } from '../claims/index.ts';
+import { listPropertiesLabelByBusinessId } from '../claims/index.ts';
 import { checksPanel, stepDef, tellClient, type ChecksPanel, type StepView } from '../claims/index.ts';
 import { gateOut, moveClaim } from './pipeline.ts';
 import { claimStage, clientStageFor, nextProcedureKey, STAGES, type ProcedureKey } from '../../shared/index.ts';
 import { PROPOSED_STEP_NAMES } from './portal-steps.ts';
-import { localStamp } from '../../shared/index.ts';
 import { getBusinessesEById, getBusinessesSById2, getContactsEByBusinessIdEmail } from '../clients/index.ts';
 import { listClaimsIdByBusinessId2 } from '../claims/index.ts';
 import { loadPipelineClaim } from '../claims/index.ts';
@@ -90,17 +92,72 @@ export function tellAndMoveOn(
   let emailed = false;
   if (to !== null && def !== undefined) {
     const next = moved.map((m) => clientStepName(m.to)).find((x) => x !== null) ?? null;
-    const sent = d.email.send({
-      to_email: to, kind: 'NOTIFICATION', business_id,
-      subject: 'Cap Rebate news: ' + def.told.replace(/^Cap Rebate has /, 'we have '),
-      body: `${def.told}. (${localStamp(d.now(), d.now())})\n\n` +
-        (next === null ? '' : `We are now moving on to the next phase: ${next}.\n\n`) +
-        `You can follow your claim, step by step, in your portal: ${origin.replace(/\/+$/, '')}/portal\n\n` +
-        'Cap Rebate',
-    });
+    const claim_id = input.claim_id !== null && input.claim_id !== undefined && input.claim_id !== '' ? input.claim_id : null;
+    const row = claim_id === null ? null : loadClaimRow(d.db, claim_id);
+    const property = row?.property_label ?? listPropertiesLabelByBusinessId<{ label: string }>(d.db, [business_id])[0]?.label ?? null;
+    const e = brandedEmail(stepNewsEmail(def, { property, surveyor: row?.surveyor_name ?? null, next, portal: `${origin.replace(/\/+$/, '')}/portal` }), { publicOrigin: origin });
+    const sent = d.email.send({ to_email: to, kind: 'NOTIFICATION', business_id, subject: e.subject, body: e.text, html: e.html });
     emailed = sent.refused === null;
   }
   return { ok: true, emailed, moved, stayed };
+}
+
+/**
+ * THE STEP'S NEWS, ON THE BRANDED LAYOUT (Phase 161m2). The three steps emails.py words (survey-booked, survey-done,
+ * report-ready) take its approved words, with what we hold: the property and, where one is assigned, the surveyor. We
+ * hold no visit date, arrival window, visit length or report time, so the sentences that need them are left out, and
+ * the report's figure is not put in an email (this module's rule: never a figure). Every other step keeps the words
+ * it had: its told line as the heading, the next phase where a claim moved, and the portal.
+ */
+export function stepNewsEmail(
+  def: StepDef, f: { readonly property: string | null; readonly surveyor: string | null; readonly next: string | null; readonly portal: string },
+): EmailContent {
+  const at = f.property ?? 'your property';
+  const button = { label: 'See your claim', href: f.portal };
+  const sign = 'The Cap Rebate team';
+  if (def.key === 'SURVEY_BOOKED') {
+    const facts: [string, string][] = [['Property', f.property ?? 'Your property'], ...(f.surveyor === null ? [] : [['Surveyor', `${f.surveyor}, chartered surveyor`] as [string, string]])];
+    return {
+      subject: 'Your survey is booked', preheader: `A chartered surveyor will visit ${at}.`, heading: 'Your survey is booked',
+      blocks: [
+        { kind: 'facts', rows: facts },
+        'The surveyor will need to see each room, including plant rooms and the roof space where safe.',
+        'Please let staff on site know they are coming. If the date no longer works, reply to this email and we will rearrange.',
+      ],
+      button, sign,
+    };
+  }
+  if (def.key === 'SURVEY_DONE') {
+    return {
+      subject: 'Your survey is done', preheader: 'Thank you for having us. Here is what happens next.', heading: 'Your survey is done',
+      blocks: [
+        `Thank you for having our surveyor at ${at}.`,
+        { kind: 'heading', text: 'What happens next' },
+        { kind: 'bullets', items: ['The surveyor values the fixtures and plant in the building.', 'We check the figures.', 'We send you the report to read and accept.'] },
+        'We will email you as soon as your report is ready.',
+      ],
+      button, sign,
+    };
+  }
+  if (def.key === 'REPORT') {
+    return {
+      subject: 'Your capital allowances report is ready', preheader: 'Please read it and accept it in your portal.', heading: 'Your report is ready',
+      blocks: [
+        `Your capital allowances report for ${at} is ready.`,
+        'Please read it in your portal and accept it if you are happy. If anything looks wrong, tell us there before you accept.',
+        'Once you accept it, we send your accountant a pack so they can include the claim in your tax return.',
+      ],
+      button: { label: 'Read your report', href: `${f.portal}/report` }, sign,
+    };
+  }
+  const blocks: EmailBlock[] = [
+    ...(f.next === null ? [] : [`We are now moving on to the next phase: ${f.next}.`]),
+    'You can follow your claim, step by step, in your portal.',
+  ];
+  return {
+    subject: 'Cap Rebate news: ' + def.told.replace(/^Cap Rebate has /, 'we have '),
+    preheader: `${def.told}.`, heading: def.told, blocks, button: { label: 'Open your portal', href: f.portal }, sign,
+  };
 }
 
 /**

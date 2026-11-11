@@ -52,7 +52,7 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { outboxTransport, STUB_NOTICE } from '../../integrations/index.ts';
+import { brandedEmail, outboxTransport, STUB_NOTICE } from '../../integrations/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { EXIT_KEYS, PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
@@ -84,8 +84,8 @@ type Vocab = Readonly<Record<string, string>>;
 /**
  * THE INVOICE-FRAUD PROCEDURE — WHERE IT STANDS. CRM 7 of 10.
  *
- * The invoice email is not built, and every refusal of it above and in
- * src/modules/admin/templates.ts holds while this says `in_force: false`. The procedure did
+ * Phase 161m2: the invoice email is built (src/modules/finance/invoices.ts, section 9) and refused, as every refusal of
+ * it above and in src/modules/admin/templates.ts holds, while this says `in_force: false`. The procedure did
  * not exist in the operating procedure's export; CRM 7 of 10 drafted it into SOP 9
  * as a FLAGGED DRAFT ADDITION and entered its sign-off in the register for the
  * solicitor, the data protection officer and the developer. test/finance/invoices-and-fee-controls.test.ts
@@ -95,11 +95,9 @@ type Vocab = Readonly<Record<string, string>>;
  * invoice email is a piece of work — its template, its channel and its checks —
  * and the refusals are lifted in that work, deliberately, not by a boolean.
  */
-export const INVOICE_FRAUD_PROCEDURE: { readonly in_force: boolean; readonly where: string; readonly signoff: string } = Object.freeze({
-  in_force: false,
-  where: 'Section 9 of our operating procedures. It is marked as a DRAFT ADDITION, written on 11 September 2026',
-  signoff: 'the solicitor, the DPO and the developer still have to sign it off',
-});
+// Phase 161m2: the block itself is kept with finance's money emails (src/modules/finance/invoices.ts, section 9), which
+// it refuses too; named here as before, so every reader of it reads the one flag.
+export { INVOICE_FRAUD_PROCEDURE } from '../finance/index.ts';
 
 const STAGE_KEYS: readonly string[] = Object.freeze([...PROCEDURE_KEYS, 'CLOSED', ...EXIT_KEYS, 'ON_HOLD']);
 
@@ -427,7 +425,10 @@ function informationRequests(d: AutomationDeps, actor: Actor | null, rule: RuleD
   return finish(d, actor, rule, e, s, run, o);
 }
 
-function noticeWords(rule: RuleDbRow, e: AutomationEvent, s: Subject, company: string | null = null): { subject: string; body: string } {
+function noticeWords(
+  rule: Pick<RuleDbRow, 'label'>, e: AutomationEvent, s: Subject, company: string | null = null,
+  publicOrigin: string | null = process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? null,
+): { subject: string; body: string; html: string } {
   const tail = s.claim_id === null || s.reference === 'a task' ? '' : ` (${s.reference})`;
   const on = s.claim_id === null ? '' : ' on a claim';
   let what: string;
@@ -441,13 +442,27 @@ function noticeWords(rule: RuleDbRow, e: AutomationEvent, s: Subject, company: s
     default: what = `A document was requested${on}${tail}`;
   }
   const subject = noticeSubject(what, company);
-  const href = s.claim_id !== null ? `/staff/claims/${s.claim_id}`
+  const path = s.claim_id !== null ? `/staff/claims/${s.claim_id}`
     : s.lead_id !== null ? `/staff/leads/${s.lead_id}`
       : s.task_id !== null ? `/staff/tasks/${s.task_id}` : '/staff';
-  return {
+  /* PHASE 161m2: on the branded layout, as a back-office email. The link is the site's full address where the site
+     knows it (CAPREBATE_PUBLIC_ORIGIN): a bare path in an email opens nothing. Without it, the path is said in words. */
+  const origin = (publicOrigin ?? '').trim().replace(/\/+$/, '');
+  const href = /^https?:\/\/[^\s/?#]+$/i.test(origin) ? `${origin}${path}` : null;
+  const mail = brandedEmail({
     subject,
-    body: `${subject}.\n\nOpen it in the back office: ${href}\n\nAdded to the emails waiting to send by the rule “${rule.label}”. ${STUB_NOTICE}`,
-  };
+    preheader: `Added by the rule “${rule.label}”.`,
+    heading: subject,
+    blocks: [
+      ...(href === null ? [`Open it in the back office: ${path}`] : []),
+      `Added to the emails waiting to send by the rule “${rule.label}”.`,
+      STUB_NOTICE,
+    ],
+    button: href === null ? null : { label: 'Open it in the back office', href },
+    sign: 'Cap Rebate back office',
+    staff: true,
+  }, { publicOrigin: origin === '' ? null : origin });
+  return { subject: mail.subject, body: mail.text, html: mail.html };
 }
 
 /**
@@ -466,7 +481,7 @@ function notifyOwner(d: AutomationDeps, actor: Actor | null, rule: RuleDbRow, e:
   const w = noticeWords(rule, e, s, company);
   const transport = outboxTransport(d.db, d.newId, d.now);
   const done = d.db.tx(() => {
-    const sent = transport.send({ to_email: u.email, subject: w.subject, body: w.body, kind: 'NOTIFICATION', business_id: s.business_id });
+    const sent = transport.send({ to_email: u.email, subject: w.subject, body: w.body, html: w.html, kind: 'NOTIFICATION', business_id: s.business_id });
     if (sent.id === null) return null;
     const o: Result = { outcome: 'RAN', reason: null, tasks: 0, outbox_id: sent.id };
     return { run: writeRun(d, actor, rule, e, s, o), o };

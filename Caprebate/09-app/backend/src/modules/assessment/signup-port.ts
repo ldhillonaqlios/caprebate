@@ -24,7 +24,8 @@ export type SignupParts = {
   readonly offerSignup: (app: App, newId: () => string, business_id: string, assessment_id: string | null) => string;
   readonly requestSignup: (app: App, origin: string, f: URLSearchParams, terms?: SignupTerms | null) => Promise<{ ok: true } | { ok: false; why: string }>;
   readonly verifyOpen: (app: App, raw: string) => boolean;
-  readonly confirmSignup: (app: App, raw: string, newId?: () => string) => { ok: true } | { ok: false; why: string };
+  /** `origin`: the site's address, for the link in the welcome email it sends. */
+  readonly confirmSignup: (app: App, raw: string, newId?: () => string, origin?: string) => { ok: true } | { ok: false; why: string };
   readonly MIN_PASSWORD: number;
 };
 

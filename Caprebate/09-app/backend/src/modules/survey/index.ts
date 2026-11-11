@@ -37,7 +37,7 @@ export type { PackView } from './survey-pack.ts';
 export { longDate, REPORT_TITLE, reportHtml, reportModel, reportPdf } from './survey-report.ts';
 // Phase 161l2: the report's pages and its sign-off came here from the claims (the client's own pages are the portal's).
 export { handleReportStaff, pdfName, sendPdf } from './report-pages.ts';
-export { releasedVersion } from './report-signoff.ts';
+export { releasedVersion, signedOffByAddress } from './report-signoff.ts';
 // And what the claim's overview (now the CRM's) read in the claims' borrowed file.
 export { getSurveyorJobsIdSurveyorIdByClaimId } from './data.ts';
 export { sweepVideos } from './survey-video.ts';

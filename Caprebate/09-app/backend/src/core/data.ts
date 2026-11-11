@@ -18,6 +18,14 @@ export function getAuditLogCountByKindAt<T extends Row = Row>(db: Db, params: re
 export function getAuditLogCountByKindObjectId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'ENGAGEMENT_SIGNED' AND object_id = ? AND json_extract(detail, '$.record') = ?", params);
 }
+/* Phase 161m2: whether an email that goes once only has gone (its kind of row, about this object), and whether one
+   went since a moment (the day's digest). */
+export function getAuditLogCountByKindObjectIdOnce<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM audit_log WHERE kind = ? AND object_id = ?', params);
+}
+export function getAuditLogCountByKindObjectIdSince<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT COUNT(*) AS n FROM audit_log WHERE kind = ? AND object_id = ? AND at >= ?', params);
+}
 export function getAuditLogSeqHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1', params);
 }

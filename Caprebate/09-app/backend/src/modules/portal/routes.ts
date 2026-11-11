@@ -46,7 +46,7 @@ export async function portalSignLink(w: WebRequest): Promise<WebResult | undefin
     }
     const f = await form(req);
     const typed = { full_name: f.get('full_name') ?? '', role: f.get('signer_role') ?? '' };
-    const r = signByLink({ db: d.app.db, audit: d.app.audit, email: d.app.email, now, newId }, token, {
+    const r = signByLink({ db: d.app.db, audit: d.app.audit, email: d.app.email, now, newId, ...(d.publicOrigin === undefined ? {} : { origin: d.publicOrigin }) }, token, {
       ...typed, authorised: f.get('authorised') === 'on', letter_sha256: f.get('letter_sha256') ?? '',
       signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
     }, clientIp(req), { cfg, ...(d.letterPath === undefined ? {} : { letterPath: d.letterPath }) });
@@ -315,7 +315,7 @@ async function portalRoutes(
     const typed = { full_name: f.get('full_name') ?? '', role: f.get('signer_role') ?? '' };
     const r = session_id === null
       ? { ok: false as const, why: 'Please sign in again, then sign the letter.' }
-      : signEngagement({ db, audit: d.app.audit, email: d.app.email, now, newId }, actor, business_id, {
+      : signEngagement({ db, audit: d.app.audit, email: d.app.email, now, newId, ...(d.publicOrigin === undefined ? {} : { origin: d.publicOrigin }) }, actor, business_id, {
         ...typed, authorised: f.get('authorised') === 'on', letter_sha256: f.get('letter_sha256') ?? '',
         signature_strokes: f.get('signature_strokes') ?? '', typed_as_signature: f.get('typed_as_signature') === 'on',
       }, { ip: clientIp(req), session_id }, { ...(d.letterPath === undefined ? {} : { letterPath: d.letterPath }), ...(d.signing === undefined ? {} : { cfg: d.signing }) });
@@ -346,7 +346,7 @@ async function portalRoutes(
   if (bookingMatch && method === 'POST') {
     const f = await form(req);
     const moveDeps = {
-      db, audit: d.app.audit, email: d.app.email, now, newId,
+      db, audit: d.app.audit, email: d.app.email, now, newId, origin: d.publicOrigin,
     };
     // A third verb, `cancel`, on the same route — see cancelOwnBooking in portal.ts.
     const r = f.get('cancel') === 'on'

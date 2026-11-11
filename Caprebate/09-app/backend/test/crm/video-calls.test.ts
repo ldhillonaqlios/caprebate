@@ -170,17 +170,20 @@ describe('a video call booked at the figure page', () => {
     assert.equal(m.meeting_id, '81234567890');
     assert.match(m.client_token, /^[0-9a-f]{64}$/);
     assert.match(sent.body, new RegExp(`Your video call link: <a href="/call/${m.client_token}">join the call here</a>`));
-    const mail = made.app.db.get<{ subject: string; body: string; id: string }>("SELECT id, subject, body FROM outbox WHERE to_email = 'ada.vc1@example.com' AND kind = 'CALENDAR_INVITE'");
+    const mail = made.app.db.get<{ subject: string; body: string; html: string | null; id: string }>("SELECT id, subject, body, html_body AS html FROM outbox WHERE to_email = 'ada.vc1@example.com' AND kind = 'CALENDAR_INVITE'");
     assert.ok(mail !== undefined, 'no invitation was saved');
-    assert.match(mail.subject, /^Your video call with Cap Rebate: /);
-    assert.match(mail.body, /A video call has been arranged for .*, lasting 60 minutes\./);
-    assert.ok(mail.body.includes(`Join the video call in your web browser: https://caprebate.example.invalid/call/${m.client_token}`));
-    assert.ok(mail.body.includes('Or open it in the Zoom app: https://us06web.zoom.us/j/81234567890?pwd=invented'));
-    assert.match(mail.body, /Meeting ID: 812 3456 7890, passcode: Inv3nt/);
+    // Phase 161m2: the branded call-booked-video email (emails.py). Our join page behind the button; the meeting ID
+    // and passcode in the facts; Zoom's own link in the calendar file.
+    assert.match(mail.subject, /^Your video call with Cap Rebate on \w+day \d+ \w+ \d{4}$/);
+    assert.match(mail.body, /^Your video call is booked\n\nWhen: .*\nHow long: 60 minutes\nMeeting ID: 812 3456 7890\nPasscode: Inv3nt\n/);
+    assert.ok(mail.body.includes(`Join the call: https://caprebate.example.invalid/call/${m.client_token}`));
+    assert.ok(mail.html !== null && mail.html.includes('Your video call is booked'), 'no branded HTML version');
+    assert.ok(mail.html.includes(`href="https://caprebate.example.invalid/call/${m.client_token}"`), 'the button does not open our join page');
     const ics = made.app.db.get<{ bytes: Uint8Array }>('SELECT bytes FROM outbox_inline_files WHERE outbox_id = ?', [mail.id]);
     assert.ok(ics !== undefined, 'no calendar file');
     const text = Buffer.from(ics.bytes).toString('utf8').replace(/\r\n /g, '');
     assert.ok(text.includes(`LOCATION:https://caprebate.example.invalid/call/${m.client_token}`), text);
+    assert.ok(text.includes('https://us06web.zoom.us/j/81234567890?pwd=invented'), 'Zoom\'s own link is not in the calendar file');
     // Nothing about the client went to Zoom: not their name, not their email, not their business.
     for (const x of t.seen) assert.doesNotMatch(`${x.url} ${x.body ?? ''}`, /Ada|Invented|ada\.vc1|Zoom Dental/);
     // Only one telephone-style invitation was not also written.
@@ -271,8 +274,8 @@ describe('joining inside our site', () => {
     assert.equal(r.status, 303, r.body.slice(0, 300));
     assert.ok(made.app.db.get('SELECT 1 AS x FROM video_meetings WHERE booking_id = ? AND cancelled_at IS NULL', [bk.id]), 'no meeting was made');
     const mail = made.app.db.get<{ body: string }>("SELECT body FROM outbox WHERE to_email = 'ada.vc5@example.com' AND kind = 'CALENDAR_INVITE' ORDER BY rowid DESC LIMIT 1");
-    assert.match(mail?.body ?? '', /A video call has been arranged for .*\n\nJoin the video call in your web browser: https:\/\/caprebate\.example\.invalid\/call\/[0-9a-f]{64}/);
-    assert.equal(made.app.db.get<{ n: number }>("SELECT count(*) AS n FROM outbox WHERE to_email = 'ada.vc5@example.com' AND body LIKE 'A telephone call%'")?.n, 0, 'a video call was called a telephone call');
+    assert.match(mail?.body ?? '', /^Your video call is booked\n[\s\S]*\nJoin the call: https:\/\/caprebate\.example\.invalid\/call\/[0-9a-f]{64}\n/);
+    assert.equal(made.app.db.get<{ n: number }>("SELECT count(*) AS n FROM outbox WHERE to_email = 'ada.vc5@example.com' AND (subject LIKE 'Your call with Cap Rebate%' OR body LIKE '%We will ring you%')")?.n, 0, 'a video call was called a telephone call');
   });
 
   test('moved: Zoom moves the same meeting; cancelled: Zoom deletes it, the row closes, and the client\'s link stops', async () => {

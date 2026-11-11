@@ -104,7 +104,7 @@ export {
 // The calendar, the booking and its invitation, the video calls, the time blocks and the rooms a survey walks.
 export { CLIENT_MOVE_NOTICE_MINUTES, HORIZON_DAYS, SLOT_MINUTES, WEEKDAY_NAMES, WorkingTimeError, addLocalDays, clockToMinutes, distinctMoments, isBookable, minutesToClock, publicSlots, replaceWorkingTimes, slotsBetween, staffSlots, startOfLocalDay, startOfLocalWeek, workingTimesFor } from './schedule.ts';
 export { MAX_DAYS, slotDayProblem, slotPicker } from './slot-picker.ts';
-export { bookingInviteFile, sendVideoInvite } from './booking-invite.ts';
+export { INVITE_NOT_SENT, bookingInviteFile, callBookedPhoneEmail, callBookedVideoEmail, callChangedEmail, callWhen, callsLink, drawCallEmail, sendVideoInvite } from './booking-invite.ts';
 export { SAME_TIME_WORDS, VIDEO_PAGE_CSP, VIDEO_PAGE_HEADERS, activeMeeting, booksATime, callLengthOf, callLengthWords, checkCallLength, clientJoinUrl, clientMayJoin, joinPanel, meetingHost, reconcileVideoMeeting, videoCallsAtSameTime, videoJoinWords, withJoinScripts, zoomBlockers, zoomDeps, zoomPlanLine } from './video-calls.ts';
 export { VIDEO_CALL_JS } from './video-call-script.ts';
 export { addBlock, blocksFor, mayBlockTime, removeBlock } from './time-blocks.ts';

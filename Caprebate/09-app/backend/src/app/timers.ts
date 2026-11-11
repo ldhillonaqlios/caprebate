@@ -6,7 +6,8 @@
  * THE JOBS, LISTED FROM THE CODE (src/app/cli.ts's scheduled commands, and what the reply timer's call already did):
  *   every-five-minutes  read email replies (at most once every two minutes, as the reply timer does); clear photo and
  *                       video uploads never finished within a day, and upload pieces never taken; try again any email
- *                       that could not be sent at the moment it was saved (retryUnsent, below).
+ *                       that could not be sent at the moment it was saved (retryUnsent, below); and (Phase 161m2) the
+ *                       engagement letter reminder and the evening documents-received email to clients.
  *   nightly             the clean-up jobs: kept originals past their time (sweep-originals), messages and closed
  *                       enquiries past theirs (each switched off until the data protection officer sets the periods,
  *                       and then it says so), and the audit chain checked end to end.
@@ -32,6 +33,7 @@ import { inboundEmailModule as IE } from '../modules/crm/index.ts';
 import { sweepUploads } from '../modules/survey/index.ts';
 import { sweepVideos } from '../modules/survey/index.ts';
 import { sweepOriginals, openKeptOriginal } from '../modules/claims/index.ts';
+import { documentsReceivedDigest, letterRemindersDue } from '../modules/claims/index.ts';
 import { MESSAGE_RETENTION } from '../modules/clients/index.ts';
 import { sweepMessages } from '../modules/crm/index.ts';
 import { sweepEnquiries } from '../modules/public-site/index.ts';
@@ -146,6 +148,18 @@ export async function runTimerJob(d: { app: App; store: FsObjectStore }, job: Ti
     await step('unfinished photos cleared:', async () => String(await sweepUploads({ db: app.db, now: app.now }, d.store)));
     await step('unfinished videos cleared:', async () => String(await sweepVideos({ db: app.db, now: app.now }, d.store)));
     await step('upload pieces cleared:', async () => String(await sweepPieces({ db: app.db, now: app.now }, d.store)));
+    // Phase 161m2: the two timed client emails. Each decides for itself whether anything is due (the reminder once,
+    // five working days after a letter was sent and not signed; the documents digest once a UK day, from 18:00) and
+    // only queues the email: the retry step below, and the outbox's own rules, decide whether it goes.
+    const origin = (env['CAPREBATE_PUBLIC_ORIGIN'] ?? '').trim() || undefined;
+    await step('letter reminders:', async () => {
+      const r = letterRemindersDue(app, app.now(), origin);
+      return `${r.reminded} due, ${r.queued} waiting to send`;
+    });
+    await step('documents received emails:', async () => {
+      const r = documentsReceivedDigest(app, app.now(), origin);
+      return r.state === 'NOT_YET' ? 'not yet (from 18:00)' : `${r.clients} clients, ${r.queued} waiting to send`;
+    });
     await step('emails tried again:', async () => {
       const r = await retryUnsent(app, d.store);
       return r.state === 'OFF' ? 'sending is off' : `${r.tried}, sent ${r.sent}`;

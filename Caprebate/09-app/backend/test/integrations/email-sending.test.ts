@@ -98,20 +98,23 @@ describe('email sending, on for testing', () => {
     const sent = await bookACall('Sending Dental One Limited', 'ada.one@invented-client.co.uk');
     assert.equal(sent.status, 200, sent.body.slice(0, 300));
     assert.match(sent.body, /We are emailing you the calendar invitation now\./);
+    // Phase 161m2: the assessment's own email (assessment-complete) goes to the same address too; this is the invitation.
     const row = made.app.db.get<{ sent_at: string | null; last_error: string | null; body: string; transport: string }>(
-      "SELECT sent_at, last_error, body, transport FROM outbox WHERE to_email = 'ada.one@invented-client.co.uk'");
+      "SELECT sent_at, last_error, body, transport FROM outbox WHERE to_email = 'ada.one@invented-client.co.uk' AND kind = 'CALENDAR_INVITE'");
     assert.ok(row !== undefined);
     assert.notEqual(row.sent_at, null, `not sent: ${row.last_error ?? ''}`);
     assert.equal(row.transport, 'SMTP');
     assert.equal(row.last_error, null);
     for (const w of NOT_SENT_WORDS) assert.ok(!row.body.includes(w), 'an email that went says it was not sent');
-    assert.equal(smtp.seen.data.length, before + 1);
+    assert.equal(smtp.seen.data.length, before + 2, 'the invitation and the assessment email');
     assert.ok(smtp.seen.lines.includes('RCPT TO:<ada.one@invented-client.co.uk>'));
     // PHASE 160d: with no long dash the subject may be plain ASCII, so it is written as it is, not encoded.
-    const lastMail = smtp.seen.data.at(-1) ?? '';
-    const encoded = /^Subject: =\?UTF-8\?B\?([^?]+)\?=$/m.exec(lastMail)?.[1];
-    const subject = encoded !== undefined ? Buffer.from(encoded, 'base64').toString('utf8') : /^Subject: (.*)$/m.exec(lastMail)?.[1] ?? '';
-    assert.match(subject, /^Your video call with Cap Rebate: /);
+    const subjects = smtp.seen.data.slice(before).map((mail) => {
+      const encoded = /^Subject: =\?UTF-8\?B\?([^?]+)\?=$/m.exec(mail)?.[1];
+      return encoded !== undefined ? Buffer.from(encoded, 'base64').toString('utf8') : /^Subject: (.*)$/m.exec(mail)?.[1] ?? '';
+    });
+    assert.ok(subjects.some((x) => /^Your video call with Cap Rebate on /.test(x)), subjects.join(' | '));
+    assert.ok(subjects.includes('Your Cap Rebate assessment: what happens next'), subjects.join(' | '));
   });
 
   test('an invented address (the seed\'s, the tests\') is never sent to, and the row says why', async () => {

@@ -584,6 +584,27 @@ It was then listed under "A document request to the client". If you choose no do
 
 ### A6 · Email templates and the emails waiting to send (`B26`)
 
+**How our emails look.** Every email we send has the same Cap Rebate look. It has our logo at the top and a white
+card with one button. Our company details are at the foot. A plain-text copy goes with it, for any inbox.
+
+**Emails that go by themselves.** We send these without anyone pressing a button:
+- thank you for an enquiry, and a note to Sales that one came in;
+- thank you for the free assessment, with the figure the client saw;
+- a booked, moved or cancelled call;
+- emails to sign in, or to set a password;
+- thank you for signing the letter, and a note to the claim's owner;
+- one reminder, five working days after the letter, if it is not signed;
+- the identity check is complete;
+- the documents a client sent today, once, after 6pm;
+- a complaint received, with its reference.
+
+**Emails you send.** You send the letter and the list of documents. You send news of the survey and the report. To
+email the identity check link, tick *Email the link to them*. Move a claim to Closed and we tell the client it is
+done. End it as a reasoned negative and we tell them there is no claim.
+
+**Money emails stay off.** Invoices, credit notes and payment thanks are built. They stay off until our invoice fraud
+checks are in place.
+
 Address: /staff/templates. The heading is **Email templates**.
 
 **Merge fields.** The page lists them: "`{{contact_name}}` `{{organisation}}` `{{property_address}}`
@@ -3400,6 +3421,7 @@ Email replies we could not match: `/staff/replies`.
    client**.
    - You see "Sent. The client will see it in their portal."
    - The line under the button says *"We do not email them about it yet."*
+   - When emails are on, it says we email them. The email only says a message is waiting.
    - The email is built. It waits for emails to be switched on (see below).
 4. A file the client sent shows under their message. Press it to open the file's page. It is also in **Files**, under
    **From the client**, with **See the message it came with**.

@@ -179,7 +179,7 @@ export async function publicSiteEnquiry(w: WebRequest): Promise<WebResult | unde
         body: h`<h1>Your enquiry was not sent</h1><p class="err">${refusalWords(check)}</p><p><a href="/#contact">Go back to the form</a></p>` }));
       return 'handled';
     }
-    const r = receiveEnquiry(d.app.deps, newId, posted, check.state === 'PASSED' ? 'passed' : `not_checked:${check.reason}`);
+    const r = receiveEnquiry(d.app.deps, newId, posted, check.state === 'PASSED' ? 'passed' : `not_checked:${check.reason}`, { email: d.app.email, origin: d.publicOrigin });
     if (!r.ok) {
       html(res, 400, page({ title: 'Your enquiry was not sent', nav: nav(actor),
         body: h`<h1>Your enquiry was not sent</h1><p class="err">${r.why}</p><p><a href="/#contact">Go back to the form</a></p>` }));

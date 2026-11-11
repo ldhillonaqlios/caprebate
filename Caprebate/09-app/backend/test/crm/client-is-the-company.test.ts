@@ -325,7 +325,8 @@ describe('EMAIL SUBJECTS lead with the company', () => {
     assert.equal(companyFirst('Documents we still need', 'Elverton Ltd'), 'Elverton Ltd: Documents we still need'); // PHASE 160d
     assert.equal(companyFirst('Elverton Ltd — the next step on your claim', 'Elverton Ltd'), 'Elverton Ltd — the next step on your claim');
     assert.equal(companyFirst('Documents', null), 'Documents');
-    assert.equal(companyFirst('x', 'A & B <Ltd>'), 'A &amp; B &lt;Ltd&gt;: x', 'the company’s name was not escaped');
+    // PHASE 161m2: a subject is plain text, so the name is as recorded; the branded layout escapes it in the HTML version.
+    assert.equal(companyFirst('x', 'A & B <Ltd>'), 'A & B <Ltd>: x', 'the company’s name was escaped into a plain-text subject');
     assert.equal(made.app.db.get<{ subject: string }>("SELECT subject FROM email_templates WHERE id = 'template-next-step'")?.subject,
       '{{organisation}}: the next step on your claim');
   });

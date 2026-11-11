@@ -51,7 +51,8 @@ import {
 import { findById, hashToken, newId, type User } from './users.ts';
 import { grouped, newSecret, otpauthUri, verifyCode } from './totp.ts';
 import { isSealed, mfaKeyFrom, openSecret, sealSecret } from './mfa-seal.ts';
-import { h, page, raw, type Safe } from '../shared/index.ts';
+import { h, localWhen, page, raw, type Safe } from '../shared/index.ts';
+import type { BrandedEmail, EmailContent } from '../integrations/index.ts';
 import { clearRecoveryCodes, recoveryCodesLeft, replaceRecoveryCodes, useRecoveryCode, RECOVERY_CODES_LOW } from './recovery-codes.ts';
 import { getSignInStepsIdUserIdById, getSignInStepsIdUserIdByTokenHash, getUsersMfaMethodById, getUsersMfaMethodMfaSecretById, insertSignInSteps, updateSignInStepsAttemptsById, updateSignInStepsCodeHashCodeExpiresAtById, updateSignInStepsFinishedAtById, updateSignInStepsPendingMethodPendingSecretById, updateSignInStepsStepPendingMethodById, updateUsersMfaLastStepById, updateUsersMfaMethodMfaSecretById, updateUsersMfaMethodMfaSecretById2, updateUsersMfaSecretById, updateUsersPasswordHashPasswordTemporaryUntilById, updateUsersPasswordHashPasswordTemporaryUntilById2 } from './data.ts';
 
@@ -88,6 +89,60 @@ export const STEP_GONE = 'That sign-in has timed out. Please sign in again.';
 export const TOO_MANY_CODES = 'Too many wrong codes. Please sign in again.';
 export const WRONG_CODE = 'That code is not right, or it has expired. Try again.';
 export const WRONG_RECOVERY_CODE = 'That recovery code is not right, or it has been used. Try again.';
+
+/*
+ * THE BRANDED EMAIL LAYOUT, AS A PORT (Phase 161m2). The layout is the outside services' (src/integrations/email/
+ * email-layout.ts, brandedEmail), which sit above the core, so the core cannot import it. The start-up hands it in
+ * (src/app/build-app.ts), as the CRM hands the outside services their do-not-contact check. Asked before it is handed in,
+ * it refuses rather than guess: no email is written.
+ */
+export type EmailLayout = (c: EmailContent, opts?: { readonly publicOrigin?: string | null }) => BrandedEmail;
+var emailLayout: EmailLayout | undefined;
+export function setEmailLayout(layout: EmailLayout): void { emailLayout = layout; }
+function branded(c: EmailContent, origin: string | null): BrandedEmail {
+  if (emailLayout === undefined) throw new Error('The email layout is not set up. The start-up sets it up, so no email was written.');
+  return emailLayout(c, { publicOrigin: origin });
+}
+/** The site's address for a link in an email: the one the caller has, else CAPREBATE_PUBLIC_ORIGIN, else none. */
+function originFor(origin: string | undefined): string | null {
+  const o = (origin ?? process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? '').trim().replace(/\/+$/, '');
+  return o === '' ? null : o;
+}
+
+/** signin-code (emails.py): the code, large, and what to do if it was not you. The code is never in the subject. */
+export function signInCodeEmail(code: string): EmailContent {
+  return {
+    // emails.py's subject carries the code; it is left out here, because the outbox keeps a subject after sending
+    // (blankSentSecrets empties the words only), and a code is never kept as text.
+    subject: 'Your Cap Rebate sign-in code',
+    preheader: 'Your code works once, for 10 minutes.',
+    heading: 'Your sign-in code',
+    blocks: [
+      { kind: 'code', text: code },
+      'Enter this code to finish signing in. It works once, for 10 minutes.',
+      'If you did not try to sign in, someone may know your password. Please change it now, and tell us at security@caprebate.co.uk.',
+    ],
+    sign: 'The Cap Rebate team',
+    security: true,
+  };
+}
+
+/** recovery-code-used (emails.py): when, how many are left, and a link to the person's own second-step page. */
+export function recoveryCodeUsedEmail(at: string, left: number, settingsLink: string | null): EmailContent {
+  return {
+    subject: 'A recovery code was used to sign in to Cap Rebate',
+    preheader: `You have ${left} recovery ${left === 1 ? 'code' : 'codes'} left.`,
+    heading: 'A recovery code was used',
+    blocks: [
+      `A recovery code was used to sign in to your Cap Rebate login on ${localWhen(at)}.`,
+      `You have **${left}** recovery ${left === 1 ? 'code' : 'codes'} left. When you are down to two, please make a new set in your account settings.`,
+      'If this was not you, change your password now and tell us at security@caprebate.co.uk.',
+    ],
+    button: settingsLink === null ? null : { label: 'Open account settings', href: settingsLink },
+    sign: 'The Cap Rebate team',
+    security: true,
+  };
+}
 
 function security(app: App, user_id: string): Security | undefined {
   return getUsersMfaMethodMfaSecretById<Security>(app.db, [user_id]);
@@ -128,12 +183,8 @@ function sendCode(app: App, row: StepRow, user: User): StepResult {
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   const at = app.now();
   updateSignInStepsCodeHashCodeExpiresAtById(app.db, [hashToken(`${row.id}:${code}`), new Date(Date.parse(at) + CODE_TTL_MS).toISOString(), row.id]);
-  const sent = app.email.send({
-    to_email: user.email, kind: 'SIGN_IN_CODE',
-    subject: 'Your Cap Rebate sign-in code',
-    body: `Your Cap Rebate sign-in code is ${code}.\n\nIt works once, for 10 minutes. ` +
-      'If you did not try to sign in, somebody may have your password: change it, and tell your administrator.',
-  });
+  const e = branded(signInCodeEmail(code), originFor(undefined));
+  const sent = app.email.send({ to_email: user.email, kind: 'SIGN_IN_CODE', subject: e.subject, body: e.text, html: e.html });
   app.audit.append({ at, kind: 'SIGN_IN_CODE_SENT', outcome: sent.refused === null ? 'ALLOWED' : 'REFUSED', actor_id: user.id,
     actor_role: user.role, object_type: 'sign_in_step', object_id: row.id, detail: sent.refused === null ? {} : { reason: sent.refused } });
   return { kind: 'STEP', note: 'We have sent you a new code.' };
@@ -284,7 +335,7 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
  * step itself). It counts toward the same five wrong codes and works once. The audit row and the email say how many
  * are left, and never the code.
  */
-export function submitRecoveryCode(app: App, raw0: string | undefined, code: string): StepResult {
+export function submitRecoveryCode(app: App, raw0: string | undefined, code: string, origin?: string): StepResult {
   const open = openFor(app, raw0);
   if (open === undefined) return { kind: 'GONE', why: STEP_GONE };
   const { row, user } = open;
@@ -296,14 +347,11 @@ export function submitRecoveryCode(app: App, raw0: string | undefined, code: str
   const at = app.now();
   app.audit.append({ at, kind: 'RECOVERY_CODE_USED', outcome: 'ALLOWED', actor_id: user.id, actor_role: user.role,
     object_type: 'user', object_id: user.id, detail: { left: used.left } });
-  app.email.send({
-    to_email: user.email, kind: 'RECOVERY_CODE_USED',
-    subject: 'A recovery code was used to sign in to Cap Rebate',
-    body: `One of your recovery codes was just used to sign in to your Cap Rebate account. Each code works once.\n\n` +
-      `You have ${used.left} ${used.left === 1 ? 'code' : 'codes'} left. ` +
-      (used.left <= 2 ? 'Make new ones soon: sign in, open "Your second step" and choose "Make new recovery codes".\n\n' : '\n\n') +
-      'If this was not you, somebody may have your password and a code: change your password now, and tell us.',
-  });
+  // The link opens the person's own second-step page, where new recovery codes are made.
+  const site = originFor(origin);
+  const e = branded(recoveryCodeUsedEmail(at, used.left,
+    site === null ? null : `${site}${user.role === 'CLIENT' ? '/portal/two-factor' : '/staff/two-factor'}`), site);
+  app.email.send({ to_email: user.email, kind: 'RECOVERY_CODE_USED', subject: e.subject, body: e.text, html: e.html });
   return advance(app, row, user, { second_factor: 'RECOVERY_CODE' });
 }
 

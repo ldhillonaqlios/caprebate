@@ -144,3 +144,10 @@ import './client-ports.ts';
 export { claimsRules, rulesThroughClaims } from './logic/rules.ts';
 // Phase 161m1: who signed the letter, and what Companies House said of them, for who may be sent an identity check (compliance).
 export { getEngagementSignaturesEngagementIdSignerNameByBusinessId, getSignatoryChecksResultReasonByBusinessIdSource } from './data.ts';
+// Phase 161m2: the branded emails of the letter and the documents, and the two timed ones (letterRemindersDue,
+// documentsReceivedDigest) the timers call.
+export { LETTER_REMINDER_WORKING_DAYS, letterReadyEmail, letterReminderEmail, letterRemindersDue } from './engagement-send.ts';
+export { letterSignedEmail, staffLetterSignedEmail } from './signing.ts';
+export { DOCUMENTS_DIGEST_FROM_HOUR, documentsNeededEmail, documentsReceivedDigest, documentsReceivedEmail, emailDocumentsNeeded } from './documents.ts';
+export { listPropertiesLabelByBusinessId } from './data.ts';
+export type { StepDef } from './approvals.ts';

@@ -482,11 +482,14 @@ describe('SHARING PROGRESS — nothing reaches the firm unless the client said y
       assert.deepEqual(engagedNo, engagedNever, 'never asked and a no were told apart');
 
       const sent = outboxTo(yes.a, PARTNER_EMAIL);
-      const engaged = sent.filter((m) => /Engaged/.test(m.subject));
+      const engaged = sent.filter((m) => /^Stage: Engaged$/m.test(m.body));
       assert.equal(engaged.length, 1);
       assert.equal(engaged[0]?.kind, 'NOTIFICATION');
       assert.equal(engaged[0]?.sent_at, null, 'the stub sent something');
-      assert.equal(/Pat|Partner|£|\d{2},\d{3}/.test(engaged[0]?.body ?? ''), false, 'a person or a figure reached the firm');
+      // PHASE 161m2: the email greets the firm's own person named to get notices; nobody of the client's, and no figure.
+      assert.match(engaged[0]?.body ?? '', /^Dear Pat Partner,$/m);
+      assert.equal(engaged[0]?.subject, 'Cap Rebate update: Meadow Dental Limited');
+      assert.equal(/Pat|Partner|£|\d{2},\d{3}/.test((engaged[0]?.body ?? '').replace(/^Dear Pat Partner,$/m, '')), false, 'a person or a figure reached the firm');
       assert.deepEqual(notices(yes.a, yes.lead).filter((n) => n.notice === 'ENGAGED'), [{ notice: 'ENGAGED', outcome: 'QUEUED', reason: null }]);
     } finally { never.a.close(); no.a.close(); yes.a.close(); }
   });
@@ -495,9 +498,9 @@ describe('SHARING PROGRESS — nothing reaches the firm unless the client said y
     const w = await engagedWith('WITHDRAWN');
     const y = await engagedWith('GIVEN');
     try {
-      assert.deepEqual(outboxTo(w.a, PARTNER_EMAIL).filter((m) => /Engaged/.test(m.subject)), []);
+      assert.deepEqual(outboxTo(w.a, PARTNER_EMAIL).filter((m) => /^Stage: Engaged$/m.test(m.body)), []);
       I.onClaimStageEntered(deps(y.a), SALES, y.claim, 'DATA_GATHERING');
-      assert.equal(outboxTo(y.a, PARTNER_EMAIL).filter((m) => /Engaged/.test(m.subject)).length, 1);
+      assert.equal(outboxTo(y.a, PARTNER_EMAIL).filter((m) => /^Stage: Engaged$/m.test(m.body)).length, 1);
     } finally { w.a.close(); y.a.close(); }
   });
 
@@ -509,7 +512,7 @@ describe('SHARING PROGRESS — nothing reaches the firm unless the client said y
       share(a, lead, 'GIVEN');
       share(a, lead, 'GIVEN');
       assert.equal(outboxTo(a, PARTNER_EMAIL).length, 1);
-      assert.match(outboxTo(a, PARTNER_EMAIL)[0]?.subject ?? '', /Referred/);
+      assert.match(outboxTo(a, PARTNER_EMAIL)[0]?.body ?? '', /^Stage: Referred$/m); // PHASE 161m2: the stage is in the facts, the subject names the client
     } finally { a.close(); }
   });
 
@@ -605,7 +608,7 @@ describe('THE REASONED NEGATIVE — told to the firm under the same opt-in, and 
           kind: 'EXIT', to: 'REASONED_NEGATIVE', reason_code: 'ADVISER_DIRECTED_NEGATIVE', reason: 'Spoke to Jane Doe at the practice',
         });
         assert.ok(exit.ok, exit.ok ? '' : exit.why);
-        const told = outboxTo(a, PARTNER_EMAIL).filter((m) => /Reasoned negative/.test(m.subject));
+        const told = outboxTo(a, PARTNER_EMAIL).filter((m) => /^Stage: Reasoned negative$/m.test(m.body));
         if (decision === 'NEVER_ASKED') {
           assert.deepEqual(told, []);
           assert.deepEqual(notices(a, lead).slice(-1), [{ notice: 'REASONED_NEGATIVE', outcome: 'NOT_QUEUED', reason: 'NO_OPT_IN' }]);
