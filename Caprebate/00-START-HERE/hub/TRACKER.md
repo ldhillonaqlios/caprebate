@@ -7,24 +7,24 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 37 |
+| Ready - Lakhbir action | 36 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 365 |
+| Done | 366 |
 | Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
 | Claude | 312 |
 | CTA | 61 |
-| Lakhbir | 94 |
+| Lakhbir | 93 |
 | Surveyor | 12 |
 | Solicitor/DPO | 63 |
-| Developer | 25 |
+| Developer | 26 |
 
 ---
 
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-84 items.
+83 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -80,6 +80,7 @@
 - File: `08-monday-doc-exports/12552682424__ICO-registration-content.md`
 - Note 2026-09-25 (Phase 151f): Owner type back to Lakhbir: Lakhbir, 25 Sep 2026, "leave as lakhbir and not director".
 - Note 2026-11-05 (Phase 161g): Phase 161g: the legal pages leave the ICO registration number as a gap (LEGAL_GAPS); the live pages need it before they go live (the review pack's checklist).
+- Note 2026-11-11 (Phase 161m1): Lakhbir, 11 Nov 2026: "ICO i can do this myself". He registers with the ICO and gives the number; it goes into the privacy policy (Word question 287).
 - Subitems (2):
   - Apply for ICO registration — `12552667455`
   - Appoint DPO — `12552667458` · Waiting on someone else
@@ -660,18 +661,13 @@
 - Document: 06-commercial-and-governance/Legal review pack (Phase 161g)/00 Cover - Legal review pack (Phase 161g).docx
 - Note 2026-11-05 (Phase 161g): Built by Phase 161g: the cover document and ten attachments (privacy policy, cookie policy and list, website terms, client portal terms, acceptable use, accessibility, disclaimer, complaint form words, outside services, the engagement letter as it is). Each approval is recorded at /staff/legal; both are needed per page version. In FOR THE SOLICITOR, THE DPO AND THE DEVELOPER.
 
-### Choose the solicitor and the data protection officer who will review the legal review pack (Phase 161g), and send it to them
+### Choose the data protection officer who will review the legal pages pack (Phase 161g), and send it to them - no solicitor (Lakhbir, 11 Nov 2026)
 
 `13475961024` · **Ready - Lakhbir action** · owner Lakhbir
 
 - Document: 06-commercial-and-governance/Legal review pack (Phase 161g)/00 Cover - Legal review pack (Phase 161g).docx
 - Note 2026-11-05 (Phase 161g): Phase 161g: the pack is in 06-commercial-and-governance/Legal review pack (Phase 161g). Word question on who reviews it.
-
-### Decide whether the website shows a telephone number, or email only (the legal pages leave a gap until then)
-
-`13475983571` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-11-05 (Phase 161g): Phase 161g: the website terms, accessibility statement and privacy policy show "to be added" for the telephone (LEGAL_GAPS). Word question added.
+- Note 2026-11-11 (Phase 161m1): Lakhbir, 11 Nov 2026: "no solicitor, its a DPO pack". The legal pages are approved by the DPO alone; Phase 161m1 changes the back office so the DPO's approval of a page's current version puts it in force.
 
 ### Outside services list: confirm where each holds data, the safeguard for any transfer outside the UK, and its data processing terms
 
@@ -682,11 +678,12 @@
 
 ### Buy Vercel Pro for the live Cap Rebate website (the free plan is for non-commercial use only), and say who joins the team
 
-`13486923814` · **Ready - Lakhbir action** · owner Lakhbir
+`13486923814` · **Ready - Lakhbir action** · owner Developer
 
 - Note 2026-11-06 (Planning, 6 Nov 2026): Lakhbir chose Vercel for the live website. Vercel's free plan is for personal, non-commercial use only, so the live project needs Pro (third-party sites quote about $20 per team member a month; check Vercel's own pricing page), plus Turso and Blob use on top. Spending, so Lakhbir's. Also say who is on the team (Word question 157: everyone who can change the live website). Phase 161h builds the live project; go-live waits on this.
 - Note 2026-11-06 (Planning): Vercel Pro is now line 1 of Phase 161n's gate (going live). 161h can run without it: it builds and proves the live set-up on a preview.
 - Note 2026-11-07 (Phase 161h): Everything for the live project built without Pro (live start, timers, backup, release workflow, runbook); no live project made; Pro is line 1 of GO-LIVE-CHECKLIST.md, Phase 161n's gate.
+- Note 2026-11-11 (Phase 161m1): Lakhbir, 11 Nov 2026: "vercel pro this will be the developer who does this". Owner type Developer: the developer buys Vercel Pro for the live project and says who joins the team.
 
 ### Choose and set up the live website's backup store (Amazon S3 in London recommended): bucket, 35-day delete rule, a user that can only add and read files there
 
@@ -1528,7 +1525,7 @@
 
 - Note 2026-11-05 (Phase 161g): Phase 161g: the accessibility statement says no independent test has been done. Someone must test it (the developer or an independent tester) and give the date.
 
-### Switch on the live legal pages (CAPREBATE_LEGAL_PAGES=on) once the solicitor and the DPO have approved every page
+### Switch on the live legal pages (CAPREBATE_LEGAL_PAGES=on) once the DPO has approved every page (no solicitor since 11 Nov 2026)
 
 `13475983553` · **Built - awaiting sign-off** · owner Developer
 
@@ -1562,7 +1559,7 @@
 
 ## Z · Complete / Not Applicable
 
-365 items.
+366 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3774,6 +3771,13 @@
 
 - Note 2026-11-04 (Phase 161b): Two checks only a person signed in on the test website can make. (1) Carried from 161a: the start-up log of the merged 161a shows the Blob store open (uploaded documents are kept in the private document store), but no photo has been sent through it since; send one from your phone and see it on the claim. (2) Phase 161b put a security token on every form; it was checked on a local copy in a browser, and the photo send uses a page script that now sends the token in a header, so the photo also proves that. If anything says This form has expired on a page you have just opened, tell Claude which page.
 - Note 2026-11-04 (Phase 161b follow-up): Done (Lakhbir, 4 Nov 2026, on the test website after 161b's merge): a client portal message sent (Sent. We will reply here.), a task started as admin, a room saved as the surveyor, and a photo sent as a file with a client message, which goes into the Blob store. No page said This form has expired, and the function log showed no error. The phone photo page itself was not used: the test client has no survey yet.
+
+### Decide whether the website shows a telephone number, or email only (the legal pages leave a gap until then)
+
+`13475983571` · **Done** · owner Lakhbir
+
+- Note 2026-11-05 (Phase 161g): Phase 161g: the website terms, accessibility statement and privacy policy show "to be added" for the telephone (LEGAL_GAPS). Word question added.
+- Note 2026-11-11 (Phase 161m1): Decided by Lakhbir, 11 Nov 2026: "go with email only for now". Phase 161m1 takes the telephone gap off the legal pages, which now say we are contacted by email.
 
 ### Phase 161h1 - The module map and the boundary check: count today's breaks, then refuse any new one (no code moves) (Lakhbir, 6 Nov 2026)
 

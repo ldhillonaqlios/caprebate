@@ -8,7 +8,7 @@ import { DISCLOSURE_LOG } from '../disclosure-log.ts';
 
 export const COMPLIANCE_RULES: readonly RuleEntry[] = defineRules('compliance', [
   switchEntry({ id: 'compliance.DISCLOSURE_LOG', title: 'Log each time client data is shared with someone outside', approver: 'the data protection officer',
-    approval: 'Not approved yet: built and switched off until the solicitor and the officer sign off who gets client data.',
+    approval: 'Not approved yet: built and switched off until the officer signs off who gets client data (no solicitor since 11 Nov 2026).',
     settings: DISCLOSURE_LOG, home: 'src/modules/compliance/disclosure-log.ts', tested_in: 'test/claims/above-ports.test.ts' }),
 ]);
 
