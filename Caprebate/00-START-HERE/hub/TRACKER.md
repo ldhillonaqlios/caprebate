@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 364 |
-| Working on it | 1 |
+| Done | 365 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1273,7 +1273,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-41 items.
+40 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1551,18 +1551,11 @@
 - Note 2026-11-07 (Phase 161h): Gate line 12 added (GO-LIVE-CHECKLIST.md); BUILD item 1 proves the live project on a real Vercel preview first, with the three paths only real services show. Same in ACTION-PLAN.md and the run sheet.
 - Note 2026-11-11 (Phase 162): The sweep (Phase 162) checked the gate: 11 of its 12 lines are still closed - 1 Vercel Pro (13486923814), 2 the ICO number (12552682424), 3 the legal pages approved (13475983553; the reviewers not yet chosen, 13475961024), 4 the DPO's appointment (12983546774), 5 a telephone or email only (13475983571), 6 the safeguards and the retention periods (12945903194), 7 the engagement letter (12984553034, 12984730922), 8 the register entries, 9 the live keys (no live project yet), 10 the developer's answers (13486597256), 12 GO-LIVE-CHECKLIST.md lines 1 to 11 and Word questions 291 and 292. Line 11 (the sweep) opens once the sweep's pull request is merged. 161n's prompt and the checklist no longer name the sweep by number (it is Phase 163 now).
 
-### Phase 162 - Sweep and stress-test (out of order, after 161m and before 161n goes live)
-
-`13521974546` · **Working on it** · owner Claude · **CLAIMED BY Lakhbir's Mac**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-11 (Phase 162): Claimed: the sweep, run out of order after 161m and before 161n goes live (COORDINATES, the order to go live). Board item 13521974546 made the same day.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-364 items.
+365 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3833,4 +3826,12 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-07 (Phase 161i): Written by Phase 161i for what it could not finish: rules 3 and 4 to zero for core, shared and integrations (data files), the dated notes of the moved files to docs/CHANGELOG.md, tests by feature with docs/TEST-NAMES.md, and the documents/, survey/ and costing/ folders. Runs after 161i, before 161j.
 - Note 2026-11-08 (Phase 161i1): Done 8 Nov 2026: core and integrations have their data files (320 statements moved word for word); no SQL in the three areas' pages and logic (rule 4 at 0); 1,076 dated notes in docs/CHANGELOG.md, names as roles; 43 tests by feature (docs/TEST-NAMES.md); documents/, survey/, costing/ in their modules; baseline 1,612 -> 1,454. Joins across owners to 161l; phase-named sentences, names in screen text and 10 tests to 161k.
+
+### Phase 162 - Sweep and stress-test (out of order, after 161m and before 161n goes live)
+
+`13521974546` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-11 (Phase 162): Claimed: the sweep, run out of order after 161m and before 161n goes live (COORDINATES, the order to go live). Board item 13521974546 made the same day.
+- Note 2026-11-11 (Phase 162): Done: the board and the tracker agree both ways; the six carried jobs done; three faults fixed; the test website found keeping its records in memory (13522119174); 161n's gate checked (11 of 12 closed); the sweep renumbered to 163. 5,616 checks, all green. PR 100; Lakhbir merges.
 
