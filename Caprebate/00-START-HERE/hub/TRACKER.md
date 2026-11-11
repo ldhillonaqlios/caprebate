@@ -3557,24 +3557,27 @@
 
 ### Phase 160e - The stress test's fixes: documents over 4.5 MB in pieces, sign-in from one network address, forms from other websites, the home page's long dashes (19 Oct 2026)
 
-`13326319071` · **Done** · owner Claude
+`13521990225` · **Done** · owner Claude
 
 - Note 2026-10-19 (Phase 160e): Written and claimed 19 Oct 2026 on Lakhbir's instruction after the stress test of main 85cb245 (stress test the website, engine, reports, code, content and portal log ins; ensure everything is working and correct before deployment).
 - Note 2026-10-19 (Phase 160e): Done 19 Oct 2026: a document over 4.5 MB sent in pieces on every upload form (src/web/upload-pieces.ts, migration 117); sign-in and resets limited from one network address, the test website trusting Vercel's X-Forwarded-For; a cross-site form refused; the home page's four long dashes; the guide's upload paragraph matched to the screens. test/phase160e.test.ts (17); four test files restated. Two decisions added to WAITING-ON-PEOPLE (the website's region; the fee wording once clause 5 is agreed).
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13326319071, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160f - The privacy notice and public notices on the test website, their four facts proposed for the DPO, and the complaint form working (20 Oct 2026)
 
-`13326319072` · **Done** · owner Claude
+`13521990226` · **Done** · owner Claude
 
 - Note 2026-10-20 (Phase 160f): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Build and publish on test' (the notices' four facts proposed for the DPO), after Phase 160e's stress test.
 - Note 2026-10-20 (Phase 160f): Done 20 Oct 2026: the notices on the test website as a draft with eight proposed facts marked; the host, store and database named in the US; the complaint form kept, emailed and logged with its arrival time; the region checked, no move. test/phase160f.test.ts (14). The eight facts wait on the DPO (WAITING-ON-PEOPLE.md).
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13326319072, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160g - The notices' eight proposed facts confirmed (Sadique Maskeen, relayed by Lakhbir, for testing) (20 Oct 2026)
 
-`13326319073` · **Done** · owner Claude
+`13521990227` · **Done** · owner Claude
 
 - Note 2026-10-20 (Phase 160g): Written and claimed 20 Oct 2026 on Lakhbir's answer 'Sadique approves, I relay' for the eight facts Phase 160f proposed.
 - Note 2026-10-20 (Phase 160g): Done 20 Oct 2026: the eight facts confirmed as relayed by Lakhbir for Sadique Maskeen, for testing; marks off; one untrue clause removed; test/phase160g.test.ts (2). 5,217 checks.
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13326319073, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160h - The website's other legal pages: terms of use, cookie policy with a consent banner, acceptable use, accessibility, disclaimer (drafts for the solicitor and the DPO)
 
@@ -3597,45 +3600,51 @@
 
 ### Phase 160k - The new public website: the Kurbelwerk home page (scan, cut-aways, dark calculator, sector drop-downs) and five sector landing pages written to rank, on the test site
 
-`13334969548` · **Done** · owner Claude
+`13521990228` · **Done** · owner Claude
 
 - Note 2026-10-21 (Phase 160k): Written and claimed 21 Oct 2026 on Lakhbir's instruction ('push it live', the test site chosen): the Kurbelwerk design from Website Content/landing-page/template-options onto the app.
 - Note 2026-10-21 (Phase 160k): Done: the Kurbelwerk home page and five sector landing pages on the test site (on merge); 35 tests, 5,293 checks. The sector pages' tax statements wait on the accountant (ACCOUNTANT-CHECKS.md).
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13334969548, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160l - The website's finishing touches: the 3% outlined in black, the title block dated today with Scale removed, a signature on the surveyor's line
 
-`13334969549` · **Done** · owner Claude
+`13521990229` · **Done** · owner Claude
 
 - Note 2026-10-21 (Phase 160l): Written and claimed on Lakhbir's instruction (screenshots: 'add black outline to the 3%', 'ensure the date here is always todays date', 'remove scale', 'add fake signiture').
 - Note 2026-10-21 (Phase 160l): Done: the 3% outlined, the title block dated today, Scale removed, a signature; 13 tests, 5,306 checks.
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13334969549, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160m - The website's sections each fit one window on a desktop screen, and the page rests on each
 
-`13334969550` · **Done** · owner Claude
+`13521990230` · **Done** · owner Claude
 
 - Note 2026-10-21 (Phase 160m): Written and claimed on Lakhbir's instruction ('polish the website - look at the scroll points everything in each section should fit within one window', the hero cropped at the bottom in his screenshot).
 - Note 2026-10-21 (Phase 160m): Done: every home section fits one window at five desktop sizes; sector sections too except the guides and the pinned drawing; 12 tests, 5,318 checks.
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13334969550, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160n - The X-ray home page: the chosen redesign (a clinic whose walls turn see-through on a 12-second scan) becomes the website's home page
 
-`13334969551` · **Done** · owner Claude
+`13521990231` · **Done** · owner Claude
 
 - Note 2026-10-28 (Phase 160n): Written and claimed on Lakhbir's instruction ('i want you claude to make the website front end as the new design': the X-ray, option 02 of the redesign options, chosen 26 Oct 2026 and redrawn as a private clinic on 28 Oct).
 - Note 2026-10-28 (Phase 160n): Done: the X-ray is the home page (the design file made ready for the site, convertXray, its fonts self-hosted); 10 tests; back end 3,029 pass, the 7 failures are files kept out of git in a fresh worktree (6 the same on main) and one that passes alone. The sector pages keep the old design.
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13334969551, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160o - The website in one design: the home page's finishing touches (no systems count, bigger captions, no surveyor placeholder, Am I eligible and Try the calculator together, a person icon for Log in) and the five sector pages in the X-ray design
 
-`13334969552` · **Done** · owner Claude
+`13521990232` · **Done** · owner Claude
 
 - Note 2026-10-28 (Phase 160o): Written and claimed on Lakhbir's instruction, with three screenshots of the live home page: 'remove the 1-6 this isnt needed', 'make the text above it bigger', 'remove the survayor icon thing', 'we need both am i eligible and also try calculator', 'change the log in words to a icon of a person', 'ensure all sectors follow the same wordpress elementor design'.
 - Note 2026-10-28 (Phase 160o): Done: the home page's five changes and the five sector pages in the X-ray design, every word kept; 31 tests; back end 3,052 pass, the 7 failures are those of 160n (files kept out of git in a fresh worktree, one that passes alone).
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13334969552, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 160p - The X-ray's finishing touches: no box under the captions (the figure alone at the end), no supported-living note on its card, the property type box as tall as the others, the lift going up and down, the lights flickering on
 
-`13334969553` · **Done** · owner Claude
+`13521990233` · **Done** · owner Claude
 
 - Note 2026-10-29 (Phase 160p): Written and claimed on Lakhbir's instruction, with three screenshots: 'just remove this box it makes no sense' (the qualifying systems box), 'remove the disclaimer from supported living', 'make property type box same height as name email phone ect', 'on the animation 1) make the lift go up and down 2) flicker the lights as they turn on'.
 - Note 2026-10-29 (Phase 160p): Done: no box under the captions, no note on the supported-living card, the property type menu 46.8 px like the other boxes, the lift going up a floor and back, the lamps flickering on. test/phase160p.test.ts (7); back end 3,059 pass / 7 fail (those of 160n).
+- Note 2026-11-11 (Phase 162): Made on the board by the sweep (Done, group Z), on Lakhbir's yes in the chat: this row had been in the tracker alone, under the id the tracker tool gave it (13334969553, the id PHASE HISTORY quotes). Its id is now the board's.
 
 ### Phase 161a - The package flaws: update the packages, and keep the test-website package (@vercel/blob, 5 high flaws) out of the live build (audit 2 Nov 2026)
 
