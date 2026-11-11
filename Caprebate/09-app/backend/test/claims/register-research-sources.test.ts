@@ -844,7 +844,10 @@ describe('Phase 162 — REGISTER_SWITCHES.BCIS and REGISTER_SWITCHES.POSTCODES_I
           const out = await R.consultAllowed({ db: app.db, audit: app.audit, now: app.now, newId, outside: { transport: t, secrets: KEYS, switches, postcodeStore: STORE } },
             actor('ADMIN'), id, [{ entry, ...ALLOWED }], { free_gate_open: true, engagement_signed: true });
           assert.deepEqual([out[0]?.state, out[0]?.bundle, out[0]?.cost_pence, t.seen.length], ['NOT_RUN', null, 0, 0], `${source} ${on ? 'on' : 'off'}`);
-          if (source === 'POSTCODES_IO') assert.match(out[0]?.detail ?? '', /the postcode check is made at the address question/);
+          if (source === 'POSTCODES_IO') {
+            assert.match(out[0]?.detail ?? '', /the postcode check is made at the address question/);
+            assert.doesNotMatch(out[0]?.detail ?? '', /It is switched off/, 'the panel must not say the check is off when its switch is on');
+          }
         }
       } finally { app.close(); }
     });
