@@ -136,7 +136,7 @@ export const NOT_BUILT: Readonly<Record<string, string>> = Object.freeze({
      longer says "It is switched off", which was untrue whenever the register's switch was on; this button never runs
      it either way. */
   POSTCODES_IO: 'allowed, but the postcode check is made at the address question, when the client types their postcode, ' +
-    'not by this button, whether its switch is on or off. Nothing was contacted',
+    'not by this button. This button never runs it. Nothing was contacted',
 });
 
 /* ================================================================== *
