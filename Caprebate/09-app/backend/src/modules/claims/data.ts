@@ -409,6 +409,11 @@ export function listClaimsIdClaimRefByOwnerId<T extends Row = Row>(db: Db, param
 export function listClaimsIdClaimRefByStage<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>("SELECT id, claim_ref, business_id FROM claims WHERE stage = 'REPORTS' ORDER BY claim_ref ASC", params);
 }
+/** Phase 161m1: the claims a client ended early (withdrew, or cancelled), with their property and any surveyor recorded, for the break-fee guide. */
+export function listClaimsEndedEarly<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT id, claim_ref, business_id, stage, property_id, surveyor_id FROM claims WHERE stage IN ('CLIENT_WITHDREW','CANCELLED') " +
+    'ORDER BY business_id ASC, claim_ref ASC', params);
+}
 export function listClaimsIdPropertyIdByBusinessIdStage<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>("SELECT id, property_id FROM claims WHERE business_id = ? AND stage = 'DATA_GATHERING' ORDER BY rowid", params);
 }

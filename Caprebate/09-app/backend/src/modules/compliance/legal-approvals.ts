@@ -4,9 +4,15 @@
  * APPROVALS. The owner: the legal pages are built ready for the live website "but not switched on ... each
  * page shows the 'Draft' line until an approval is recorded (who approved it, and the date, kept in the database and
  * the audit log). With no approval nothing goes live." An admin records each approval in the back office at
- * /staff/legal: the page, who approved it, as solicitor or as data protection officer, and the date. A page is in force
- * when both have approved its CURRENT version (LEGAL_PAGES in src/modules/compliance/legal-register.ts); a new version starts again.
- * An approval is never changed or deleted (migration 121's triggers).
+ * /staff/legal: the page, the name of our data protection officer who approved it, and the date. A page is in force
+ * when the data protection officer has approved its CURRENT version (LEGAL_PAGES in
+ * src/modules/compliance/legal-register.ts); a new version starts again. An approval is never changed or deleted
+ * (migration 121's triggers).
+ *
+ * PHASE 161m1, Lakhbir, 11 Nov 2026: "no solicitor, its a DPO pack". Until then a page needed a solicitor's approval
+ * as well. The form no longer offers the solicitor and an approval as solicitor is refused. The table still allows the
+ * role SOLICITOR (no migration: nothing recorded is lost), and a SOLICITOR row recorded before the change is kept but
+ * is no longer read: it does not count towards a page being in force.
  *
  * AGREEMENTS. the owner, 5 Nov 2026: "the sign-up asks the person to tick that they have read them (the tick, its date
  * and the version are kept, and the audit log records it)". The sign-up offered after the free assessment carries the
@@ -33,28 +39,30 @@ export type TermsVersions = { readonly portal_terms: string; readonly website_te
 export const currentTermsVersions = (): TermsVersions =>
   ({ portal_terms: versionOf('portal-terms'), website_terms: versionOf('terms'), privacy: versionOf('privacy-policy') });
 
-/** The approvals of each page's current version. */
+/** The data protection officer's approval of each page's current version. A SOLICITOR row (recorded before Phase
+ *  161m1) is not read: it no longer counts. An approval of an older version does not count either. */
 export function currentApprovals(db: Db): Approvals {
   const rows = listLegalApprovalsPageVersion<{ page: LegalPageKey; version: string; approved_by: string; approver_role: 'SOLICITOR' | 'DPO'; approved_on: string }>(db);
   const out = new Map<LegalPageKey, PageApproval>();
   for (const [key] of APPROVABLE) {
-    const mine = rows.filter((r) => r.page === key && r.version === versionOf(key));
-    const of = (role: 'SOLICITOR' | 'DPO') => { const r = mine.find((x) => x.approver_role === role); return r === undefined ? null : { by: r.approved_by, on: r.approved_on }; };
-    if (mine.length > 0) out.set(key, { solicitor: of('SOLICITOR'), dpo: of('DPO') });
+    const r = rows.find((x) => x.page === key && x.version === versionOf(key) && x.approver_role === 'DPO');
+    if (r !== undefined) out.set(key, { dpo: { by: r.approved_by, on: r.approved_on } });
   }
   return out;
 }
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Record one approval. Admins only. Refuses a page we do not have, a role we do not use, a missing name or date, a
- *  date in the future, and a second approval by the same role of the same version. */
+/** Record one approval by our data protection officer. Admins only. Refuses a page we do not have, any role but the
+ *  DPO (the form sends none; since Phase 161m1 the solicitor is not asked), a missing name or date, a date in the
+ *  future, and a second approval of the same version. */
 export function recordApproval(app: App, actor: Actor, f: URLSearchParams, newId: () => string): { ok: true } | { ok: false; why: string } {
   if (actor.role !== 'ADMIN') return { ok: false, why: 'Only an admin can record an approval.' };
   const key = f.get('page') as LegalPageKey | null;
   if (key === null || !APPROVABLE.some(([k]) => k === key)) return { ok: false, why: 'Choose the page that was approved.' };
-  const role = f.get('role');
-  if (role !== 'SOLICITOR' && role !== 'DPO') return { ok: false, why: 'Choose who approved it.' };
+  const asked = f.get('role');
+  if (asked !== null && asked !== 'DPO') return { ok: false, why: 'Only our data protection officer approves the legal pages.' };
+  const role = 'DPO';
   const by = (f.get('approved_by') ?? '').trim();
   if (by.length < 2 || by.length > 200) return { ok: false, why: 'Type the name of the person who approved it.' };
   const on = (f.get('approved_on') ?? '').trim();
@@ -103,24 +111,23 @@ export function agreementPage(nav: Safe, next: string, error?: string): string {
       <button class="cta" type="submit">Continue</button></form>` });
 }
 
-/** The back office page: each page's version, who has approved it, and the form to record an approval. */
+/** The back office page: each page's version, whether our data protection officer has approved it, and the form to
+ *  record an approval. */
 export function approvalsPage(nav: Safe, approvals: Approvals, msg?: { ok: boolean; text: string }): string {
   const day = (on: string) => on;
   const cell = (a: { by: string; on: string } | null) => a === null ? h`<span class="gap">not yet</span>` : h`${a.by}, ${day(a.on)}`;
   return page({ title: 'Legal pages', nav, wide: true, body: h`<h1>Legal pages</h1>
     ${msg === undefined ? raw('') : h`<p class="${msg.ok ? 'ok' : 'err'}" role="${msg.ok ? 'status' : 'alert'}">${msg.text}</p>`}
-    <p class="help">A page stays a draft until both reviewers approve this version. One is our solicitor. The other is
-    our data protection officer. A new version needs new approvals. Once kept, an approval cannot be changed or removed.</p>
-    <div class="tablewrap"><table><thead><tr><th>Page</th><th>Version</th><th>Solicitor</th><th>Data protection officer</th><th>In force</th></tr></thead>
+    <p class="help">A page stays a draft until our data protection officer approves this version. Their approval alone
+    puts it in force. A new version needs a new approval. Once kept, an approval cannot be changed or removed.</p>
+    <div class="tablewrap"><table><thead><tr><th>Page</th><th>Version</th><th>Data protection officer</th><th>In force</th></tr></thead>
     <tbody>${APPROVABLE.map(([key, title]) => { const a = approvals.get(key); return h`<tr><td>${title}</td><td>${key === 'notices' ? NOTICES_VERSION : versionOf(key)}</td>
-      <td>${cell(a?.solicitor ?? null)}</td><td>${cell(a?.dpo ?? null)}</td><td>${inForce(a) ? 'Yes' : 'No, a draft'}</td></tr>`; })}</tbody></table></div>
+      <td>${cell(a?.dpo ?? null)}</td><td>${inForce(a) ? 'Yes' : 'No, a draft'}</td></tr>`; })}</tbody></table></div>
     <h2>Record an approval</h2>
     <form method="post" action="/staff/legal/approve">
       <label class="fl" for="la-page">Page</label>
       <select class="fi" id="la-page" name="page" required>${APPROVABLE.map(([key, title]) => h`<option value="${key}">${title}, version ${versionOf(key)}</option>`)}</select>
-      <label class="fl" for="la-role">Approved by our</label>
-      <select class="fi" id="la-role" name="role" required><option value="SOLICITOR">Solicitor</option><option value="DPO">Data protection officer</option></select>
-      <label class="fl" for="la-by">Their name</label><input class="fi" id="la-by" name="approved_by" maxlength="200" required>
+      <label class="fl" for="la-by">The name of our data protection officer</label><input class="fi" id="la-by" name="approved_by" maxlength="200" required>
       <label class="fl" for="la-on">The date they approved it</label><input class="fi" id="la-on" type="date" name="approved_on" required>
       <button class="cta" type="submit">Record the approval</button>
     </form>` });

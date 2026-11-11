@@ -364,9 +364,8 @@ function reduceUnderClause13(app: TApp, claim: string, invoice: string, amended:
   assert.equal(opened.ok, true);
   const outcome = Object.keys(R.ENQUIRY_OUTCOMES).find((k) => k !== 'NO_CHANGE') ?? '';
   assert.equal(R.closeEnquiry(rd, actor('SALES'), claim, opened.ok ? opened.id : '', { closed_on: '2026-09-05', outcome, amended_figure: amended }).ok, true);
-  const real = loadLetter();
-  const settled = { paragraphs: real.paragraphs, openTerms: real.openTerms.filter((t) => !/^clause 13 —/.test(t.clause)) };
-  return INV.creditClause13(invoiceDeps(app), actor('ACCOUNTING'), invoice, {}, { clawback: { enabled: true }, letter: settled });
+  // Since Phase 161m1 the real letter's clause 13 is complete, so it is the letter the credit is run against.
+  return INV.creditClause13(invoiceDeps(app), actor('ACCOUNTING'), invoice, {}, { clawback: { enabled: true }, letter: loadLetter() });
 }
 
 describe('line 10 — model C: 10% of our fee as invoiced, off, refused while clause 1 is blank, reversed under clause 13', () => {
@@ -374,9 +373,11 @@ describe('line 10 — model C: 10% of our fee as invoiced, off, refused while cl
     const { app } = await referredAtInvoice();
     try {
       assert.equal(I.rewardSetting(app.db).model, 'OFF');
-      assert.ok(I.clauseOneBlanks().length > 0, 'the real letter’s clause 1 is no longer blank — this test’s premise moved');
+      // PHASE 161m1: the real letter's clause 1 has no blank left; the refusal is proved with the blank put back.
+      assert.deepEqual(I.clauseOneBlanks(), [], 'clause 1 of the real letter has a blank again');
+      const blank1 = [{ clause: 'clause 1 — Agreement and Parties', text: '[Where the Client has none engaged, Cap Rebate will, if instructed, introduce its own chartered tax adviser, at a fee of £[amount].]' }];
       for (const model of ['A_RECIPROCITY', 'B_DISCLOSED_FEE', 'C_PERCENT_OF_INVOICED_FEE']) {
-        const r = I.setRewardModel(CF.recordDeps(app) as never, actor('ADMIN'), { model, fee_pounds: '500' });
+        const r = I.setRewardModel(CF.recordDeps(app) as never, actor('ADMIN'), { model, fee_pounds: '500' }, { openTerms: blank1 });
         assert.equal(r.ok, false, `${model} was switched on with clause 1 blank`);
         if (!r.ok) assert.match(r.why, /clause 1 of the engagement letter is blank/);
       }
@@ -669,22 +670,29 @@ describe('line 2 — the engagement letter’s commercial terms, as the back end
     } finally { app.close(); }
   });
 
-  test('(iv) CLAUSE 13: refund decided (a) yes, time limit completed — and with the trigger and settlement still blank the clawback raises nothing, even switched on; complete, it applies', () => {
+  test('(iv) CLAUSE 13: refund decided (a) yes, time limit completed, and (Phase 161m1) the trigger and settlement decided: any reduction, a settlement counts; switched ON since 11 Nov 2026 (Lakhbir approved, no solicitor) it applies as shipped, and a blank put back still refuses', () => {
     const real = loadLetter();
-    const blanks13 = real.openTerms.filter((t) => /^clause 13 —/.test(t.clause)).map((t) => t.text);
-    assert.equal(blanks13.length, 2);
-    assert.ok(blanks13.some((t) => /^\[Trigger:/.test(t)) && blanks13.some((t) => /^\[Settlements:/.test(t)));
-    assert.equal(blanks13.some((t) => /Time limit/.test(t)), false, 'the time limit is still an open term');
-    assert.match(real.paragraphs.map((p) => p.text).join('\n'), /Time limit: this clause applies for so long as the claim remains open to enquiry\./);
+    assert.deepEqual(real.openTerms.filter((t) => /^clause 13 —/.test(t.clause)), [], 'clause 13 has a blank again');
+    const text = real.paragraphs.map((p) => p.text).join('\n');
+    assert.match(text, /Trigger: this clause applies to any reduction in the capital allowances identified\./);
+    assert.match(text, /Settlements: this clause also applies where the Client accepts a settlement with HM Revenue and Customs that reduces them\./);
+    assert.match(text, /Time limit: this clause applies until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim\./);
+    assert.doesNotMatch(text, /for so long as the claim remains open to enquiry/);
+    assert.doesNotMatch(text, /not yet settled and are marked for completion/);
     assert.equal(R.FEE_CLAWBACK.decided.refund, 'YES');
-    assert.equal(R.FEE_CLAWBACK.decided.time_limit, 'for so long as the claim remains open to enquiry');
-    assert.equal(R.FEE_CLAWBACK.enabled, false, 'the clawback switch was turned on');
-    const on = R.clawbackReading({ gate: { enabled: true } });
-    assert.equal(on.applies, false);
+    assert.equal(R.FEE_CLAWBACK.decided.time_limit, 'until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim');
+    assert.equal(R.FEE_CLAWBACK.decided.trigger, 'any reduction, with no threshold');
+    assert.equal(R.FEE_CLAWBACK.decided.settlements, 'a settlement the client accepts counts as a reduction');
+    assert.deepEqual(R.FEE_CLAWBACK.decided.still_open, [], 'a clause 13 term is open again');
+    assert.equal(R.FEE_CLAWBACK.enabled, true, 'the clawback switch was turned off');
+    assert.equal(R.clawbackReading().reason, 'APPLIES', 'as shipped, with clause 13 complete, it applies');
+    assert.equal(R.clawbackReading({ gate: { enabled: false } }).reason, 'SWITCH_OFF', 'the other way: off still refuses');
+    assert.equal(R.clawbackReading({ gate: { enabled: true } }).applies, true, 'complete and on, it applies');
+    const blank = letterWith((t) => t.replace('Trigger: this clause applies to any reduction in the capital allowances identified.', '[Trigger: this clause applies to any reduction / applies only to a reduction of more than [X]% or £[amount].]'));
+    const on = R.clawbackReading({ gate: { enabled: true }, openTerms: blank.openTerms });
+    assert.equal(on.applies, false, 'the other way: a blank put back does not refuse');
     assert.equal(on.reason, 'CLAUSE_13_BLANK');
-    assert.equal(on.blanks.length, 2);
-    assert.equal(R.clawbackReading().reason, 'SWITCH_OFF');
-    assert.equal(R.clawbackReading({ gate: { enabled: true }, openTerms: [] }).applies, true, 'the other way: complete and on, it applies');
+    assert.equal(on.blanks.length, 1);
   });
 
   test('(v) THE FREE ENQUIRY SUPPORT SENTENCE IS IN THE LETTER IN EXACTLY THE DECIDED WORDS, and is not an open term', () => {

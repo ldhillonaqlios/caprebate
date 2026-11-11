@@ -6,8 +6,10 @@
  * pages, each with its Draft line until an approval is recorded (src/modules/compliance/legal-approvals.ts).
  *
  * NOTHING HERE IS INVENTED. Every fact nobody has given us (the ICO number, the data protection officer's name and
- * contact, a telephone number, where the live website's host keeps data) is a marked gap: `LATER` on the page, listed
- * in LEGAL_GAPS. The free lookups are LEGITIMATE INTERESTS, never consent (standing rule 13(b)): the only consent here is
+ * contact, where the live website's host keeps data) is a marked gap: `LATER` on the page, listed in LEGAL_GAPS. There
+ * is no telephone number: Lakhbir, 11 Nov 2026, "go with email only for now" (Phase 161m1), so the policy says we are
+ * reached by email or by post, and no telephone line is shown.
+ * The free lookups are LEGITIMATE INTERESTS, never consent (standing rule 13(b)): the only consent here is
  * the optional analytics cookie. The outside services come from OUTSIDE_SERVICES (src/integrations/outside-services.ts), tied to
  * SECRET_KEYS by a test; the retention periods come from RETENTION_PARAMETERS (src/modules/compliance/compliance-identity.ts), the
  * retention schedule, and say they are not yet approved while they are not.
@@ -71,7 +73,6 @@ export function privacyPolicyBody(updated: string): Safe {
   <ul>
     <li>Email about your data: ${mail(DP_MAIL)}</li>
     <li>Post: ${COMPANY}, ${OFFICE}</li>
-    <li>Telephone: ${LATER}</li>
     <li>Our data protection officer: ${LATER}</li>
     <li>Our registration number with the Information Commissioner: ${LATER}</li>
   </ul>

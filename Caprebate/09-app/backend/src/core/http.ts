@@ -30,14 +30,15 @@ export type WebDeps = {
   publicOrigin?: string;
   /** The test-only letter (src/modules/claims/letter.ts, TEST_LETTER_PATH). Absent is the real letter. Only the test website passes it. */
   letterPath?: string;
-  /** Signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, off. */
+  /** Signing on for testing (ENGAGEMENT_SIGNING_TEST, the test copy only). Absent is ENGAGEMENT_SIGNING, on since 11 Nov 2026. */
   signing?: EngagementSigning;
   /** The public notices page and its complaint form (src/modules/public-site/notices-site.ts). Only the test website passes it. */
   notices?: boolean;
   /**
    * THE LEGAL SETTING, for the live website. The legal pages, the notices page, the cookie
    * banner and the client's tick are served wherever it is on, as on the test website, but each page carries its Draft
-   * line until our solicitor and our data protection officer have both approved its version (src/modules/compliance/legal-approvals.ts).
+   * line until our data protection officer has approved its version (src/modules/compliance/legal-approvals.ts; the DPO
+   * alone since Phase 161m1).
    * Off unless CAPREBATE_LEGAL_PAGES=on (src/app/server.ts). With it and `notices` both off, nothing changes.
    */
   legal?: boolean;

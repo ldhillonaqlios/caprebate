@@ -65,8 +65,8 @@ export function buildNoticesEdition(source: string): NoticesEdition {
 
 /**
  * THE SAME PAGE ON THE LIVE WEBSITE (the `legal` setting). The test website's banner ("Our test website")
- * is replaced by the page's own Draft line, which goes once our solicitor and our data protection officer have both
- * approved its version (src/modules/compliance/legal-approvals.ts).
+ * is replaced by the page's own Draft line, which goes once our data protection officer has approved its version
+ * (src/modules/compliance/legal-approvals.ts; the DPO alone since Phase 161m1).
  */
 export function noticesForLiveSite(html: string, line: string): string {
   if (!html.includes(BANNER)) throw new Error('the notices page has no test banner to replace');

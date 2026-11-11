@@ -635,14 +635,16 @@ describe('THE REASONED NEGATIVE — told to the firm under the same opt-in, and 
  * ================================================================== */
 
 describe('THE REWARD MODEL — both built, both off, and the switch refuses while clause 1 is blank', () => {
-  test('it ships off; the real letter’s clause 1 has a blank; A and B are refused and the refusal is audited; OFF is always allowed', async () => {
+  test('it ships off; a clause 1 blank refuses A and B and the refusal is audited; OFF is always allowed', async () => {
     const a = await app();
     try {
       assert.equal(I.rewardSetting(a.db).model, 'OFF');
-      const blanks = I.clauseOneBlanks();
-      assert.ok(blanks.length > 0, 'the premise: clause 1 of the letter, read from the .docx, still has a square-bracket blank');
+      // PHASE 161m1 (11 November 2026): the owner removed clause 1's bracketed offer of our own tax adviser, so the real
+      // letter's clause 1 has no blank. The refusal is proved with the blank put back, as the letter had it.
+      assert.deepEqual(I.clauseOneBlanks(), [], 'clause 1 of the real letter has a blank again');
+      const blank1 = [{ clause: 'clause 1 — Agreement and Parties', text: '[Where the Client has none engaged, Cap Rebate will, if instructed, introduce its own chartered tax adviser, at a fee of £[amount].]' }];
       for (const model of ['A_RECIPROCITY', 'B_DISCLOSED_FEE']) {
-        const r = I.setRewardModel(deps(a), ADMIN, { model, fee_pounds: '500' });
+        const r = I.setRewardModel(deps(a), ADMIN, { model, fee_pounds: '500' }, { openTerms: blank1 });
         assert.equal(r.ok, false);
         assert.match(r.ok ? '' : r.why, /clause 1/);
         assert.equal(I.rewardSetting(a.db).model, 'OFF');

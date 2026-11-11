@@ -314,7 +314,7 @@ function settledLetter(): string {
   writeFileSync(p, docxOf(['ENGAGEMENT LETTER', '1. Parties', 'This letter is between CAP REBATE LTD and Test Signing Ltd.', '2. Fees', 'Our fee is 10 per cent of the relief.']));
   return p;
 }
-const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, solicitor_confirmed: true, question: SIGNING_QUESTION });
+const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, signature_confirmed: true, question: SIGNING_QUESTION });
 
 async function signingWorld() {
   const w = await boot();
@@ -335,24 +335,28 @@ async function signingWorld() {
 }
 
 describe('5 · the built-in signature', () => {
-  test('OFF TODAY: the switch is false, and the real letter still has open terms, so it cannot be signed at all', async (t) => {
-    assert.equal(ENGAGEMENT_SIGNING.enabled, false);
-    assert.equal(ENGAGEMENT_SIGNING.solicitor_confirmed, false);
+  test('ON SINCE 11 NOV 2026, and the real letter still shows specimen wording for this client, so it cannot be signed for them yet', async (t) => {
+    assert.equal(ENGAGEMENT_SIGNING.enabled, true);
+    assert.equal(ENGAGEMENT_SIGNING.signature_confirmed, true);
     const real = shownLetter({ name: 'Test Signing Ltd' });
-    assert.ok(real.open_terms > 0);
+    // PHASE 161m1: the letter has no open term left; what still refuses it here is the specimen wording this client's record
+    // does not replace (no company number, no indicative range).
+    assert.equal(real.open_terms, 0);
+    assert.ok(real.specimens > 0);
     assert.deepEqual(signingMissing(ENGAGEMENT_SIGNING, real), [
-      'Our solicitor must confirm that typing your name is a good enough way to sign this letter.',
       'Some terms in the letter are not settled yet, so it cannot be signed.',
       // PHASE 158b (F22): 'Test Signing Ltd' has no company number on record, so the letter still names the specimen.
       'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.',
-      'Then signing must be switched on.',
     ]);
-    // switched on, a letter with a blank in it is still refused
+    // Switched off and unconfirmed, as it shipped before 11 Nov 2026, the owner-neutral words come first.
+    assert.deepEqual(signingMissing({ ...ENGAGEMENT_SIGNING, enabled: false, signature_confirmed: false }, real)[0],
+      'We must first confirm that typing your name is a good enough way to sign this letter.');
+    // switched on, a letter with specimen wording in it is still refused
     assert.deepEqual(signingMissing(SIGNING_ON, real), ['Some terms in the letter are not settled yet, so it cannot be signed.',
       'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.']);
     const x = await signingWorld(); t.after(() => x.w.made.close());
     const r = signEngagement(x.deps, x.actor, x.biz, { full_name: 'Ada Lovelace', role: 'Director', authorised: true, letter_sha256: real.sha256 }, { ip: '203.0.113.9', session_id: x.session });
-    assert.deepEqual(r, { ok: false, why: 'Signing is not switched on yet. Our solicitor must confirm that typing your name is a good enough way to sign this letter.' });
+    assert.deepEqual(r, { ok: false, why: 'This letter cannot be signed yet. Some terms in the letter are not settled yet, so it cannot be signed.' });
     assert.equal(x.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures WHERE business_id = ?', [x.biz])?.n, 0);
     assert.equal(assertSignedEngagement(x.db, x.biz).signed, false);
   });
@@ -439,7 +443,7 @@ describe('5 · the built-in signature', () => {
     assert.equal(w.made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM engagement_signatures WHERE origin <> 'SEED'")?.n, 0);
   });
 
-  test('the portal draws the form with the letter’s fingerprint, and pressing Sign today says why it is not switched on', async (t) => {
+  test('the portal draws the form with the letter’s fingerprint, and pressing Sign today says why this client’s letter cannot be signed yet', async (t) => {
     const x = await signingWorld(); t.after(() => x.w.made.close());
     const cookieJar: string[] = [];
     const req = async (path: string, body?: URLSearchParams) => {
@@ -459,7 +463,8 @@ describe('5 · the built-in signature', () => {
     assert.match(pageR.body, /name="authorised"/);
     const post = await req('/portal/letter/sign', new URLSearchParams({ full_name: 'Ada Lovelace', signer_role: 'Director', authorised: 'on', letter_sha256: real.sha256 }));
     assert.equal(post.status, 400);
-    assert.match(post.body, /Signing is not switched on yet/);
+    assert.match(post.body, /This letter cannot be signed yet/);
+    assert.doesNotMatch(post.body, /Signing is not switched on yet/);
     assert.equal(x.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures WHERE business_id = ?', [x.biz])?.n, 0);
   });
 });
@@ -497,13 +502,14 @@ describe('6 · Google Analytics: the id is configuration, and the policy widens 
 /* ================================================================== the lists */
 
 describe('the stub list and the switches say what is true', () => {
-  test('the signature entry names the built-in signature and says it is off; the email entry names IONOS', () => {
+  test('the signature entry names the built-in signature and says it is on since 11 Nov 2026; the email entry names IONOS', () => {
     const sig = STUBS.find((s) => s.id === 'signature');
     assert.equal(sig?.module, 'src/modules/claims/signing.ts');
-    assert.match(sig?.what ?? '', /BUILT IN by Phase 146f and switched off/);
+    assert.match(sig?.what ?? '', /BUILT IN by Phase 146f and switched on since 11 Nov 2026/);
     assert.match(STUBS.find((s) => s.id === 'email')?.what ?? '', /pointed it at IONOS/);
   });
-  test('ENGAGEMENT_SIGNING is stamped on every claim, off', () => {
-    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'ENGAGEMENT_SIGNING'), { switch: 'ENGAGEMENT_SIGNING', on: false, home: 'src/modules/claims/signing.ts' });
+  test('ENGAGEMENT_SIGNING is stamped on every claim, on since 11 Nov 2026; FEE_CLAWBACK too', () => {
+    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'ENGAGEMENT_SIGNING'), { switch: 'ENGAGEMENT_SIGNING', on: true, home: 'src/modules/claims/signing.ts' });
+    assert.deepEqual(backendSwitchReadings().find((s) => s.switch === 'FEE_CLAWBACK'), { switch: 'FEE_CLAWBACK', on: true, home: 'src/modules/claims/claim-record.ts' });
   });
 });

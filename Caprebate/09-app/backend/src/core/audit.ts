@@ -384,6 +384,12 @@ export type AuditKind =
    */
   | 'IDENTITY_CHECK_SENT' | 'IDENTITY_CHECK_NOT_SENT' | 'IDENTITY_RESULT_RECEIVED' | 'IDENTITY_RESULT_REFUSED'
   /**
+   * Phase 161m1: an Admin sent a check to someone who is not a director or an owner of the client as we hold them, for
+   * that one check: the check, the organisation and contact ids, the rule's code and the Admin's reason (screened, as a
+   * take-back's is). Written beside the IDENTITY_CHECK_SENT row, which says `rule_bypassed`.
+   */
+  | 'IDENTITY_CHECK_RULE_BYPASSED'
+  /**
    * WhatsApp with each client (src/modules/crm/whatsapp.ts). Sent, or not sent and why; received and filed (or left
    * for a person to file); a webhook body refused because Meta's signature did not hold; filed by hand. Ids, counts and
    * outcomes only — NEVER a number or the words.
@@ -447,7 +453,8 @@ export type AuditKind =
   | 'AUTHORISATION_REFUSED'
   /** A signed-in person's form refused for a missing, wrong or used token (src/core/form-token.ts). */
   | 'FORM_TOKEN_REFUSED'
-  /** An admin recorded a solicitor's or the DPO's approval of a legal page's version (src/modules/compliance/legal-approvals.ts). */
+  /** An admin recorded the DPO's approval of a legal page's version (src/modules/compliance/legal-approvals.ts). Before
+   *  Phase 161m1 it could also be a solicitor's; those entries stay as they were. */
   | 'LEGAL_PAGE_APPROVED'
   /** A client ticked that they have read the portal terms, the website terms and the privacy policy; the versions are kept. */
   | 'TERMS_AGREED'

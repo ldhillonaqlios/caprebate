@@ -54,23 +54,39 @@ let built: readonly RuleEntry[] | undefined;
 export function claimsRules(): readonly RuleEntry[] {
   if (built !== undefined) return built;
   built = defineRules('claims', [
-    switchEntry({ id: 'claims.FEE_CLAWBACK', title: 'Our fee follows a claim HMRC reduces (clause 13)', approver: 'the solicitor', approval: OFF,
+    switchEntry({ id: 'claims.FEE_CLAWBACK', title: 'Our fee follows a claim HMRC reduces (the fee adjustment clause)', approver: 'Lakhbir', approval: 'On: approved by Lakhbir on 11 Nov 2026 (no solicitor).',
+      version: 2, effective_from: '2026-11-11',
+      change: 'Switched on. Lakhbir decided the last two terms of clause 13 (any reduction counts; a settlement the client accepts counts) ' +
+        'and approved the engagement letter\'s final wording ("Approved, switch on", 11 Nov 2026). A reduced claim now raises the finance task, ' +
+        'and the clause 13 credit note can be issued. Before, it was off and nothing happened when a claim was reduced.',
       settings: FEE_CLAWBACK, home: `${HOME}claim-record.ts`, tested_in: 'test/claims/claim-record.test.ts' }),
     switchEntry({ id: 'claims.CONVEYANCING_STRIP', title: 'Company names are kept on conveyancing papers', approver: 'the data protection officer', approval: OFF,
       settings: CONVEYANCING_STRIP, home: `${HOME}conveyancing-strip.ts`, tested_in: 'test/compliance/data-protection-switches.test.ts' }),
     switchEntry({ id: 'claims.FEE_CONTROLS.above_benefit', title: 'What happens when our fee is more than the benefit', approver: 'Lakhbir', approval: OFF,
       settings: FEE_CONTROLS.above_benefit, home: `${HOME}fee-controls.ts`, tested_in: 'test/finance/invoices-and-fee-controls.test.ts' }),
-    switchEntry({ id: 'claims.FEE_CONTROLS.break_and_abort', title: 'The break fee and the abort fee', approver: 'Lakhbir', approval: OFF,
-      settings: FEE_CONTROLS.break_and_abort, home: `${HOME}fee-controls.ts`, tested_in: 'test/finance/invoices-and-fee-controls.test.ts' }),
+    switchEntry({ id: 'claims.FEE_CONTROLS.break_and_abort', title: 'The break fee and the abort fee', approver: 'Lakhbir',
+      approval: 'Off, and kept off on Lakhbir\'s word (11 Nov 2026): "we shouldnt charge anyone first its only the 3% admin can send invoices manually".',
+      version: 2, effective_from: '2026-11-11',
+      change: 'Its meaning changed, its value did not: on or off, the app no longer raises a break fee or an abort fee. ' +
+        'The finance page shows what clause 5 comes to (£995 a property, plus a booked surveyor\'s charges at cost, added by hand) and an admin raises it by hand. ' +
+        'Before, switched on, it raised one flat £995.',
+      settings: FEE_CONTROLS.break_and_abort, home: `${HOME}fee-controls.ts`, tested_in: 'test/finance/break-fee-by-hand.test.ts' }),
     switchEntry({ id: 'claims.FEE_CONTROLS.uplifts', title: 'The extra charges for complicated jobs', approver: 'Lakhbir', approval: OFF,
       settings: FEE_CONTROLS.uplifts ?? { enabled: false }, home: `${HOME}fee-controls.ts`, tested_in: 'test/claims/rate-card-uplifts.test.ts' }),
     switchEntry({ id: 'claims.MANDATORY_DOCUMENTS', title: 'The documents a claim needs before it moves on', approver: 'Lakhbir', approval: 'On, on Lakhbir\'s answer.',
       settings: MANDATORY_DOCUMENTS, home: `${HOME}mandatory-documents.ts`, tested_in: 'test/crm/introducer-source-claim-team.test.ts' }),
-    switchEntry({ id: 'claims.ENGAGEMENT_SIGNING', title: 'A client signs the engagement letter in the portal', approver: 'the solicitor',
-      approval: 'Not approved yet: built and switched off until the solicitor confirms a typed name is a good enough signature.',
+    switchEntry({ id: 'claims.ENGAGEMENT_SIGNING', title: 'A client signs the engagement letter in the portal', approver: 'Lakhbir',
+      approval: 'On: approved by Lakhbir on 11 Nov 2026 (no solicitor). He confirmed a typed name with a tick for authority is a good enough signature ("Yes, confirmed") and approved the letter\'s final wording ("Approved, switch on").',
+      version: 2, effective_from: '2026-11-11',
+      change: 'Switched on, and the signature confirmed. The field solicitor_confirmed is renamed signature_confirmed, because the owner confirmed it, not a solicitor. ' +
+        'A client login may now sign the real letter when it has no open terms and says which business signs. Signing from an emailed link stays off (Word question 246). ' +
+        'Before, both were false and no real letter could be signed.',
       settings: ENGAGEMENT_SIGNING, home: `${HOME}signing.ts`, tested_in: 'test/claims/signing-for-testing.test.ts' }),
-    switchEntry({ id: 'claims.ENGAGEMENT_SIGNING_TEST', title: 'Signing the test copy of the letter, on the test website only', approver: 'the solicitor',
+    switchEntry({ id: 'claims.ENGAGEMENT_SIGNING_TEST', title: 'Signing the test copy of the letter, on the test website only', approver: 'Lakhbir',
       approval: 'On for testing on Lakhbir\'s word (6 Oct 2026); the real letter cannot be signed under it.',
+      version: 2, effective_from: '2026-11-11',
+      change: 'Its meaning did not change: the field solicitor_confirmed is renamed signature_confirmed (still false here, still waived for the test copy). ' +
+        'Its waiver record gains a dated note that since 11 Nov 2026 the real letter has no blanks and ENGAGEMENT_SIGNING is on.',
       settings: ENGAGEMENT_SIGNING_TEST, home: `${HOME}signing.ts`, tested_in: 'test/claims/signing-for-testing.test.ts' }),
     switchEntry({ id: 'claims.DEFENCE_PACK_GENERATOR', title: 'Make the defence pack for an HMRC enquiry', approver: 'the tax adviser',
       approval: 'Not approved yet: built and switched off until the tax adviser signs off the defence pack.',

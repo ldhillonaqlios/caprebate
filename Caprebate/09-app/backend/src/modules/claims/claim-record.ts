@@ -1095,29 +1095,40 @@ export const ENQUIRY_OUTCOMES: Vocab = Object.freeze({
 export const CLAWBACK_QUESTION = 'If a claim is reduced after we have been paid, do we give the money back?';
 
 /**
- * CLAUSE 13 — THE FEE FOLLOWS THE CORRECTED FIGURE. SHIPPED OFF.
+ * CLAUSE 13: THE FEE FOLLOWS THE CORRECTED FIGURE. ON SINCE 11 NOVEMBER 2026.
  *
- * The letter's clause 13 now states the rule — a reduced claim is recalculated
- * and the difference credited or refunded — and leaves three terms blank: the
- * trigger, settlements, and the time limit. Built and switched off: while it is
- * off, an enquiry that reduces a claim raises nothing and the audit says why;
- * turned on while clause 13 still carries a blank, it still raises nothing. On,
- * with the clause complete, a reduction raises a finance task for Accounting.
- * Nothing here computes a credit: the fee is Caprebate's own finance.
+ * The letter's clause 13 states the rule: a reduced claim is recalculated and the
+ * difference credited or refunded. Its three terms are settled (Lakhbir, 11 Nov
+ * 2026, no solicitor): any reduction counts, a settlement the client accepts
+ * counts, and it lasts until HMRC can no longer open an enquiry. He approved the
+ * letter's final wording ("Approved, switch on"), so the switch is on. Off, an
+ * enquiry that reduces a claim raises nothing and the audit says why; on while
+ * clause 13 carries a blank, it still raises nothing. On, with the clause
+ * complete, a reduction raises a finance task for Accounting, and
+ * creditClause13 (src/modules/finance/invoices.ts) credits the difference.
  */
 export type FeeClawbackSwitch = {
   readonly enabled: boolean; readonly clause: string; readonly question: string;
-  /** What the owner decided, recorded. It moves no switch: the trigger and settlement terms are still blank. */
-  readonly decided: { readonly refund: 'YES'; readonly time_limit: string; readonly still_open: readonly string[]; readonly source: string };
+  /** What the owner decided, recorded. Nothing is still open since 11 Nov 2026. */
+  readonly decided: {
+    readonly refund: 'YES'; readonly time_limit: string;
+    /** Which reductions count (decided 11 Nov 2026). */
+    readonly trigger: string;
+    /** Whether a settlement the client accepts counts (decided 11 Nov 2026). */
+    readonly settlements: string;
+    readonly still_open: readonly string[]; readonly source: string;
+  };
 };
 
 export const FEE_CLAWBACK: FeeClawbackSwitch = Object.freeze({
-  enabled: false, clause: 'clause 13 — Fee Adjustment Where a Claim is Reduced', question: CLAWBACK_QUESTION,
+  enabled: true, clause: 'clause 13 — Fee Adjustment Where a Claim is Reduced', question: CLAWBACK_QUESTION,
   decided: Object.freeze({
     refund: 'YES' as const,
-    time_limit: 'for so long as the claim remains open to enquiry',
-    still_open: Object.freeze(['the trigger — any reduction, or only one above a threshold', 'whether it applies to a settlement the client accepts']),
-    source: 'The owner was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 now says “for so long as the claim remains open to enquiry”.',
+    time_limit: 'until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim',
+    trigger: 'any reduction, with no threshold',
+    settlements: 'a settlement the client accepts counts as a reduction',
+    still_open: Object.freeze([] as string[]),
+    source: 'The owner was asked if we give money back when a claim is reduced after we are paid. He said yes, with no time limit. Clause 13 said “for so long as the claim remains open to enquiry”; since Phase 161m1 (11 November 2026, the owner’s answer) it says “until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim”. On 11 November 2026 Lakhbir also decided the trigger (any reduction) and settlements (a settlement the client accepts counts), then approved the letter’s final wording: “Approved, switch on”. No solicitor.',
   }),
 });
 
@@ -1133,7 +1144,7 @@ export function clawbackReading(opts: { gate?: { readonly enabled: boolean }; op
   const blanks = clauseThirteenBlanks(opts.openTerms).map((t) => t.text);
   if (!gate.enabled) {
     return { applies: false, reason: 'SWITCH_OFF', blanks,
-      why: `Switched off. Nothing happens when a claim is reduced until clause 13 is complete. Still to answer: “${CLAWBACK_QUESTION}”` };
+      why: 'Switched off. Nothing happens when a claim is reduced while the switch is off.' };
   }
   if (blanks.length > 0) {
     return { applies: false, reason: 'CLAUSE_13_BLANK', blanks,

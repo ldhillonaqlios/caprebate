@@ -4,9 +4,9 @@
  * The stub provider that lived here (`stubSignatureProvider`, which contacted nothing and executed nothing) is gone.
  * the owner decided the engagement letter is signed inside the application, so the signature is built in:
  * src/modules/claims/signing.ts — the client types their full name and role, ticks that they may sign for the business, and
- * presses Sign; the record, its fingerprint in the audit chain and a signed PDF are kept. It is switched off
- * (ENGAGEMENT_SIGNING) until our solicitor confirms a typed name suits the letter and the letter's open terms are
- * settled.
+ * presses Sign; the record, its fingerprint in the audit chain and a signed PDF are kept. It is switched on
+ * (ENGAGEMENT_SIGNING) since 11 November 2026: Lakhbir confirmed a typed name suits the letter and approved the
+ * letter's final wording (no solicitor).
  *
  * WHAT IS LEFT HERE is the interface, for any other document a signature provider might one day carry, and the
  * built-in provider's description of itself. The surveyor's "commit figures" is not a signature and never was.
@@ -39,4 +39,4 @@ export function builtInSignatureProvider(ids: () => string): SignatureProvider {
 }
 
 export const SIGNATURE_NOTICE =
-  'The client signs in their portal. Signing is built in and not switched on yet.';
+  'The client signs in their portal. Signing is built in and switched on.';

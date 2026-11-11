@@ -12,7 +12,7 @@
  *   5  the signature drawn or adopted; the record's fingerprint covers it; the certificate of completion; the copy
  *   6  the smaller ones: Zoom (F5), the lead (F7), the next action (F9), the town (F8), the words (F1, F2, F4, F6, F13)
  *
- * Signing stays OFF (ENGAGEMENT_SIGNING): every signature here is made with the switch handed in by the test.
+ * Signing is ON since 11 Nov 2026 (ENGAGEMENT_SIGNING); every signature here is still made with the switch handed in by the test.
  * Everything is invented.
  */
 import { describe, test } from 'node:test';
@@ -56,7 +56,7 @@ import type { Actor } from '../../src/core/authz.ts';
 
 type TestApp = Awaited<ReturnType<typeof testApp>>;
 const T0 = '2026-10-06T09:00:00.000Z';
-const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, solicitor_confirmed: true, question: SIGNING_QUESTION });
+const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, signature_confirmed: true, question: SIGNING_QUESTION });
 const json = (status: number, body: object): Fixture => ({ status, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
 
 function staffUsers(a: TestApp): void {
@@ -402,9 +402,10 @@ const pdfText = (b: Uint8Array) => Buffer.from(b).toString('latin1');
 const hexOf = (s: string) => Buffer.from(s, 'latin1').toString('hex');
 
 describe('5 · a DocuSign-style signature: drawn or adopted, fingerprinted, with a certificate of completion', () => {
-  test('still OFF as shipped: the switch is false and the solicitor has not confirmed', () => {
-    assert.equal(ENGAGEMENT_SIGNING.enabled, false);
-    assert.equal(ENGAGEMENT_SIGNING.solicitor_confirmed, false);
+  test('ON as shipped since 11 Nov 2026: the switch is true and the signature confirmed (Lakhbir, no solicitor); links stay off', () => {
+    assert.equal(ENGAGEMENT_SIGNING.enabled, true);
+    assert.equal(ENGAGEMENT_SIGNING.signature_confirmed, true);
+    assert.equal(ENGAGEMENT_SIGNING.links, undefined, 'signing from an emailed link was switched on (Word question 246 is open)');
   });
 
   test('neither drawn nor adopted is refused, never assumed; a tap is too small; nonsense is no signature', async () => {

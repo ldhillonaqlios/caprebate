@@ -47,17 +47,17 @@ import { feeTriggerReached, liveFeeInvoiceCount, type FeeTrigger } from './fee-i
 import { clawbackReading, invoiceWindowNeed, signOffSinceEntry } from '../claims/index.ts';
 import { claimantTypeForGate } from '../assessment/index.ts';
 import { claimObjFor } from '../claims/index.ts';
-import { computeFee, controlsView, letterFee, letterFees, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type ControlsView, type FeeControls } from '../claims/index.ts';
+import { breakFeeGuide, computeFee, controlsView, letterFees, listClaimsEndedEarly, FEE_CONTROLS, PAYMENT_TERMS_QUESTION, type BreakFeeGuide, type ControlsView, type FeeControls } from '../claims/index.ts';
 import { ensureVatTask, expectedFees, monthStart, settingsView, vatForInvoice, vatReading, type SettingsView, type VatReading } from './vat.ts';
 import { feeVersusBenefit, type FeeVersusBenefit } from './finance.ts';
 import { assertFinanceSection, financeSectionObj } from './finance.permissions.ts';
 import { feeList, type FeeView } from '../clients/index.ts';
 import { announce } from '../../core/index.ts';
 import type { Letter } from '../claims/index.ts';
-import { getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../clients/index.ts';
+import { getBusinessesNameById, getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../clients/index.ts';
 import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../claims/index.ts';
-import { getInvoiceCreditNotesAVByInvoiceId, getInvoiceNumbersCOALESCEMAXSeqN, getInvoicePaymentsCountByInvoiceIdVoidedAt, getInvoicePaymentsIdInvoiceIdById, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimId, getInvoicesCountByClaimIdKind, getInvoicesIdByIdClaimId, insertInvoiceCreditNotes, insertInvoiceNumbers, insertInvoicePayments, insertInvoices, listInvoiceCreditNotesIdBasisByInvoiceId, listInvoiceCreditNotesInvoiceIdAmountPence, listInvoicePaymentsIdReceivedOnByInvoiceId, listInvoicePaymentsInvoiceIdAmountPenceByVoidedAt, updateInvoiceNumbersStateCancelledAtByInvoiceIdKind, updateInvoicePaymentsVoidedAtVoidedByById, updateInvoicesInvoiceStatusCancelledAtById, updateInvoicesInvoiceStatusSentOnById } from './data.ts';
-import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId } from './data.ts';
+import { getInvoiceCreditNotesAVByInvoiceId, getInvoiceNumbersCOALESCEMAXSeqN, getInvoicePaymentsCountByInvoiceIdVoidedAt, getInvoicePaymentsIdInvoiceIdById, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimId, getInvoicesIdByIdClaimId, insertInvoiceCreditNotes, insertInvoiceNumbers, insertInvoicePayments, insertInvoices, listInvoiceCreditNotesIdBasisByInvoiceId, listInvoiceCreditNotesInvoiceIdAmountPence, listInvoicePaymentsIdReceivedOnByInvoiceId, listInvoicePaymentsInvoiceIdAmountPenceByVoidedAt, updateInvoiceNumbersStateCancelledAtByInvoiceIdKind, updateInvoicePaymentsVoidedAtVoidedByById, updateInvoicesInvoiceStatusCancelledAtById, updateInvoicesInvoiceStatusSentOnById } from './data.ts';
+import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId, listInvoicesLiveBreakFeeByBusinessId } from './data.ts';
 import { resultVersions } from '../../shared/index.ts';
 import { rulesThroughFinance } from './logic/rules.ts';
 
@@ -373,10 +373,6 @@ function loadClaim(db: Db, id: string): ClaimRow {
   return c;
 }
 
-function liveInvoicesOfKind(db: Db, claim_id: string, kind: string): number {
-  return getInvoicesCountByClaimIdKind<{ n: number }>(db, [claim_id, kind])?.n ?? 0;
-}
-
 /**
  * RAISE AN INVOICE ON A CLAIM — ACCOUNTING OR ADMIN.
  *
@@ -439,43 +435,162 @@ export function raiseInvoice(d: InvoiceDeps, actor: Actor, claim_id: string, inp
     basis = `${f.basis}. From the tax adviser’s signed-off figure, signed on ${signoff.signed_on}. ` +
       `The fee controls when it was raised: ${f.readings.above_benefit}; ${f.readings.minimum_fee}; ${f.readings.multi_site_discount}; ${f.readings.break_and_abort}.`;
   } else {
-    const lf = letterFee(kind as 'BREAK_FEE' | 'ABORT_FEE', controls, opts.letter);
-    if (!lf.ok) return refuse(lf.code, lf.why);
-    const want = kind === 'BREAK_FEE' ? 'CLIENT_WITHDREW' : 'REASONED_NEGATIVE';
-    if (s.key !== want) {
-      return refuse('WRONG_STAGE', kind === 'BREAK_FEE'
-        ? 'The break fee is raised on a claim the client withdrew from (clause 5), and this claim has not exited that way.'
-        : 'The abort fee is raised on a claim that ended in a reasoned negative (clause 4), and this claim has not exited that way.');
-    }
-    if (liveInvoicesOfKind(d.db, c.id, kind) > 0) return refuse('LIVE_INVOICE_EXISTS', `This claim already has a live invoice for ${words(INVOICE_KINDS, kind, kind)}.`);
-    fee_pence = lf.fee_pence;
-    basis = `${lf.basis}. The fee controls when it was raised: ${Object.values(controlsView(controls, opts.letter).readings).join('; ')}.`;
+    /* PHASE 161m1 (Lakhbir, 11 November 2026): NEVER BY THE APP, WHATEVER THE SWITCH. This path used to raise clause 5's
+       break fee as one flat £995 when the break-and-abort switch was on. Now a break fee is raised only by an admin, by
+       hand, with the amount they enter (raiseBreakFeeByHand); and there is no abort fee, because clause 4 says no fee is
+       payable where no material claim is identified. Refused and audited, as every refusal here is. */
+    return kind === 'BREAK_FEE'
+      ? refuse('NOT_RAISED_BY_THE_APP', 'The app never raises a break fee by itself. If the client ended the agreement early, an admin raises it by hand, from the finance page.')
+      : refuse('NO_ABORT_FEE', 'There is no abort fee. The engagement letter says no fee is payable if no material claim is found, so nothing is raised.');
   }
 
-  const vat = vatForInvoice(d.db, fee_pence, today);
+  return writeInvoice(d, actor, c, { kind, figure, fee_pence, fee_rate, basis, warning, entity, at, today, letter: opts.letter, controls }, refuse);
+}
+
+type InvoiceFields = {
+  readonly kind: string; readonly figure: number | null; readonly fee_pence: number; readonly fee_rate: number | null;
+  readonly basis: string; readonly warning: string | null; readonly entity: 'company' | null; readonly at: string; readonly today: string;
+  readonly letter: LetterSource | undefined; readonly controls: FeeControls; readonly detail?: Record<string, unknown>;
+};
+
+/**
+ * THE INVOICE ITSELF, AS EVERY INVOICE IS WRITTEN: the VAT from the recorded position, the due date from clause 4, the
+ * next number in the series, the versions with it (migration 122), audited, and announced in the same transaction.
+ */
+function writeInvoice(
+  d: InvoiceDeps, actor: Actor, c: ClaimRow, f: InvoiceFields, refuse: (code: string, why: string) => InvoiceResult,
+): InvoiceResult {
+  const vat = vatForInvoice(d.db, f.fee_pence, f.today);
   if (!vat.ok) return refuse('VAT_POSITION_NOT_RECORDED', vat.why);
-  const terms = letterFees(opts.letter).payment_terms;
-  const due_on = terms.state === 'DAYS' ? addDaysToDate(today, terms.days) : null;
+  const terms = letterFees(f.letter).payment_terms;
+  const due_on = terms.state === 'DAYS' ? addDaysToDate(f.today, terms.days) : null;
   const due_basis = terms.state === 'DAYS'
     ? `due ${terms.label}`
     : `${DUE_UNSET} — ${terms.label} “${PAYMENT_TERMS_QUESTION}” is for the owner to decide.`;
 
   const id = d.newId();
+  const kind = f.kind;
   d.db.tx(() => {
-    insertInvoices(d.db, [id, c.business_id, c.id, kind, figure, fee_pence, fee_rate, 'RAISED', 'UNPAID', vat.words, vat.setting_id, vat.vat_pence,
-        today, due_on, due_basis, basis, warning, actor.id, at, entity,
+    insertInvoices(d.db, [id, c.business_id, c.id, kind, f.figure, f.fee_pence, f.fee_rate, 'RAISED', 'UNPAID', vat.words, vat.setting_id, vat.vat_pence,
+        f.today, due_on, due_basis, f.basis, f.warning, actor.id, f.at, f.entity,
         // Phase 161m: the engine's version and every rule's, with the invoice and never after (migration 122).
         JSON.stringify(resultVersions(rulesThroughFinance()))]);
-    const seq = allocateNumber(d.db, 'INVOICE', id, null, actor.id, at);
+    const seq = allocateNumber(d.db, 'INVOICE', id, null, actor.id, f.at);
     // The kind, the number and whether a due date was set — never an amount.
     record(d, actor, 'INVOICE_RAISED', 'invoice', id, 'ALLOWED', {
-      kind, number: formatInvoiceNumber(seq), claim_id: c.id, due: due_on === null ? DUE_UNSET : 'SET',
+      kind, number: formatInvoiceNumber(seq), claim_id: c.id, due: due_on === null ? DUE_UNSET : 'SET', ...(f.detail ?? {}),
     });
-    ensureVatTask(d.db, d.now, d.newId, vatReading(d.db, at, { controls }), actor.id);
+    ensureVatTask(d.db, d.now, d.newId, vatReading(d.db, f.at, { controls: f.controls }), actor.id);
     // Told in the same transaction: reward model C accrues its percentage on the fee AS INVOICED (the CRM listens).
     announce({ ...d, actor }, 'finance', 'invoice.raised', { invoice_id: id, kind });
   });
   return { ok: true, id };
+}
+
+/* ================================================================== *
+ * 5a · THE BREAK FEE, RAISED BY HAND — ADMIN ALONE (Phase 161m1)
+ * ================================================================== */
+
+/** The stages at which a client may have ended the agreement early: withdrew, or cancelled. */
+export const ENDED_EARLY_STAGES: readonly string[] = Object.freeze(['CLIENT_WITHDREW', 'CANCELLED']);
+
+/** The most a break fee typed by hand may be: a slip of the keyboard, not a decision. */
+export const BREAK_FEE_BY_HAND_MAX_PENCE = 1_000_000_00;
+
+/**
+ * RAISE CLAUSE 5'S BREAK FEE BY HAND. ADMIN ALONE (`invoice.raise_by_hand`), on a claim the client ended early, with the
+ * amount the admin enters: the guide (breakFeeGuide) is shown beside the field and pre-fills it, and the admin may change
+ * it, because the surveyor's charges are added by hand. One live break fee an agreement. Every refusal is audited, as
+ * raiseInvoice's are; the invoice is sealed and numbered as every invoice is, and carries the versions it was raised with.
+ * The audit records that the amount was typed and whether it matched the guide, never the amount (it is on the invoice).
+ */
+export function raiseBreakFeeByHand(d: InvoiceDeps, actor: Actor, claim_id: string, input: Fields, opts: InvoiceOptions = {}): InvoiceResult {
+  const c = loadClaim(d.db, claim_id);
+  authorise(actor, 'invoice.raise_by_hand', { type: 'invoice', id: c.id, business_id: c.business_id });
+  const kind = 'BREAK_FEE';
+  const refuse = (code: string, why: string, field?: string): InvoiceResult => {
+    record(d, actor, 'INVOICE_RAISED', 'claim', c.id, 'REFUSED', { kind, by_hand: true, reason_code: code });
+    return field === undefined ? { ok: false, why } : { ok: false, why, field };
+  };
+  const s = claimStage(c.stage);
+  if (s.key === null || !ENDED_EARLY_STAGES.includes(s.key)) {
+    return refuse('NOT_ENDED_EARLY', `A break fee is raised only on a claim the client ended early (withdrew or cancelled). This claim is at ${s.label}.`);
+  }
+  if (listInvoicesLiveBreakFeeByBusinessId<{ id: string }>(d.db, [c.business_id]).length > 0) {
+    return refuse('LIVE_INVOICE_EXISTS', 'This client already has a break fee invoice. To change it, issue a credit note first.');
+  }
+  const raw = clean(input['amount']);
+  const pounds = raw === null ? Number.NaN : Number(raw.replace(/[£,\s]/g, ''));
+  const pence = Number.isFinite(pounds) && pounds > 0 ? toPence(pounds) : null;
+  if (pence === null || pence <= 0) return refuse('NO_AMOUNT', 'Enter the break fee in pounds.', 'amount');
+  if (pence > BREAK_FEE_BY_HAND_MAX_PENCE) return refuse('AMOUNT_TOO_LARGE', `That is more than ${formatPence(BREAK_FEE_BY_HAND_MAX_PENCE)}. Check the amount.`, 'amount');
+  const note = clean(input['note']);
+  if (note !== null && note.length > 2000) return refuse('NOTE_TOO_LONG', 'The note is longer than we store: 2,000 characters is the limit.', 'note');
+
+  const guide = endedEarlyGuide(d.db, c.business_id, opts.letter);
+  const matches = guide.letter_pence !== null && guide.letter_pence === pence;
+  const at = d.now();
+  const exact = `£${(pence / 100).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const basis = `The break fee, clause 5, raised by hand by an admin: ${exact}. ` +
+    `The guide on the day: ${guide.lines.join(' ')} ${matches ? 'The amount is the guide’s.' : 'The amount was entered by hand.'}` +
+    (note === null ? '' : ` The admin’s note: ${note}`);
+  return writeInvoice(d, actor, c, {
+    kind, figure: null, fee_pence: pence, fee_rate: null, basis, warning: null, entity: null, at, today: localDate(at),
+    letter: opts.letter, controls: opts.controls ?? FEE_CONTROLS, detail: { by_hand: true, amount: 'ENTERED_BY_HAND', matches_guide: matches },
+  }, refuse);
+}
+
+type EndedRow = { id: string; claim_ref: string; business_id: string; stage: string; property_id: string | null; surveyor_id: string | null };
+
+/** The break-fee guide for one client: the properties on the claims they ended early, and any surveyor recorded. */
+function endedEarlyGuide(db: Db, business_id: string, letter?: LetterSource): BreakFeeGuide {
+  return guideFor(listClaimsEndedEarly<EndedRow>(db).filter((r) => r.business_id === business_id), letter);
+}
+
+function guideFor(rows: readonly EndedRow[], letter?: LetterSource): BreakFeeGuide {
+  return breakFeeGuide({
+    properties: new Set(rows.map((r) => r.property_id).filter((p): p is string => p !== null)).size,
+    claims_without_property: rows.filter((r) => r.property_id === null).length,
+    surveyor_recorded: rows.some((r) => r.surveyor_id !== null),
+  }, letter);
+}
+
+/** One client who ended early, as the finance page shows it. */
+export type EndedEarlyClient = {
+  readonly business_id: string;
+  readonly client_name: string;
+  readonly claims: readonly { readonly id: string; readonly claim_ref: string; readonly stage: string }[];
+  /** The claim the break fee is raised on: the first of them. */
+  readonly raise_on: string;
+  readonly guide: BreakFeeGuide;
+  /** The guide's figure in pounds, to pre-fill the admin's field; empty where the guide has none. */
+  readonly prefill: string;
+  /** The live break fee invoice already raised for this client, if one is. */
+  readonly invoice: { readonly id: string; readonly claim_id: string } | null;
+  readonly may_raise_by_hand: boolean;
+};
+
+/** Every client with a claim they ended early that this actor may read, with the break-fee guide. */
+export function endedEarlyClients(db: Db, actor: Actor, opts: { letter?: LetterSource } = {}): EndedEarlyClient[] {
+  const rows = listClaimsEndedEarly<EndedRow>(db)
+    .filter((r) => can(actor, 'claim.read', claimObjFor(db, { id: r.id, business_id: r.business_id })));
+  const byClient = new Map<string, EndedRow[]>();
+  for (const r of rows) byClient.set(r.business_id, [...(byClient.get(r.business_id) ?? []), r]);
+  return [...byClient.entries()].map(([business_id, claims]) => {
+    const guide = guideFor(claims, opts.letter);
+    const live = listInvoicesLiveBreakFeeByBusinessId<{ id: string; claim_id: string }>(db, [business_id])[0];
+    const first = claims[0] as EndedRow;
+    return {
+      business_id,
+      client_name: getBusinessesNameById<{ name: string }>(db, [business_id])?.name ?? '',
+      claims: claims.map((r) => ({ id: r.id, claim_ref: r.claim_ref, stage: claimStage(r.stage).label })),
+      raise_on: first.id,
+      guide,
+      prefill: guide.letter_pence === null ? '' : (guide.letter_pence / 100).toFixed(2),
+      invoice: live === undefined ? null : { id: live.id, claim_id: live.claim_id },
+      may_raise_by_hand: live === undefined && can(actor, 'invoice.raise_by_hand', { type: 'invoice', id: first.id, business_id }),
+    };
+  });
 }
 
 /* ================================================================== *
@@ -565,7 +680,7 @@ export function creditInFull(d: InvoiceDeps, actor: Actor, id: string, input: Fi
 
 /**
  * CLAUSE 13 — THE FEE RECALCULATED ON THE CORRECTED FIGURE. CRM 6 of 10's
- * FEE_CLAWBACK is the switch and it is OFF; while it is off, or clause 13 is blank,
+ * FEE_CLAWBACK is the switch and it is ON since 11 Nov 2026; while it is off, or clause 13 is blank,
  * this refuses and is audited as that module audits it. On, it reads the reduced
  * figure from the claim's closed HMRC enquiry and credits the difference — the
  * calculation the letter says the client can perform.
@@ -693,6 +808,8 @@ export type FinanceDashboard = {
   readonly settings: SettingsView;
   readonly may_record_setting: boolean;
   readonly controls: ControlsView;
+  /** Phase 161m1: the clients who ended early, each with the break-fee guide. Nothing is raised from it by itself. */
+  readonly ended_early: readonly EndedEarlyClient[];
   /** Model B's fees to a firm — listed, never paid from here. */
   readonly introducer_fees: readonly FeeView[];
   readonly recorded_not_collected: string;
@@ -773,6 +890,7 @@ export function financeDashboard(db: Db, actor: Actor, nowIso: string, opts: Inv
     settings: settingsView(db, actor, today),
     may_record_setting: can(actor, 'finance_setting.write', financeSectionObj()),
     controls: controlsView(opts.controls ?? FEE_CONTROLS, opts.letter),
+    ended_early: endedEarlyClients(db, actor, opts.letter === undefined ? {} : { letter: opts.letter }),
     introducer_fees: feeList(db, actor),
     recorded_not_collected: RECORDED_NOT_COLLECTED,
   };

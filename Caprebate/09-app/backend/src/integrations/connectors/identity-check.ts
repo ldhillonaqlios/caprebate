@@ -35,6 +35,13 @@
  * BEFORE A REAL CLIENT IS CHECKED: publish the notice naming Didit, put Didit into clause 7, set both `named_in_*` to
  * true, and set `papers_waived_for_testing` to false. The waiver is never a substitute for the papers.
  *
+ * THE LETTER NAMES DIDIT, Phase 161m1 (11 Nov 2026). Lakhbir: "mention didit". Clause 18 of the engagement letter
+ * (identity check and reliance) now says the check is carried out by Didit, our identity-check provider, as our privacy
+ * notice describes. So `named_in_engagement_letter` is TRUE, recorded as version 2 of integrations.IDENTITY_CHECK in
+ * the rules register. The privacy notice lists Didit (OUTSIDE_SERVICES) but is still a DRAFT, not published, so
+ * `named_in_privacy_notice` stays FALSE, the waiver stays, and the screens still say "Testing only", naming the
+ * notice alone. Nothing is switched on by this.
+ *
  * WHAT IS SENT. The check we set up (its workflow id), an opaque reference to our check, and the first and last name
  * of the person, as the name Didit should expect to find on the document. Never an address, a company, a claim, a
  * figure, an email or a phone number. The client's documents and selfie go from their phone to Didit, never through us.
@@ -71,7 +78,7 @@ export type IdentityCheckConfig = {
   readonly provider: IdentityProvider | null;
   /** The provider is named as a processor in the published privacy notice. */
   readonly named_in_privacy_notice: boolean;
-  /** The provider is named as a processor in clause 7 of the engagement letter. */
+  /** The provider is named in the engagement letter (clause 18 since Phase 161m1). */
   readonly named_in_engagement_letter: boolean;
   /**
    * TESTING ONLY. A person's decision to send checks before the two papers above name the provider. It never makes
@@ -98,7 +105,8 @@ export const IDENTITY_CHECK: IdentityCheckConfig = Object.freeze({
   enabled: true,
   provider: 'DIDIT',
   named_in_privacy_notice: false,
-  named_in_engagement_letter: false,
+  // Clause 18 of the letter names Didit (Phase 161m1, 11 Nov 2026); the privacy notice is still a draft
+  named_in_engagement_letter: true,
   papers_waived_for_testing: true,
   waiver_record: 'The owner said it on 25 September 2026, in the chat with Claude. He is Head of Business Development. ' +
     'He said: "switch it on we are still in a testing enviroment". The privacy notice is a draft. It is not published. Clause 7 names Didit only in a comment.',
@@ -113,7 +121,7 @@ export function identityCheckMissing(cfg: IdentityCheckConfig, secrets: SecretSt
   const out: string[] = [];
   if (cfg.provider === null) out.push('Choose the identity check service.');
   if ((cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true) && cfg.papers_waived_for_testing !== true) {
-    out.push('Name that service in the privacy notice and in the engagement letter.');
+    out.push(`Name that service in ${papersNotNaming(cfg)}.`);
   }
   const mine = secrets.forOwner('DIDIT_IDV');
   if (!IDENTITY_KEYS.every((k) => mine.has(k))) out.push('Add the identity check service’s keys to the server.');
@@ -126,11 +134,20 @@ export function sentUnderTestingWaiver(cfg: IdentityCheckConfig): boolean {
   return cfg.papers_waived_for_testing === true && (cfg.named_in_privacy_notice !== true || cfg.named_in_engagement_letter !== true);
 }
 
+/** The papers that do not name the service yet, in words: "the privacy notice", "the engagement letter", or both. */
+function papersNotNaming(cfg: IdentityCheckConfig): string {
+  const notice = cfg.named_in_privacy_notice !== true;
+  const letter = cfg.named_in_engagement_letter !== true;
+  return notice && letter ? 'the privacy notice and in the engagement letter' : notice ? 'the privacy notice' : 'the engagement letter';
+}
+
 /** The words every screen that can send a check shows while it would be sent under the waiver. Null otherwise. */
 export function identityTestingWarning(cfg: IdentityCheckConfig): string | null {
-  return sentUnderTestingWaiver(cfg)
-    ? `Testing only. Our privacy notice and our engagement letter do not name ${IDENTITY_PROVIDER_NAME} yet. Check yourself or a colleague who agrees. Never check a client.`
-    : null;
+  if (!sentUnderTestingWaiver(cfg)) return null;
+  const notice = cfg.named_in_privacy_notice !== true;
+  const letter = cfg.named_in_engagement_letter !== true;
+  const which = notice && letter ? 'Our privacy notice and our engagement letter do not' : notice ? 'Our published privacy notice does not' : 'Our engagement letter does not';
+  return `Testing only. ${which} name ${IDENTITY_PROVIDER_NAME} yet. Check yourself or a colleague who agrees. Never check a client.`;
 }
 
 export type IdentityStart =

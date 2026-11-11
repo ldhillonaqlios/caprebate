@@ -7,6 +7,8 @@
  * who and when; with keys a check is sent and its audit row says it went under the waiver; the screen says "Testing
  * only ... Never check a client"; and the gate still works — take the waiver away with the papers undone and nothing is
  * sent. Recorded answers, INVENTED, no key and no network.
+ * PHASE 161m1, 11 November 2026: clause 18 of the engagement letter names Didit, so `named_in_engagement_letter` is true
+ * (version 2 of the rule); the notice is still a draft, so its flag stays false and the waiver stays.
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
@@ -35,6 +37,8 @@ async function world() {
   const s = await seed(made.app.db, made.app.hasher, made.app.now);
   const admin = { id: s.users.find((u) => u.role === 'ADMIN')!.id, role: 'ADMIN', business_id: null, disabled: false } as Actor;
   const c = made.app.db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM contacts ORDER BY id LIMIT 1')!;
+  /* Phase 161m1: a check goes only to a director or an owner of the client, in their own name (identity-who.ts), so the seed's contact is made the client's "Owner / director", named as typed. */
+  made.app.db.run("UPDATE contacts SET full_name = 'Ada Invented', job_role = 'owner_director' WHERE id = ?", [c.id]);
   const audit = (kind: string) => made.app.db.all<{ detail: string }>('SELECT detail FROM audit_log WHERE kind = ? ORDER BY seq', [kind]);
   return { app: made.app, admin, c, audit, close: made.close };
 }
@@ -43,7 +47,8 @@ describe('151h · on for testing, the papers waived — and saying so everywhere
   test('it ships on, the papers are still NOT named, and the waiver says who decided it and when', () => {
     assert.equal(IDENTITY_CHECK.enabled, true);
     assert.equal(IDENTITY_CHECK.named_in_privacy_notice, false, 'the notice is a draft, not published: the flag must not say otherwise');
-    assert.equal(IDENTITY_CHECK.named_in_engagement_letter, false, 'clause 7 names Didit only in a comment: the flag must not say otherwise');
+    // Phase 161m1: clause 18 of the engagement letter names Didit now (version 2 of integrations.IDENTITY_CHECK)
+    assert.equal(IDENTITY_CHECK.named_in_engagement_letter, true, 'clause 18 of the letter names Didit');
     assert.equal(IDENTITY_CHECK.papers_waived_for_testing, true);
     assert.match(IDENTITY_CHECK.waiver_record ?? '', /The owner.*25 September 2026.*testing/);
     assert.equal(sentUnderTestingWaiver(IDENTITY_CHECK), true);
@@ -87,7 +92,9 @@ describe('151h · on for testing, the papers waived — and saying so everywhere
       const r = await sendIdentityCheck({ app: w.app, newId: () => 'idc-151h-x' }, w.admin,
         { business_id: w.c.business_id, contact_id: w.c.id, cdd_check_id: null, first_name: 'Ada', last_name: 'Invented' }, { config: unwaived });
       assert.equal(r.ok, false);
-      assert.match(r.ok ? '' : r.why, /privacy notice and in the engagement letter/);
+      // the letter names Didit now (Phase 161m1), so only the notice is missing, and the refusal names it alone
+      assert.match(r.ok ? '' : r.why, /Name that service in the privacy notice\./);
+      assert.doesNotMatch(r.ok ? '' : r.why, /engagement letter/);
       assert.equal(identityTestingWarning(unwaived), null);
       const papersDone: IdentityCheckConfig = Object.freeze({ ...IDENTITY_CHECK, named_in_privacy_notice: true, named_in_engagement_letter: true });
       assert.equal(identityTestingWarning(papersDone), null, 'with the papers done, nothing is sent under a waiver and no warning shows');

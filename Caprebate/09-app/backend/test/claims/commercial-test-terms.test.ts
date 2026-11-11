@@ -3,9 +3,10 @@
  * solicitor to check. The back end's half; the papers are in OneDrive (06-commercial-and-governance, 08-monday-doc-exports).
  *
  *   line 1        Word question 23  — a fixed disposal fee from the job cost model, never a percentage; a test default
- *   lines 2, 3, 7 Word questions 33, 34, 196 — the TEST-ONLY engagement letter: clauses 5, 7(d) and 13 filled, each
- *                 "test default, not agreed"; shown by the test website alone; never signed; the real letter untouched
- *                 (line 3's refund run against it is in test/finance/invoices-and-fee-controls.test.ts, beside the refund's own test)
+ *   lines 2, 3, 7 Word questions 33, 34, 196 — the TEST-ONLY engagement letter: clauses 5, 7(d) and 13 were filled, each
+ *                 "test default, not agreed"; shown by the test website alone; never signed. PHASE 161m1 (11 November 2026):
+ *                 the owner decided every term, so the real letter has no blank and the test copy is the real letter word
+ *                 for word with its one header line (line 3's refund run against it is in test/finance/invoices-and-fee-controls.test.ts)
  *   line 5        Word question 45  — the money-laundering check's test defaults: a low/medium/high level, 25%, and
  *                 ordinary partnerships, LLPs and trusts
  */
@@ -25,6 +26,7 @@ import * as A from '../../src/modules/compliance/compliance-aml.ts';
 import type * as C from '../../src/modules/compliance/compliance.ts';
 import { actor, testApp } from '../helpers.ts';
 import { plainDashText } from '../../src/shared/plain-dashes.ts';
+import { readZipEntry, DOCX_DOCUMENT_ENTRIES } from '../../src/shared/zip.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
 const T0 = '2026-10-04T09:00:00.000Z';
@@ -48,51 +50,89 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
   const testCopy = loadLetter({ path: TEST_LETTER_PATH });
   const clause = (l: typeof real, n: string) => l.paragraphs.map((p) => p.text).join('\n').split(/\n(?=\d{1,2}\.\s)/).find((s) => s.startsWith(`${n}. `)) ?? '';
 
-  test('THE REAL LETTER IS UNTOUCHED: its clause 5, 7(d) and 13 brackets are still there, and it is not a test copy', () => {
+  test('PHASE 161m1: THE REAL LETTER HAS NO BLANK LEFT: every term decided by the owner, and it is not a test copy', () => {
     assert.equal(real.test_copy, false);
-    const open = real.openTerms.map((t) => `${t.clause.split(' —')[0]} ${t.text}`);
-    assert.ok(open.some((t) => t.startsWith('clause 5 ') && t.includes('[X]')));
-    assert.ok(open.some((t) => t.startsWith('clause 7 ') && t.includes('named in our privacy notice /')));
-    assert.equal(real.openTerms.filter((t) => /^clause 13 —/.test(t.clause)).length, 2);
+    assert.deepEqual(real.openTerms, []);
+    assert.ok(!real.paragraphs.some((p) => p.text.includes('[')), 'a square bracket is left in the real letter');
     assert.ok(!real.paragraphs.some((p) => p.text.includes(TEST_DEFAULT_MARK)));
   });
 
-  test('THE TEST COPY: clause 5 is £995 a property plus a booked surveyor at cost; 7(d) names the privacy notice; 13 is any reduction and counts settlements — each marked', () => {
+  test('THE TEST COPY IS THE REAL LETTER WORD FOR WORD, with one line under the title: for the test system only, never sent to a client', () => {
     assert.equal(testCopy.test_copy, true);
     // PHASE 160d: the letter is drawn without long dashes; the mark is still read from the document's own words.
-    assert.ok(testCopy.paragraphs.some((p) => p.text.startsWith(plainDashText(TEST_COPY_MARK))));
-    assert.equal(testCopy.test_copy, true);
+    const header = testCopy.paragraphs[1]?.text ?? '';
+    assert.ok(header.startsWith(plainDashText(TEST_COPY_MARK)));
+    assert.equal(header, 'TEST COPY: for the test system only. This copy is never sent to a client.');
+    assert.doesNotMatch(header, /solicitor/);
+    assert.deepEqual(testCopy.paragraphs.filter((_, i) => i !== 1), real.paragraphs, 'the test copy differs from the real letter beyond its header line');
+    assert.deepEqual(testCopy.openTerms, []);
+    assert.ok(!testCopy.paragraphs.some((p) => p.text.includes(TEST_DEFAULT_MARK)));
+    // The terms the copy used to carry as test defaults are now the real letter's own words.
     const fees = letterFees(testCopy);
     assert.equal(fees.break_fee.state, 'SET');
     assert.equal(fees.break_fee.state === 'SET' ? fees.break_fee.pence : 0, 99_500);
-    assert.match(clause(testCopy, '5'), /£995 per property .*plus the charges of any surveyor already booked for the claim, at cost \(test default, not agreed\)/);
-    assert.match(testCopy.paragraphs.map((p) => p.text).join('\n'), /they are named in our privacy notice \(test default, not agreed\)/);
+    assert.match(clause(testCopy, '5'), /£995 per property .*plus the charges of any surveyor already booked for the claim, at cost, in addition/);
     const text = testCopy.paragraphs.map((p) => p.text).join('\n');
-    assert.match(text, /this clause applies to any reduction \(test default, not agreed\)/);
-    assert.match(text, /accepts a settlement with HM Revenue and Customs \(test default, not agreed\)/);
-    assert.equal(testCopy.openTerms.filter((t) => /^clause (5|13) —/.test(t.clause)).length, 0);
-    assert.equal(testCopy.openTerms.filter((t) => t.text.includes('privacy notice')).length, 0);
-    // Only the three: every other open term of the real letter is still open in the copy.
-    assert.deepEqual(testCopy.openTerms.map((t) => t.text),
-      real.openTerms.filter((t) => !/^clause (5|13) —/.test(t.clause) && !t.text.includes('privacy notice')).map((t) => t.text));
+    assert.match(text, /they are named in our privacy notice\./);
+    assert.match(text, /this clause applies to any reduction in the capital allowances identified/);
+    assert.match(text, /applies where the Client accepts a settlement with HM Revenue and Customs/);
   });
 
-  test('line 3: with clause 13 filled the refund applies once switched on; it is still off as shipped', () => {
+  test("PHASE 161m1, THE OWNER'S ANSWERS (11 November 2026): the review note's points written into the letter, and its two reviewer comments gone", () => {
+    const text = real.paragraphs.map((p) => p.text).join('\n');
+    // 1 and 9: clause 1 supersedes any other document, and the Client is a business.
+    assert.match(clause(real, '1'), /It supersedes any engagement form, terms of business or other document issued about the Services, and where any of them differs from this Agreement, this Agreement prevails\./);
+    assert.match(clause(real, '1'), /in the course of its business, trade or profession and not as a consumer\./);
+    assert.doesNotMatch(text, /accompanying Terms of Business/);
+    assert.match(clause(real, '11'), /Where any such document differs from this Agreement, this Agreement prevails\./);
+    // Clause 4: the 3% is the only fee, nothing up front; the introducer disclosure.
+    assert.match(clause(real, '4'), /It is the only fee we charge for the Services\./);
+    assert.match(clause(real, '4'), /We take no payment up front\./);
+    assert.match(clause(real, '4'), /we may pay that firm an introduction fee out of our own fee\. It does not increase what the Client pays, and we will tell the Client the amount if asked\./);
+    // Clause 5: the current test, invoiced only on early termination, still £995 a property plus a booked surveyor at cost.
+    assert.match(clause(real, '5'), /protects our legitimate interest in recovering the costs we commit to when we are instructed.*proportionate to those costs/s);
+    assert.match(clause(real, '5'), /only on an invoice we send after that happens\. Nothing is charged in advance\./);
+    assert.doesNotMatch(text, /genuine pre-estimate|not a penalty|work carried out up to the date of termination|fees for work already carried out/);
+    // 7(a), 10, 13, 14, 16, 18.
+    assert.match(clause(real, '7'), /\(a\) the chartered surveyor engaged in connection with the Client's claim, and any chartered tax adviser the Client engages;/);
+    assert.match(clause(real, '10'), /the fees paid or payable by the Client under this Agreement or £5,000, whichever is greater, save that/);
+    assert.match(clause(real, '10'), /death or personal injury caused by negligence, fraud or fraudulent misrepresentation, or any other liability that cannot be limited or excluded by law\./);
+    assert.match(clause(real, '13'), /until HM Revenue and Customs can no longer open an enquiry into the return that includes the claim\./);
+    assert.match(clause(real, '14'), /authorise Cap Rebate as its agent with HM Revenue and Customs for the claim, by form 64-8 or by HMRC's online agent authorisation/);
+    assert.match(clause(real, '16'), /within six years after it ends/);
+    assert.match(clause(real, '16'), /or to a claim made or amended more than six years after this Agreement ends\./);
+    assert.match(clause(real, '18'), /must be a director, partner, member or owner of the Client, or someone we agree to in writing\./);
+    assert.match(clause(real, '18'), /The check is carried out by Didit, our identity-check provider, as described in our privacy notice\./);
+    assert.match(clause(real, '19'), /the agent authority with HM Revenue and Customs at clause 14, and the fee at clause 16 where our work is used within six years/);
+    // The numbering is unchanged: clauses 1 to 19, in order.
+    assert.deepEqual(real.paragraphs.map((p) => /^(\d{1,2})\.\s/.exec(p.text)?.[1]).filter((n) => n !== undefined).map(Number), Array.from({ length: 19 }, (_, i) => i + 1));
+    assert.doesNotMatch(text, /—/, 'a long dash in the letter');
+    // 8: no reviewer comment is left in either Word file, and no anchor to one.
+    for (const path of [LETTER_PATH, TEST_LETTER_PATH]) {
+      const comments = readZipEntry(path, ['word/comments.xml', 'word\\comments.xml']).toString('utf8');
+      assert.doesNotMatch(comments, /<w:comment /, `a reviewer comment is left in ${path}`);
+      assert.doesNotMatch(readZipEntry(path, DOCX_DOCUMENT_ENTRIES).toString('utf8'), /w:comment(RangeStart|RangeEnd|Reference)/);
+    }
+  });
+
+  test('line 3: with clause 13 decided the refund applies, in both letters; the switch ships ON since 11 Nov 2026, so it applies as shipped', () => {
     assert.equal(clawbackReading({ openTerms: testCopy.openTerms, gate: { enabled: true } }).reason, 'APPLIES');
-    assert.equal(clawbackReading({ openTerms: real.openTerms, gate: { enabled: true } }).reason, 'CLAUSE_13_BLANK');
-    assert.equal(clawbackReading({ openTerms: testCopy.openTerms }).reason, 'SWITCH_OFF');
+    assert.equal(clawbackReading({ openTerms: real.openTerms, gate: { enabled: true } }).reason, 'APPLIES');
+    assert.equal(clawbackReading({ openTerms: testCopy.openTerms }).reason, 'APPLIES');
+    assert.equal(clawbackReading({ openTerms: real.openTerms }).reason, 'APPLIES');
+    assert.equal(clawbackReading({ openTerms: real.openTerms, gate: { enabled: false } }).reason, 'SWITCH_OFF');
   });
 
   test('A TEST COPY IS NEVER SIGNED, whatever the switch says and even with no term open', () => {
-    const missing = signingMissing({ enabled: true, solicitor_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: true });
+    const missing = signingMissing({ enabled: true, signature_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: true });
     assert.equal(missing.length, 1);
     assert.match(missing[0] ?? '', /test copy of the letter.*never be signed/);
-    assert.equal(signingMissing({ enabled: true, solicitor_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: false }).length, 0);
+    assert.equal(signingMissing({ enabled: true, signature_confirmed: true, question: '' }, { open_terms: 0, specimens: 0, test_copy: false }).length, 0);
     assert.equal(shownLetter({ name: 'Invented Care Limited' }, TEST_LETTER_PATH).test_copy, true);
     assert.equal(shownLetter({ name: 'Invented Care Limited' }).test_copy, false);
   });
 
-  test('a client asked to sign the test copy is refused, with the switch on and the solicitor’s yes', async () => {
+  test('a client asked to sign the test copy is refused, with the switch on and the signature confirmed', async () => {
     const a = await testApp();
     try {
       const biz = randomUUID();
@@ -102,7 +142,7 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
       const letter = shownLetter({ name: 'Invented Dental Limited' }, TEST_LETTER_PATH);
       const r = signEngagement({ db: a.db, audit: a.audit, email: a.email, now: a.now, newId: randomUUID }, actor('CLIENT', 'u-cl', biz), biz,
         { full_name: 'Ivy Inventedperson', role: 'Director', authorised: true, letter_sha256: letter.sha256 },
-        { ip: '127.0.0.1', session_id: 's-1' }, { cfg: { enabled: true, solicitor_confirmed: true, question: '' }, letterPath: TEST_LETTER_PATH });
+        { ip: '127.0.0.1', session_id: 's-1' }, { cfg: { enabled: true, signature_confirmed: true, question: '' }, letterPath: TEST_LETTER_PATH });
       assert.equal(r.ok, false);
       assert.match(r.ok ? '' : r.why, /test copy/);
       assert.equal(a.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM engagement_signatures')?.n, 0);
@@ -122,7 +162,8 @@ describe('lines 2, 3 and 7 — Word questions 33, 34 and 196: the test-only enga
         const cookie = login.headers.getSetCookie().map((x) => x.split(';')[0] ?? '').join('; ');
         const page = await (await fetch(`${base}/portal/letter`, { headers: { cookie } })).text();
         assert.equal(page.includes('TEST COPY'), testLetter, `testLetter ${String(testLetter)}`);
-        assert.equal(page.includes('test default, not agreed'), testLetter);
+        assert.equal(page.includes('This copy is never sent to a client.'), testLetter);
+        assert.equal(page.includes('test default, not agreed'), false, 'Phase 161m1: neither letter carries a test default now');
       } finally { made.close(); }
     }
     const api = readFileSync(join(ROOT, 'api', 'index.mjs'), 'utf8');

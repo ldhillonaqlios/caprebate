@@ -1066,6 +1066,10 @@
    "area": "compliance",
    "kind": "logic"
   },
+  "src/modules/compliance/identity-who.ts": {
+   "area": "compliance",
+   "kind": "logic"
+  },
   "src/modules/compliance/index.ts": {
    "area": "compliance",
    "kind": "other"

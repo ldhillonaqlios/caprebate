@@ -310,6 +310,7 @@ GET = /staff/finance/view.json
 POST = /staff/finance/vat-check
 POST = /staff/finance/settings
 * ~ /^\/staff\/finance\/claims\/([A-Za-z0-9-]+)\/raise$/
+* ~ /^\/staff\/finance\/claims\/([A-Za-z0-9-]+)\/break-fee$/
 * ~ /^\/staff\/finance\/received\/([A-Za-z0-9-]+)\/void$/
 * ~ /^\/staff\/finance\/([A-Za-z0-9-]+)$/
 * ~ /^\/staff\/finance\/([A-Za-z0-9-]+)\/(sent|cancel|credit-in-full|credit-clause-13|received)$/

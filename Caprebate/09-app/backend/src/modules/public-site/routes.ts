@@ -23,7 +23,7 @@ export async function publicSiteRoutes(w: WebRequest): Promise<WebResult | undef
      its proposed facts marked - with its style as a file and its complaint form working. Anywhere else, as before. */
   if (legalServed) {
     /* The website's other legal pages, the banner's styles, and the answer (src/modules/public-site/legal-pages.ts).
-       Also wherever the `legal` setting is on; each page says Draft until both approvals are recorded. */
+       Also wherever the `legal` setting is on; each page says Draft until the DPO's approval is recorded. */
     if (path === '/assets/cookie-banner.css' && method === 'GET') { res.writeHead(200, CSS_HEADERS); res.end(COOKIE_BANNER_CSS); return 'handled'; }
     if (path === '/cookies/choice' && method === 'POST') {
       const f = await form(req);

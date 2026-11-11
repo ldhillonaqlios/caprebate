@@ -138,16 +138,30 @@ function count(db: Db, sql: string, params: readonly (string | number | null)[] 
   return db.get<{ n: number }>(sql, params)?.n ?? -1;
 }
 
-/** The real letter with clause 4's payment terms and abort fee, and clause 5's break fee, filled in — for the switch tests only. */
+/**
+ * The real letter with an abort fee of £750 in clause 4, for the switch tests only. Since Phase 161m1 the real letter is
+ * complete (clause 4: no fee where no material claim is identified; clause 5: £995 a property), so only the abort fee
+ * is changed here, to prove the SET branch of an abort fee the other way.
+ */
 function completedLetter(): { paragraphs: { text: string; heading: boolean }[]; openTerms: ReturnType<typeof unresolvedTerms> } {
   const real = loadLetter();
   const paragraphs = real.paragraphs.map((p) => ({
     ...p,
+    text: p.text.replace('If no material claim is identified following the survey, no fee is payable.',
+      'If no material claim is identified following the survey, an abort fee of £750 is payable to cover survey and preparation costs already incurred.'),
+  }));
+  return { paragraphs, openTerms: unresolvedTerms(paragraphs) };
+}
+
+/** The real letter with clause 4's abort-fee choice and clause 5's break fee put back in square brackets, as they were until Phase 161m1. */
+function blankFeesLetter(): { paragraphs: { text: string; heading: boolean }[]; openTerms: ReturnType<typeof unresolvedTerms> } {
+  const real = loadLetter();
+  const paragraphs = real.paragraphs.map((p) => ({
+    ...p,
     text: p.text
-      .replace(/\[payment terms[^\]]*\]/, 'within 14 days of invoice')
-      .replace('[no fee is payable / an abort fee of £[amount] is payable to cover survey and preparation costs already incurred]',
-        'an abort fee of £750 is payable to cover survey and preparation costs already incurred')
-      .replace('£[X]', '£995'),
+      .replace('If no material claim is identified following the survey, no fee is payable.',
+        'If no material claim is identified following the survey, [no fee is payable / an abort fee of £[amount] is payable to cover survey and preparation costs already incurred].')
+      .replace('a break fee of £995 per property', 'a break fee of £[X]'),
   }));
   return { paragraphs, openTerms: unresolvedTerms(paragraphs) };
 }
@@ -393,7 +407,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
     } finally { app.close(); }
   });
 
-  test('CREDIT NOTES ARE THEIR OWN ROWS: in full with no amount typed, numbered in the series; clause 13 refused while its switch is off and while the letter is blank, and exact when both are met', async () => {
+  test('CREDIT NOTES ARE THEIR OWN ROWS: in full with no amount typed, numbered in the series; clause 13 refused while its switch is off and while the letter is blank, and exact as shipped (on since 11 Nov 2026)', async () => {
     const app = await testApp();
     try {
       staff(app);
@@ -401,10 +415,15 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       const id = raise(app, claim);
       assert.equal(I.markSent(deps(app), ACC, id, {}).ok, true);
 
-      const off = I.creditClause13(deps(app), ACC, id, {});
+      // FEE_CLAWBACK ships ON since 11 Nov 2026 (Lakhbir approved, no solicitor); off is proved with the switch handed in.
+      assert.equal(R.FEE_CLAWBACK.enabled, true, 'the clawback switch ships off again');
+      const off = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: false } });
       assert.equal(off.ok, false);
       if (!off.ok) assert.match(off.why, /switched off/i);
-      const blank = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true } });
+      // PHASE 161m1: the real letter's clause 13 is complete; the refusal while it is blank is proved with a blank put back.
+      const real = loadLetter();
+      const blank13 = { paragraphs: real.paragraphs, openTerms: [{ clause: 'clause 13 — Fee Adjustment Where a Claim is Reduced', text: '[Trigger: this clause applies to any reduction / applies only to a reduction of more than [X]% or £[amount].]' }] };
+      const blank = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true }, letter: blank13 });
       assert.equal(blank.ok, false);
       if (!blank.ok) assert.match(blank.why, /clause 13 of the engagement letter still has gaps/);
       assert.equal(count(app.db, "SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'FEE_CLAWBACK_NOT_APPLIED' AND outcome = 'REFUSED'"), 2);
@@ -415,9 +434,9 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       const outcome = Object.keys(R.ENQUIRY_OUTCOMES).find((k) => k !== 'NO_CHANGE') ?? '';
       const closed = R.closeEnquiry(rdeps, SALES, claim, opened.ok ? opened.id : '', { closed_on: '2026-09-05', outcome, amended_figure: '200000' });
       assert.equal(closed.ok, true, closed.ok ? '' : closed.why);
-      const real = loadLetter();
-      const clause13Settled = { paragraphs: real.paragraphs, openTerms: real.openTerms.filter((t) => !/^clause 13 —/.test(t.clause)) };
-      const c13 = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true }, letter: clause13Settled });
+      assert.deepEqual(real.openTerms, [], 'the real letter has an open term again');
+      // As shipped: the real switch and the real letter, nothing handed in.
+      const c13 = I.creditClause13(deps(app), ACC, id, {});
       assert.equal(c13.ok, true, c13.ok ? '' : c13.why);
       assert.equal(app.db.get<{ amount_pence: number }>('SELECT amount_pence FROM invoice_credit_notes WHERE basis = ?', ['CLAUSE_13_REDUCTION'])?.amount_pence,
         7_200_00 - 6_000_00, 'clause 13 did not credit 3% of the difference');
@@ -436,7 +455,7 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
     } finally { app.close(); }
   });
 
-  test('PHASE 153d — CLAUSE 13 RUN AGAINST THE TEST-ONLY LETTER (Word question 34): any reduction, settlements counting; the credit is the fee on the corrected figure, and the real letter still refuses', async () => {
+  test('PHASE 153d — CLAUSE 13 RUN AGAINST THE TEST-ONLY LETTER (Word question 34): any reduction, settlements counting; the credit is the fee on the corrected figure. Since Phase 161m1 the real letter says the same', async () => {
     const app = await testApp();
     try {
       staff(app);
@@ -448,9 +467,10 @@ describe('1 · an invoice belongs to a claim, and its amount is never typed', ()
       assert.equal(opened.ok, true, opened.ok ? '' : opened.why);
       const outcome = Object.keys(R.ENQUIRY_OUTCOMES).find((k) => k !== 'NO_CHANGE') ?? '';
       assert.equal(R.closeEnquiry(rdeps, SALES, claim, opened.ok ? opened.id : '', { closed_on: '2026-09-05', outcome, amended_figure: '200000' }).ok, true);
-      const real = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true }, letter: loadLetter() });
-      assert.equal(real.ok, false, 'the real letter, its clause 13 still blank, gave a credit');
+      // PHASE 161m1: the real letter's clause 13 is the test copy's, so both read complete; one credit is issued per reduction.
+      assert.deepEqual(loadLetter().openTerms, []);
       const testCopy = loadLetter({ path: TEST_LETTER_PATH });
+      assert.deepEqual(testCopy.openTerms, []);
       const c13 = I.creditClause13(deps(app), ACC, id, {}, { clawback: { enabled: true }, letter: testCopy });
       assert.equal(c13.ok, true, c13.ok ? '' : c13.why);
       assert.equal(app.db.get<{ amount_pence: number }>('SELECT amount_pence FROM invoice_credit_notes WHERE basis = ?', ['CLAUSE_13_REDUCTION'])?.amount_pence,
@@ -568,11 +588,9 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
         assert.equal(f.warning, null);
       }
     }
-    for (const kind of ['BREAK_FEE', 'ABORT_FEE'] as const) {
-      const r = FC.letterFee(kind);
-      assert.equal(r.ok, false);
-      if (!r.ok) assert.equal(r.code, 'SWITCH_OFF');
-    }
+    // PHASE 161m1: the app raises no break fee and no abort fee, on or off (test/finance/break-fee-by-hand.test.ts).
+    assert.equal(Object.hasOwn(FC, 'letterFee'), false, 'the flat-£995 raising is back');
+    assert.match(FC.controlReadings().break_and_abort, /^off: the app never raises a break fee or an abort fee by itself/);
     assert.equal(Object.keys(FC.FEE_CONTROLS).some((k) => /job/i.test(k)), false, 'a minimum job size switch exists for a decided no');
     assert.match(FC.NO_MINIMUM_JOB_SIZE, /1 September 2026/);
   });
@@ -630,20 +648,25 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
     assert.match(FC.controlReadings().multi_site_discount, /NOT DECIDED/);
   });
 
-  test('THE BREAK FEE AND THE ABORT FEE ARE READ FROM THE LETTER: BLANK today and refused even switched on; with a completed letter the break fee on a withdrawn claim, and the abort fee nowhere else', async () => {
+  test('THE BREAK FEE AND THE ABORT FEE ARE READ FROM THE LETTER: since Phase 161m1 £995 a property and nil; a blank gives no figure; and the app raises neither, switch on or off', async () => {
     const lf = FC.letterFees();
-    assert.equal(lf.break_fee.state, 'BLANK', 'clause 5 is no longer blank — the break fee question has been answered; re-read it');
-    assert.equal(lf.abort_fee.state, 'BLANK');
+    // PHASE 161m1 (11 November 2026): clause 5 is £995 per property plus a booked surveyor at cost; clause 4 says no fee
+    // is payable where no material claim is identified, so there is no abort fee.
+    assert.equal(lf.break_fee.state, 'SET', 'clause 5 is blank again');
+    assert.equal(lf.break_fee.state === 'SET' ? lf.break_fee.pence : 0, 995_00);
+    assert.equal(lf.abort_fee.state, 'NIL');
     // Phase 132e: clause 4's payment terms are completed — "within 14 days of the date of the invoice".
     assert.deepEqual({ ...lf.payment_terms }, { state: 'DAYS', days: 14, label: 'within 14 days of the invoice, as clause 4 states' });
     assert.equal(FC.letterFees(blankTermsLetter()).payment_terms.state, 'BLANK');
-    assert.match(lf.break_fee.label, /^BLANK IN THE ENGAGEMENT LETTER/);
-    const onButBlank = FC.letterFee('BREAK_FEE', ALL_ON);
-    assert.equal(onButBlank.ok, false);
-    if (!onButBlank.ok) assert.equal(onButBlank.code, 'LETTER_BLANK');
+    const blankFees = FC.letterFees(blankFeesLetter());
+    assert.deepEqual([blankFees.break_fee.state, blankFees.abort_fee.state], ['BLANK', 'BLANK'], 'the blank-fees fixture no longer blanks them');
+    assert.match(blankFees.break_fee.label, /^BLANK IN THE ENGAGEMENT LETTER/);
+    // A blank clause 5 gives the guide no figure, and none is made up.
+    const blankGuide = FC.breakFeeGuide({ properties: 2, claims_without_property: 0, surveyor_recorded: false }, blankFeesLetter());
+    assert.deepEqual([blankGuide.state, blankGuide.letter_pence], ['BLANK', null]);
 
     const done = FC.letterFees(completedLetter());
-    assert.deepEqual([done.break_fee.state, done.abort_fee.state, done.payment_terms.state], ['SET', 'SET', 'DAYS'], 'the completed letter fixture no longer fills the blanks');
+    assert.deepEqual([done.break_fee.state, done.abort_fee.state, done.payment_terms.state], ['SET', 'SET', 'DAYS'], 'the completed letter fixture no longer sets the abort fee');
 
     const app = await testApp();
     try {
@@ -651,21 +674,25 @@ describe('2 · the fee controls: built, shipped off, and off is exactly today’
       const { claim } = readyToInvoice(app);
       app.db.run("UPDATE claims SET stage = 'CLIENT_WITHDREW' WHERE id = ?", [claim]);
       assert.equal(I.raiseInvoice(deps(app), ACC, claim, { kind: 'BREAK_FEE' }).ok, false, 'a break fee was raised with the switch off');
-      assert.equal(I.raiseInvoice(deps(app), ACC, claim, { kind: 'BREAK_FEE' }, { controls: ALL_ON }).ok, false, 'a break fee was raised on a blank letter');
+      assert.equal(I.raiseInvoice(deps(app), ACC, claim, { kind: 'BREAK_FEE' }, { controls: ALL_ON, letter: blankFeesLetter() }).ok, false, 'a break fee was raised on a blank letter');
       assert.equal(I.raiseInvoice(deps(app), ACC, claim, { kind: 'ABORT_FEE' }, { controls: ALL_ON, letter: completedLetter() }).ok, false, 'an abort fee on a withdrawn claim');
-      const id = raise(app, claim, { controls: ALL_ON, letter: completedLetter() }, 'BREAK_FEE');
-      assert.deepEqual(plain(app.db.get('SELECT kind, fee_pence, fee_rate, claim_value_pence FROM invoices WHERE id = ?', [id])),
-        { kind: 'BREAK_FEE', fee_pence: 995_00, fee_rate: null, claim_value_pence: null });
+      // PHASE 161m1: switched on, the app used to raise one flat £995 here. Now it raises nothing, on or off.
+      const on = I.raiseInvoice(deps(app), ADMIN, claim, { kind: 'BREAK_FEE' }, { controls: ALL_ON });
+      assert.equal(on.ok, false, 'the app raised a break fee by itself with the switch on');
+      if (!on.ok) assert.match(on.why, /never raises a break fee by itself/);
+      assert.equal(count(app.db, "SELECT COUNT(*) AS n FROM invoices WHERE kind <> 'FEE'"), 0);
     } finally { app.close(); }
 
     const h = await boot();
     try {
       const page = await (await h.signIn('ACCOUNTING')).req('/staff/finance');
       assert.equal(page.status, 200);
-      // Phase 132e: two blanks remain loud — the break fee and the abort fee; the payment terms are stated now.
-      assert.ok((page.body.match(/BLANK IN THE ENGAGEMENT LETTER/g) ?? []).length >= 2, 'a blank term is not shown blank, loudly');
+      // PHASE 161m1: no blank is left in the letter, so none is shown; the page reads the letter's own terms.
+      assert.equal(/BLANK IN THE ENGAGEMENT LETTER/.test(page.body), false, 'a blank term is shown that the letter does not have');
+      assert.match(page.body, /£995(\.00)?, as clause 5 states/);
+      assert.match(page.body, /nil.{1,4}clause 4 says no fee is payable where no material claim is identified/);
       assert.match(page.body, /within 14 days of the invoice, as clause 4 states/);
-      assert.equal(/£995|£750/.test(page.body), false);
+      assert.equal(/£750/.test(page.body), false);
     } finally { h.close(); }
   });
 });
@@ -892,7 +919,7 @@ describe('4 · the finance dashboard: ACCOUNTING and ADMIN, and money only', () 
 
   test('THE RULE: every new action is refused to every role not granted it — and a CLIENT is on none', () => {
     const granted: Record<string, readonly AppRole[]> = {
-      'invoice.raise': ['ADMIN', 'ACCOUNTING'], 'invoice.credit': ['ADMIN', 'ACCOUNTING'],
+      'invoice.raise': ['ADMIN', 'ACCOUNTING'], 'invoice.raise_by_hand': ['ADMIN'], 'invoice.credit': ['ADMIN', 'ACCOUNTING'],
       'invoice.record_received': ['ADMIN', 'ACCOUNTING'], 'finance_setting.write': ['ADMIN'],
     };
     for (const [action, roles] of Object.entries(granted)) {

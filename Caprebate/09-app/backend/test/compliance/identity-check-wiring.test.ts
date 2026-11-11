@@ -116,6 +116,8 @@ const decision = (status: string, check_ref: string, session = SESSION) => JSON.
 function aContact(db: Db) {
   const c = db.get<{ id: string; business_id: string }>('SELECT id, business_id FROM contacts ORDER BY id LIMIT 1');
   assert.ok(c, 'the seed has no contact');
+  /* Phase 161m1: a check goes only to a director or an owner of the client, in their own name (identity-who.ts), so the seed's contact is made the client's "Owner / director", named as typed. */
+  db.run("UPDATE contacts SET full_name = 'Ada Invented', job_role = 'owner_director' WHERE id = ?", [c.id]);
   return c;
 }
 

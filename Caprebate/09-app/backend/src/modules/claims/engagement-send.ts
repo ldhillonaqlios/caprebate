@@ -13,7 +13,7 @@
  * THE SIGNED COPY: the signed PDF the signature record holds (src/modules/claims/signing.ts), checked against its fingerprint
  * before it is handed to anybody, for the client in the portal and for Sales and Admin on the client page.
  *
- * Nothing here opens signing: ENGAGEMENT_SIGNING decides that, and is off.
+ * Nothing here opens signing: ENGAGEMENT_SIGNING decides that (on since 11 Nov 2026; its signing links stay off).
  */
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';

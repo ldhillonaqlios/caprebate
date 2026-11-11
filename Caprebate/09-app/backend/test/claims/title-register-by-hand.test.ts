@@ -36,7 +36,7 @@ import type { Actor } from '../../src/core/authz.ts';
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SRC = join(HERE, '..', '..', 'src');
 const BACKEND = join(HERE, '..', '..');
-const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, solicitor_confirmed: true, question: SIGNING_QUESTION });
+const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, signature_confirmed: true, question: SIGNING_QUESTION });
 type TestApp = Awaited<ReturnType<typeof testApp>>;
 afterEach(() => forgetRegisteredSecretsForTest());
 

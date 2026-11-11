@@ -504,11 +504,6 @@
           "why": "The second half of the SDP-L1 brief. Same board item."
         },
         {
-          "ref": "SDP-L3 the client engagement letter",
-          "id": "12984545390",
-          "how": "prose"
-        },
-        {
           "ref": "SDP-L3 the client engagement letter, extended to its name for us and to the public site, notices page and complaint form",
           "id": "13069114161",
           "how": "prose",
@@ -989,6 +984,10 @@
         {
           "id": "13486597256",
           "why": "The 6 November 2026 note names the developer question pack's item (Ready - Lakhbir action, owner Developer): waiting on Lakhbir to send it and on the developer's answers, not a sign-off. Not an entry."
+        },
+        {
+          "id": "12984545390",
+          "why": "SDP-L3, the client engagement letter: approved by Lakhbir on 11 Nov 2026 (no solicitor) and Done (Phase 161m1). The register still names it in its history and in the 161m1 note; it no longer waits on anyone here."
         }
       ]
     }

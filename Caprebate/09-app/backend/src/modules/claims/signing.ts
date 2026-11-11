@@ -1,5 +1,5 @@
 /**
- * THE BUILT-IN SIGNATURE FOR THE ENGAGEMENT LETTER — BUILT, AND SWITCHED OFF.
+ * THE BUILT-IN SIGNATURE FOR THE ENGAGEMENT LETTER: BUILT, AND SWITCHED ON SINCE 11 NOVEMBER 2026.
  *
  * the owner decided that the letter is signed inside the application, not through a bought
  * service. It replaces the stub provider in src/integrations/signature.ts for the engagement letter. The surveyor's "commit
@@ -30,13 +30,18 @@
  * the day EMAIL_SENDING is on, saved until then.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * WHY IT IS OFF — ENGAGEMENT_SIGNING
+ * WHY IT IS ON: ENGAGEMENT_SIGNING
  *
- *   1. Our solicitor has not yet confirmed that a typed name, with a tick for authority, is a good enough signature for
- *      this letter. It is asked in the Word questions document under the solicitor, under SIGNING_QUESTION's title.
- *   2. The letter still has terms in square brackets (clauses 4, 5, 7 and 13) and specimen wording. A letter with a
- *      blank in it is not signed, whatever the switch says: that refusal is here, not on the page.
- *   3. Then someone switches it on.
+ *   1. Settled 11 November 2026: Lakhbir confirmed that a typed name, with a tick for authority, is a good enough
+ *      signature for this letter (no solicitor; clause 17 says an electronic signature binds). It was asked in the Word
+ *      questions document under SIGNING_QUESTION's title (question 194).
+ *   2. The same day he approved the letter's final wording: "Approved, switch on". So the switch is on.
+ *   3. A letter with a term in square brackets, or specimen wording, is still not signed, whatever the switch says: that
+ *      refusal is here, not on the page. Since Phase 161m1 (11 November 2026) the letter itself has no bracket left;
+ *      the specimen client, number and range are replaced from the client's record, and refused where they are not.
+ *      The test copy is never signed under this switch, and a letter that does not say which business signs is refused.
+ *   4. Signing from a link in an email (`links`) is a separate question (SIGNING_LINK_QUESTION, Word question 246) and
+ *      stays off for real clients.
  *
  * NOTHING HERE THROWS ON AN ORDINARY REFUSAL. Off, already signed, not sent yet, a blank name, no tick, a changed
  * letter: each is a sentence the client reads.
@@ -62,11 +67,14 @@ import { getAssessmentsShownHighPenceByBusinessId } from '../assessment/index.ts
 
 export type EngagementSigning = {
   readonly enabled: boolean;
-  /** Our solicitor has confirmed that a typed name and a tick for authority suit this letter. */
-  readonly solicitor_confirmed: boolean;
+  /**
+   * Confirmed that a typed name and a tick for authority suit this letter. The owner (Lakhbir) confirmed it on
+   * 11 November 2026 ("Yes, confirmed"); no solicitor is involved. Called solicitor_confirmed before that day.
+   */
+  readonly signature_confirmed: boolean;
   readonly question: string;
   /**
-   * ON FOR TESTING. Under this setting the solicitor's answer is waived and the TEST COPY of
+   * ON FOR TESTING. Under this setting the signature confirmation is waived and the TEST COPY of
    * the letter may be signed — and nothing else: the real letter is refused, whatever else holds. Only
    * ENGAGEMENT_SIGNING_TEST sets it, and only the test website (api/index.mjs) or a local copy started with
    * CAPREBATE_SIGNING_TEST=1 uses that.
@@ -74,8 +82,8 @@ export type EngagementSigning = {
   readonly test_copy_only?: boolean;
   readonly waiver_record?: string;
   /**
-   * SIGNING FROM A LINK IN THE EMAIL, without a portal login. Off for real clients until the solicitor's
-   * answer covers it (Word question, under the solicitor: SIGNING_LINK_QUESTION); on with ENGAGEMENT_SIGNING_TEST.
+   * SIGNING FROM A LINK IN THE EMAIL, without a portal login. Off for real clients until that question is
+   * answered (SIGNING_LINK_QUESTION, Word question 246); on with ENGAGEMENT_SIGNING_TEST.
    */
   readonly links?: boolean;
 };
@@ -91,25 +99,29 @@ export const SIGN_LINK_DAYS = 7;
 export const SIGNING_QUESTION =
   'Is a typed name, with a tick to say they may sign for the business, a good enough signature on our engagement letter?';
 
+/**
+ * ON SINCE 11 NOVEMBER 2026: Lakhbir confirmed a typed name with a tick for authority ("Yes, confirmed") and approved
+ * the letter's final wording ("Approved, switch on"). No solicitor. `links` stays absent, so off (Word question 246).
+ */
 export const ENGAGEMENT_SIGNING: EngagementSigning = Object.freeze({
-  enabled: false,
-  solicitor_confirmed: false,
+  enabled: true,
+  signature_confirmed: true,
   question: SIGNING_QUESTION,
 });
 
 /**
  * SIGNING ON FOR TESTING —. The test website (and a local copy started with CAPREBATE_SIGNING_TEST=1)
  * lets an invented client sign the TEST COPY of the letter end to end: the drawn signature, the record, the certificate
- * of completion and the signed copy. The real letter cannot be signed under it (`signingMissing`), and the switch real
- * clients would use, ENGAGEMENT_SIGNING above, stays off until the solicitor answers Word question 194.
+ * of completion and the signed copy. The real letter cannot be signed under it (`signingMissing`). The switch real
+ * clients use, ENGAGEMENT_SIGNING above, is on since 11 Nov 2026 (Lakhbir approved the letter's final wording; no solicitor).
  */
 export const ENGAGEMENT_SIGNING_TEST: EngagementSigning = Object.freeze({
   enabled: true,
-  solicitor_confirmed: false,
+  signature_confirmed: false,
   question: SIGNING_QUESTION,
   test_copy_only: true,
   links: true,
-  waiver_record: 'The owner (Head of Business Development), 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off.',
+  waiver_record: 'The owner (Head of Business Development), 6 October 2026, in the chat with Claude: "Signing itself is still switched off. switch this on for test purposes at the moment". The test copy of the letter only, invented clients only; the real letter keeps its blanks and ENGAGEMENT_SIGNING stays off. Since 11 November 2026 the real letter has no blanks and ENGAGEMENT_SIGNING is on (Lakhbir approved the letter\'s final wording); this setting still signs the test copy only.',
 });
 
 /** Which signing setting this copy runs under: the test one only where it was asked for. */
@@ -195,17 +207,17 @@ export function signingMissing(cfg: EngagementSigning, letter: Pick<ShownLetter,
      Refused in every mode, the test copy's included: the Friary House run signed a partnership in as "company number
      98604417". The client's kind of business (or a company's number) on their record clears it. */
   const party = 'We do not know yet which business is signing. Their company number, or what kind of business they are, is not on record.';
-  /* Signing on for testing signs the test copy and nothing else. The test copy's open terms carry test
-     defaults (each marked "test default, not agreed"); they are what is being tested, so they do not refuse it here. */
+  /* Signing on for testing signs the test copy and nothing else. Since Phase 161m1 the test copy has the real letter's
+     words and no open term; an open term put back in it is what is being tested, so it does not refuse it here. */
   if (cfg.test_copy_only === true) {
     if (letter.test_copy !== true) out.push('Signing is switched on for testing only, and only the test copy of the letter can be signed there.');
     else if (letter.party_unknown === true) out.push(party);
     if (cfg.enabled !== true) out.push('Then signing must be switched on.');
     return out;
   }
-  // The test-only copy carries terms nobody has agreed. It is shown on the test website and never signed.
-  if (letter.test_copy === true) out.push('This is the test copy of the letter. Its terms are not agreed, so it can never be signed.');
-  if (cfg.solicitor_confirmed !== true) out.push('Our solicitor must confirm that typing your name is a good enough way to sign this letter.');
+  // The test-only copy is for the test system. It is shown on the test website and never signed as a contract.
+  if (letter.test_copy === true) out.push('This is the test copy of the letter. It is for the test system only, so it can never be signed.');
+  if (cfg.signature_confirmed !== true) out.push('We must first confirm that typing your name is a good enough way to sign this letter.');
   if (letter.open_terms > 0 || letter.specimens > 0) out.push('Some terms in the letter are not settled yet, so it cannot be signed.');
   if (letter.party_unknown === true) out.push(party);
   if (cfg.enabled !== true) out.push('Then signing must be switched on.');
@@ -517,8 +529,9 @@ function signAs(
   if (state === 'SIGNED') return { ok: false, why: SIGN_WORDS.already };
   if (state === 'NOT_SENT') return { ok: false, why: SIGN_WORDS.not_sent };
   const letter = shownLetter(b, opts.letterPath, letterFacts(d.db, b.id));
-  const missing = signingMissing(opts.cfg ?? ENGAGEMENT_SIGNING, letter);
-  if (missing.length > 0) return { ok: false, why: `Signing is not switched on yet. ${missing[0]}` };
+  const cfg = opts.cfg ?? ENGAGEMENT_SIGNING;
+  const missing = signingMissing(cfg, letter);
+  if (missing.length > 0) return { ok: false, why: `${cfg.enabled === true ? 'This letter cannot be signed yet.' : 'Signing is not switched on yet.'} ${missing[0]}` };
   const name = fullName(input.full_name);
   if (name === null) return { ok: false, why: SIGN_WORDS.name };
   const role = input.role.replace(/\s+/g, ' ').trim();

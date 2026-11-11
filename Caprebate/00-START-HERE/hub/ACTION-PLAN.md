@@ -532,6 +532,21 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     approved, the other sign-offs), then the sweep again before the first
     client. If the gate opens early, the phases left run after go-live.
 
+  GO-LIVE PEOPLE AND THE LETTER (Lakhbir, 11 Nov 2026). Vercel Pro is bought
+    by the developer ("vercel pro this will be the developer who does
+    this"). Lakhbir registers with the ICO himself. NO SOLICITOR for the
+    legal pages ("no solicitor, its a DPO pack"): the DPO's approval of a
+    page's current version alone puts it in force (Phase 161m1). EMAIL ONLY,
+    no telephone on the website ("go with email only for now"). The
+    engagement letter: a flat 3%; break fee GBP 995 a property plus a booked
+    surveyor at cost; nothing payable if the survey finds no material
+    claim; the fee credited back on any reduction, settlements included;
+    HMRC dealt with directly; no own-tax-adviser offer until one is
+    appointed; an authority to obtain documents (commercially sensitive
+    ones included) from named third parties; Lakhbir approves its wording
+    himself, no solicitor. Older text asking a solicitor to approve the
+    legal pages or the letter is history.
+
   WHATSAPP - BY MANUAL UPLOAD, WITH PHOTOS (Lakhbir, 5 Oct 2026: "go with
     manual upload, keep photos"). Staff talk to clients on the WhatsApp phone;
     to keep a conversation they export that chat and upload it to the
@@ -1232,24 +1247,28 @@ them on a database FILE (test/core/live-website.test.ts). It made NO live projec
 database or store: Vercel Pro is not bought and the Turso account needs
 Lakhbir's sign-in, so the real-preview proof is BUILD item 1 below. Phases
 161h1 to 161m regrouped the code behind the boundary check. The sweep ran after 161m (Phase 162, 11 Nov 2026). The legal pages are built and off
-until both approvals are recorded (Phase 161g). The developer question pack
+until the DPO's approval is recorded (Phase 161g; the DPO alone since Phase 161m1). The developer question pack
 (board 13486597256) asks Naeem D13 and D14 about going live.
 
 THE GATE: check every line and write it in the record as open or not, with
 its board item. If any line is not open, change nothing live: tell Lakhbir
 which lines are left, set this item to its true status, and stop.
- 1. Vercel Pro bought for the live project (board 13486923814).
- 2. The ICO registration number, on the privacy policy.
- 3. A solicitor and a data protection officer chosen, and both have approved
-    the current version of every legal page in the back office (Legal
-    pages; board 13475983553), so CAPREBATE_LEGAL_PAGES can be "on".
+ 1. Vercel Pro bought for the live project (board 13486923814; the
+    developer buys it, Lakhbir 11 Nov 2026).
+ 2. The ICO registration number, on the privacy policy (Lakhbir registers).
+ 3. A data protection officer chosen, who has approved the current version
+    of every legal page in the back office (Legal pages; board 13475983553),
+    so CAPREBATE_LEGAL_PAGES can be "on". No solicitor: the DPO alone
+    approves them (Lakhbir, 11 Nov 2026; built by Phase 161m1).
  4. The DPO's appointment signed, and the name and contact we publish.
- 5. A telephone number, or Lakhbir's decision to show email only.
+ 5. OPEN since 11 Nov 2026: email only, no telephone (Lakhbir: "go with
+    email only for now"; built by Phase 161m1).
  6. The safeguard and data processing terms for each outside service that
     may hold data outside the UK (the outside services list, attachment 9
     of the legal review pack), and the retention periods approved.
- 7. The engagement letter agreed (fees, break fee, clawback), not the test
-    defaults.
+ 7. OPEN since 11 Nov 2026: the engagement letter's final wording approved
+    by Lakhbir ("Approved, switch on"; no solicitor). Online signing and the
+    fee adjustment are on (Phase 161m1).
  8. Every register entry marked as needed before go-live signed, or its
     feature left switched off and said so (FOR-THE-ACCOUNTANT.md,
     FOR-THE-SURVEYOR.md, FOR-THE-SOLICITOR-DPO-DEVELOPER.md).

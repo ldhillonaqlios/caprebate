@@ -576,6 +576,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'invoice.read': NO('our fee is a percentage of the allowances identified, so a fee reveals the claim value'),
   'invoice.write': NO(WRITES),
   'invoice.raise': NO(WRITES),
+  'invoice.raise_by_hand': NO(WRITES),
   'invoice.credit': NO(WRITES),
   'invoice.record_received': NO(WRITES),
   'finance_setting.write': NO(WRITES),

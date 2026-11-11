@@ -84,7 +84,7 @@ const PICK_FIXTURES = {
   'GET /api/codes': ok('epc-codes.json'),
   'GET /api/codes/info': [ok('epc-codes-info-age-band.json'), ok('epc-codes-info-tenure.json')],
 };
-const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, solicitor_confirmed: true, question: SIGNING_QUESTION });
+const SIGNING_ON: EngagementSigning = Object.freeze({ enabled: true, signature_confirmed: true, question: SIGNING_QUESTION });
 
 type TestApp = Awaited<ReturnType<typeof testApp>>;
 
