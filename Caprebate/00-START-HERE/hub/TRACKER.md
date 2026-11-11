@@ -7,14 +7,14 @@
 | Status | Items |
 | --- | ---: |
 | Ready - Claude can build | 0 |
-| Ready - Lakhbir action | 34 |
+| Ready - Lakhbir action | 32 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
 | Blocked - licence or purchase | 3 |
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 368 |
+| Done | 370 |
 | Working on it | 1 |
 
 | Owner type | Items |
@@ -71,7 +71,7 @@
 
 ## 01 · FOR LAKHBIR — decisions, appointments, company, governance
 
-81 items.
+79 items.
 
 ### Register with the ICO and put the data protection basics in place
 
@@ -627,13 +627,6 @@
 
 - Note 2026-10-10 (Phase 159f): Phase 159f built the importer (node src/cli.ts import-bcis-data --rates --elements --locations; import-bcis-index --tpi), keeping BCIS's data outside the repository. BCIS confirmed our use (relayed by Lakhbir, 9 Oct 2026; Word question 218, closed 10 Oct 2026). Until the export arrives, the test website drafts from invented test rates, labelled as such.
 
-### After Phase 161d1 is merged: on the test website, open the engagement letter in the client portal and a claim's survey pack (Fixtures, item by item) as the surveyor; tell Claude if either is blank or shows an error
-
-`13472446325` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-11-05 (Phase 161d1): Since this phase the app reads the engagement letter, its test copy and the fixture list from its own copies in 09-app/backend/copies/. Both pages were opened on a local copy with the invented logins (the letter, and the pack chapter showing a row of the fixture list), and the branch preview served the home page and the full notices page; a preview has no logins, so only you can open these two on the test website after the merge.
-- Note 2026-11-11 (Phase 162): The sweep opened both on the test website. The survey pack's chapter 12 (Fixtures, item by item) lists 37 fixtures, opened as Admin; the client portal shows the engagement letter as signed with Read the letter and the signed copy. The letter page itself was not opened: the sign-in dropped first, because the test website is keeping its records in memory (13522119174). Status unchanged; it waits on that item.
-
 ### Answer the Word question: should the test website install exactly the package versions we tested (commit a root lock file)?
 
 `13473533228` · **Ready - Lakhbir action** · owner Lakhbir
@@ -677,13 +670,6 @@
 
 - Document: 09-app/deploy/LIVE-RUNBOOK.md
 - Note 2026-11-07 (Phase 161h): The nightly backup is built and switched off until its store is set (src/backup.ts). Runbook section 7 has the bucket, the delete rule and the user; GO-LIVE-CHECKLIST.md line 5; Word questions 155, 291 and 292.
-
-### The test website is keeping its records in memory (found by the sweep, 11 Nov 2026): read the Vercel log line 'test deployment:' for why its lasting database did not open, and check the Turso settings
-
-`13522119174` · **Ready - Lakhbir action** · owner Lakhbir
-
-- Note 2026-11-11 (Phase 162): Found by the sweep on the test website. Between two sign-ins about 20 minutes apart every invented client had a new id, the engagement letter said the seed signed it "Today, 06:27", and a sign-in held only while the next page reached the same copy (the pane was signed out twice). With the lasting database in use a new copy never seeds again (seedOnce), so each copy is running on its own database in memory. Only Lakhbir can see why: the Vercel log prints "test deployment: <why>" as each copy starts (api/index.mjs), and the Turso integration's settings (TURSO_DATABASE_URL, TURSO_AUTH_TOKEN; names only). Since this sweep, Admin's home on the test website says so too, with the same reason, once its pull request is merged. Until it is fixed, a sign-in on the test website can drop at any page, and nothing anyone types there lasts. The sweep could not finish its signed-in checks for this reason; they wait on this item.
-- Note 2026-11-11 (Phase 162): Carried here by the sweep, because they share this trigger: once the test website keeps its records again (Admin's home no longer says otherwise), sign in and open what the sweep could not finish on 11 Nov 2026 - the client portal's letter page (/portal/letter) and its report page (/portal/report), both as client@example.invalid; and, once a claim on the seed has an issued report, a claim's report, its sign-off and the client's acceptance (the seed has none issued, so the suites are the evidence until then). Everything else the sweep opened looked and behaved as before.
 
 ---
 
@@ -1545,7 +1531,7 @@
 
 ## Z · Complete / Not Applicable
 
-368 items.
+370 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3775,6 +3761,14 @@
 - Note 2026-11-04 (Phase 161b): Two checks only a person signed in on the test website can make. (1) Carried from 161a: the start-up log of the merged 161a shows the Blob store open (uploaded documents are kept in the private document store), but no photo has been sent through it since; send one from your phone and see it on the claim. (2) Phase 161b put a security token on every form; it was checked on a local copy in a browser, and the photo send uses a page script that now sends the token in a header, so the photo also proves that. If anything says This form has expired on a page you have just opened, tell Claude which page.
 - Note 2026-11-04 (Phase 161b follow-up): Done (Lakhbir, 4 Nov 2026, on the test website after 161b's merge): a client portal message sent (Sent. We will reply here.), a task started as admin, a room saved as the surveyor, and a photo sent as a file with a client message, which goes into the Blob store. No page said This form has expired, and the function log showed no error. The phone photo page itself was not used: the test client has no survey yet.
 
+### After Phase 161d1 is merged: on the test website, open the engagement letter in the client portal and a claim's survey pack (Fixtures, item by item) as the surveyor; tell Claude if either is blank or shows an error
+
+`13472446325` · **Done** · owner Lakhbir
+
+- Note 2026-11-05 (Phase 161d1): Since this phase the app reads the engagement letter, its test copy and the fixture list from its own copies in 09-app/backend/copies/. Both pages were opened on a local copy with the invented logins (the letter, and the pack chapter showing a row of the fixture list), and the branch preview served the home page and the full notices page; a preview has no logins, so only you can open these two on the test website after the merge.
+- Note 2026-11-11 (Phase 162): The sweep opened both on the test website. The survey pack's chapter 12 (Fixtures, item by item) lists 37 fixtures, opened as Admin; the client portal shows the engagement letter as signed with Read the letter and the signed copy. The letter page itself was not opened: the sign-in dropped first, because the test website is keeping its records in memory (13522119174). Status unchanged; it waits on that item.
+- Note 2026-11-11 (Phase 162): Done, 11 Nov 2026 (after the test website's database was back): the engagement letter opens whole in the client portal (/portal/letter, signed, the test copy's four open terms blank on purpose), and a claim's survey pack chapter 12 lists its 37 fixtures item by item. Neither is blank or shows an error.
+
 ### Decide whether the website shows a telephone number, or email only (the legal pages leave a gap until then)
 
 `13475983571` · **Done** · owner Lakhbir
@@ -3848,4 +3842,14 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-11 (Phase 162): Claimed: the sweep, run out of order after 161m and before 161n goes live (COORDINATES, the order to go live). Board item 13521974546 made the same day.
 - Note 2026-11-11 (Phase 162): Done: the board and the tracker agree both ways; the six carried jobs done; three faults fixed; the test website found keeping its records in memory (13522119174); 161n's gate checked (11 of 12 closed); the sweep renumbered to 163. 5,616 checks, all green. PR 100; Lakhbir merges.
+
+### The test website is keeping its records in memory (found by the sweep, 11 Nov 2026): read the Vercel log line 'test deployment:' for why its lasting database did not open, and check the Turso settings
+
+`13522119174` · **Done** · owner Lakhbir
+
+- Note 2026-11-11 (Phase 162): Found by the sweep on the test website. Between two sign-ins about 20 minutes apart every invented client had a new id, the engagement letter said the seed signed it "Today, 06:27", and a sign-in held only while the next page reached the same copy (the pane was signed out twice). With the lasting database in use a new copy never seeds again (seedOnce), so each copy is running on its own database in memory. Only Lakhbir can see why: the Vercel log prints "test deployment: <why>" as each copy starts (api/index.mjs), and the Turso integration's settings (TURSO_DATABASE_URL, TURSO_AUTH_TOKEN; names only). Since this sweep, Admin's home on the test website says so too, with the same reason, once its pull request is merged. Until it is fixed, a sign-in on the test website can drop at any page, and nothing anyone types there lasts. The sweep could not finish its signed-in checks for this reason; they wait on this item.
+- Note 2026-11-11 (Phase 162): Carried here by the sweep, because they share this trigger: once the test website keeps its records again (Admin's home no longer says otherwise), sign in and open what the sweep could not finish on 11 Nov 2026 - the client portal's letter page (/portal/letter) and its report page (/portal/report), both as client@example.invalid; and, once a claim on the seed has an issued report, a claim's report, its sign-off and the client's acceptance (the seed has none issued, so the suites are the evidence until then). Everything else the sweep opened looked and behaved as before.
+- Note 2026-11-11 (Phase 162): CAUSE FOUND (11 Nov 2026, after PR 100 was merged): Admin's home on the test website, signed in by Lakhbir, gives the server's reason: 'The lasting database could not be opened (Error: Hrana(StreamError(Error { message: "Operation was blocked: SQL read operations are forbidden (reads are blocked, do you need to upgrade your plan?)", code: "BLOCKED" })))'. Turso has blocked reads on the account: its plan's read allowance is used up. Nothing in our code or settings is broken. What is left is Lakhbir's: in the Turso dashboard, read the usage page (how many reads, and when the allowance resets), then either move to a paid plan or wait for the reset. The sweep's two open checks (the portal's letter and report pages) wait on that. If the usage shows the test website itself reads far more than expected, cutting its reads is buildable (a new phase).
+- Note 2026-11-11 (Phase 162): CORRECTED the same day, from Turso's own dashboard (the Vercel-managed organisation vercel-icfg-..., opened by Lakhbir in the browser pane): 'Your account is temporarily blocked because you exceeded your usage quota.' The quota crossed is SYNCS, not reads: syncs 3.12 GB of the free plan's 3 GB this month; reads 25.09K of 500M; writes 416 of 10M; storage 15.66 MB of 5 GB (database-aero-nest, aws-us-east-1). Syncs come only from the local copy (CAPREBATE_DB_LOCAL_COPY=on, 'faster clicks part 2', 3 Oct 2026): each new copy of the website downloads the whole database, and every page brings in what other copies wrote (server.ts, app.db.refresh). The block lasts until Turso's monthly allowance resets or the plan is changed in Vercel (My integrations, Turso, Settings, Change Plan). What stops it happening again: the local copy switched off in Vercel's settings (CAPREBATE_DB_LOCAL_COPY off or removed), so every query goes to the database itself and nothing is synced.
+- Note 2026-11-11 (Phase 162): FIXED, 11 Nov 2026: Lakhbir moved the Turso integration to the Developer plan in Vercel (10 GB syncs, $5.99 a month); on his word Claude deleted CAPREBATE_DB_LOCAL_COPY from the caprebate-test project's Production settings in the browser pane, and Lakhbir verified the redeploy. Turso's banner is gone, the plan shows Developer, the database Active, and its syncs stayed at 3.12 GB after the redeploy. On the test website, signed in as Admin: no 'records in memory' warning, the sign-in held across six pages, and the first client's id was the same each time. As the client: the portal's letter page shows the whole letter, the report page says it is not ready yet (no seeded claim has an issued report), and the letter's signing date is the lasting database's own (1 Oct 2026, 14:02), not today's. Every query now goes to Turso directly; nothing is synced. With the local copy off the usage fits the free plan, so the plan could go back to free from December if wanted.
 

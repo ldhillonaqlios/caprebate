@@ -22,7 +22,7 @@ test mode, developers will change this".
 
 | Service | What it does | Keys (in Vercel?) | State | Before real clients |
 |---|---|---|---|---|
-| Turso database | The test website's records | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` (yes); `CAPREBATE_DB_LOCAL_COPY=on` (yes, 3 Oct) | Live; a local copy on each copy of the site since 3 Oct (clicks 0.6–0.8 s) | UK host (developers) |
+| Turso database | The test website's records | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` (yes); `CAPREBATE_DB_LOCAL_COPY` (set on 3 Oct; DELETED 11 Nov 2026 on Lakhbir's word: its syncs used up Turso's free 3 GB and Turso blocked the database; do not set it again without checking the plan's syncs allowance; the Turso integration is on the Developer plan since 11 Nov) | Live; a local copy on each copy of the site since 3 Oct (clicks 0.6–0.8 s) | UK host (developers) |
 | Vercel Blob | Uploaded documents | `BLOB_STORE_ID` (yes) | Live | UK host (developers) |
 | IONOS email sending | Staff emails, invitations, sign-in codes, calendar invites | `IONOS_SMTP_*` (yes) | **Sends real email**, under a testing waiver (`EMAIL_SENDING`, src/integrations/email/email-provider.ts) | Privacy notice and letter clause 7 name IONOS. **5 Oct 2026 (Phase 156b): SPF, DKIM and DMARC published; a test email scored 10/10 on mail-tester.com** |
 | IONOS mailbox reading | Replies to contact@ come into the app | `IONOS_IMAP_*`, `REPLY_TIMER_TOKEN` (yes) | Live, read only; the outside timer (cron-job.org, Lakhbir's account) **runs every 5 minutes, each run 200 (checked 5 Oct 2026, Phase 156b)** | Privacy notice |
