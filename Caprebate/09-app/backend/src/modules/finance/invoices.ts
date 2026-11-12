@@ -38,7 +38,8 @@ import type { Db } from '../../core/index.ts';
 import type { AuditKind, AuditLog, Outcome } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
-import { localDate, localStamp } from '../../shared/index.ts';
+import { localDate, localStamp, ukDate } from '../../shared/index.ts';
+import { brandedEmail, type BrandedEmail, type EmailTransport } from '../../integrations/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { addDaysToDate, dueReading, taskObj, type DueReading } from '../clients/index.ts';
 import { claimStage } from '../../shared/index.ts';
@@ -54,9 +55,10 @@ import { assertFinanceSection, financeSectionObj } from './finance.permissions.t
 import { feeList, type FeeView } from '../clients/index.ts';
 import { announce } from '../../core/index.ts';
 import type { Letter } from '../claims/index.ts';
-import { getBusinessesNameById, getBusinessesSectorById, getStaffTasksIdTitleByClaimIdRuleId } from '../clients/index.ts';
+import { getBusinessesNameById, getBusinessesSectorById, getContactsIdBusinessIdById2, getStaffTasksIdTitleByClaimIdRuleId } from '../clients/index.ts';
 import { getHmrcEnquiriesAmendedFigurePenceByClaimIdClosedOn } from '../claims/index.ts';
 import { getInvoiceCreditNotesAVByInvoiceId, getInvoiceNumbersCOALESCEMAXSeqN, getInvoicePaymentsCountByInvoiceIdVoidedAt, getInvoicePaymentsIdInvoiceIdById, getInvoicePaymentsNByInvoiceIdVoidedAt, getInvoicesCountByClaimId, getInvoicesIdByIdClaimId, insertInvoiceCreditNotes, insertInvoiceNumbers, insertInvoicePayments, insertInvoices, listInvoiceCreditNotesIdBasisByInvoiceId, listInvoiceCreditNotesInvoiceIdAmountPence, listInvoicePaymentsIdReceivedOnByInvoiceId, listInvoicePaymentsInvoiceIdAmountPenceByVoidedAt, updateInvoiceNumbersStateCancelledAtByInvoiceIdKind, updateInvoicePaymentsVoidedAtVoidedByById, updateInvoicesInvoiceStatusCancelledAtById, updateInvoicesInvoiceStatusSentOnById } from './data.ts';
+import { getInvoiceCreditNotesEmailById, getInvoicePaymentsEmailById } from './data.ts';
 import { getClaimsCreatedAtNameById, getClaimsIdBusinessIdById, getInvoicesIdBusinessIdById, listInvoicesIdBusinessId, listInvoicesIdBusinessIdByClaimId, listInvoicesLiveBreakFeeByBusinessId } from './data.ts';
 import { resultVersions } from '../../shared/index.ts';
 import { rulesThroughFinance } from './logic/rules.ts';
@@ -894,4 +896,198 @@ export function financeDashboard(db: Db, actor: Actor, nowIso: string, opts: Inv
     introducer_fees: feeList(db, actor),
     recorded_not_collected: RECORDED_NOT_COLLECTED,
   };
+}
+
+/* ================================================================== *
+ * 9 · THE MONEY EMAILS: BUILT, AND REFUSED (Phase 161m2)
+ *
+ * The invoice, the clause 13 credit note and the thank-you for a payment, each on the branded layout in the approved
+ * wording (invoice, credit-note and payment-received in 05-reports-and-templates/emails/emails.py). An ADMIN sends each
+ * one by hand, and nothing sends one by itself. ALL THREE ARE REFUSED while the invoice-fraud procedure is not in force,
+ * exactly as every other invoice email is refused today (the automation's INVOICE_EMAIL and INVOICE_REMINDER, the
+ * templates' refused words): an email about an invoice or a payment is the email a fraudster copies. The thank-you
+ * carries no bank details, but it names an invoice and an amount, and the procedure is what decides how we write to a
+ * client about money; so it waits with the other two. Lifting the refusal is the procedure's piece of work, not this flag.
+ * ================================================================== */
+
+/**
+ * THE INVOICE-FRAUD PROCEDURE: WHERE IT STANDS. CRM 7 of 10, kept here since Phase 161m2 so the finance module that
+ * builds the money emails reads the same block the CRM's rules and the admin's templates read (src/modules/crm/automation.ts
+ * names it from here, as before). test/finance/invoices-and-fee-controls.test.ts reads the operating procedures' export
+ * and fails if this says in force while the export says draft.
+ */
+export const INVOICE_FRAUD_PROCEDURE: { readonly in_force: boolean; readonly where: string; readonly signoff: string } = Object.freeze({
+  in_force: false,
+  where: 'Section 9 of our operating procedures. It is marked as a DRAFT ADDITION, written on 11 September 2026',
+  signoff: 'the solicitor, the DPO and the developer still have to sign it off',
+});
+
+/** What an admin reads when a money email is refused. */
+export const MONEY_EMAIL_REFUSED =
+  'Invoices, credit notes and payment emails are not sent by email yet. That waits on our invoice-fraud procedure, ' +
+  'which is not in force. Send it by hand, by post or as the client asked, and record it.';
+
+/** Null when a money email may go; otherwise why not. */
+export function moneyEmailRefusal(procedure: { readonly in_force: boolean } = INVOICE_FRAUD_PROCEDURE): string | null {
+  return procedure.in_force === true ? null : MONEY_EMAIL_REFUSED;
+}
+
+/** Pounds and pence as an invoice states them: "£1,234.56", and "£1,200" for whole pounds. */
+export function poundsExact(pence: number): string {
+  const whole = Math.floor(Math.abs(pence) / 100);
+  const p = Math.abs(pence) % 100;
+  return `${pence < 0 ? '-' : ''}£${whole.toLocaleString('en-GB')}${p === 0 ? '' : `.${String(p).padStart(2, '0')}`}`;
+}
+
+/** A fee rate as a person reads it: 0.03 is "3%", 0.025 is "2.5%". */
+function rateWords(rate: number): string {
+  return `${String(Math.round(rate * 10000) / 100)}%`;
+}
+
+function portalLink(origin: string | null): string | null {
+  const o = (origin ?? '').trim().replace(/\/+$/, '');
+  return /^https?:\/\/[^\s/?#]+$/i.test(o) ? `${o}/portal` : null;
+}
+
+function daysBetween(fromIso: string, toIso: string): number {
+  return Math.round((Date.parse(`${toIso}T00:00:00Z`) - Date.parse(`${fromIso}T00:00:00Z`)) / 86_400_000);
+}
+
+/** THE INVOICE EMAIL (emails.py: invoice). The fee row is said only where the invoice carries a rate and a figure. */
+export function invoiceEmail(f: {
+  readonly invoice_number: string; readonly organisation: string; readonly rate: number | null; readonly allowances_pence: number | null;
+  readonly amount_pence: number; readonly invoice_date: string; readonly due_on: string | null; readonly origin: string | null;
+}): BrandedEmail {
+  const due = f.due_on === null ? null : `${ukDate(f.due_on)} (${String(daysBetween(f.invoice_date, f.due_on))} days)`;
+  const link = portalLink(f.origin);
+  const rows: [string, string][] = [['Invoice', f.invoice_number]];
+  if (f.rate !== null && f.allowances_pence !== null) rows.push(['Our fee', `${rateWords(f.rate)} of ${poundsExact(f.allowances_pence)} capital allowances identified`]);
+  rows.push(['Amount due', poundsExact(f.amount_pence)]);
+  if (due !== null) rows.push(['Due by', due]);
+  return brandedEmail({
+    subject: `Invoice ${f.invoice_number} from Cap Rebate`,
+    preheader: f.due_on === null ? 'Our fee for your capital allowances report.' : `Our fee for your capital allowances report. Due by ${ukDate(f.due_on)}.`,
+    heading: 'Your invoice',
+    blocks: [
+      `Thank you for working with us. Our invoice for ${f.organisation} is attached.`,
+      { kind: 'facts', rows },
+      '**Before you pay**, please check the bank details on the invoice match the ones in your portal. We will never change our bank details by email. If an email ever asks you to pay a different account, do not pay it: tell us at contact@caprebate.co.uk.',
+    ],
+    button: link === null ? null : { label: 'See the invoice in your portal', href: link },
+    sign: 'The Cap Rebate team',
+    security: true,
+  }, { publicOrigin: f.origin });
+}
+
+/** THE CLAUSE 13 CREDIT NOTE EMAIL (emails.py: credit-note). Fees are before VAT; the credit says its VAT where it has any. */
+export function creditNoteEmail(f: {
+  readonly credit_number: string; readonly old_allowances_pence: number; readonly new_allowances_pence: number;
+  readonly old_fee_pence: number; readonly new_fee_pence: number; readonly credit_pence: number; readonly credit_vat_pence: number;
+  readonly origin: string | null;
+}): BrandedEmail {
+  const credit = f.credit_vat_pence > 0 ? `${poundsExact(f.credit_pence)} plus ${poundsExact(f.credit_vat_pence)} VAT` : poundsExact(f.credit_pence);
+  const back = poundsExact(f.credit_pence + f.credit_vat_pence);
+  const link = portalLink(f.origin);
+  return brandedEmail({
+    subject: `Credit note ${f.credit_number} from Cap Rebate`,
+    preheader: 'Your claim was reduced, so our fee has been recalculated.',
+    heading: 'A credit to your account',
+    blocks: [
+      `The capital allowances on your claim have been reduced from ${poundsExact(f.old_allowances_pence)} to ${poundsExact(f.new_allowances_pence)}. As our engagement letter says, our 3% fee is recalculated on the new figure.`,
+      { kind: 'facts', rows: [['Fee before', poundsExact(f.old_fee_pence)], ['Fee now', poundsExact(f.new_fee_pence)], ['Credit to you', credit]] },
+      `If you have already paid, we will refund ${back} to the account you paid from. If not, the credit is taken off what you owe. The credit note is attached.`,
+    ],
+    button: link === null ? null : { label: 'See your account', href: link },
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin: f.origin });
+}
+
+/** THE THANK-YOU FOR A PAYMENT (emails.py: payment-received). No bank details, and no link. */
+export function paymentReceivedEmail(f: { readonly amount_pence: number; readonly invoice_number: string; readonly origin: string | null }): BrandedEmail {
+  return brandedEmail({
+    subject: 'Thank you for your payment',
+    preheader: `We have received ${poundsExact(f.amount_pence)} for invoice ${f.invoice_number}.`,
+    heading: 'Thank you for your payment',
+    blocks: [
+      `We have received your payment of ${poundsExact(f.amount_pence)} for invoice ${f.invoice_number}. Thank you.`,
+      'If HMRC asks about your claim, we support you on our valuation free of charge, as our engagement letter says.',
+    ],
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin: f.origin });
+}
+
+export type MoneyEmailDeps = InvoiceDeps & { readonly email: EmailTransport };
+/** Who it goes to (one of the company's own contacts with an email address), the site's address, and the PDF to attach. */
+export type MoneyEmailInput = { readonly contact_id: string; readonly origin: string | null; readonly pdf?: Uint8Array | null };
+
+/** An admin, on this invoice, and only while the procedure is in force: null to go on, or the refusal. */
+function moneyEmailGate(actor: Actor, r: InvoiceRow): InvoiceResult | null {
+  authorise(actor, 'invoice.write', { type: 'invoice', id: r.id, business_id: r.business_id });
+  if (actor.role !== 'ADMIN') return { ok: false, why: 'Only an admin sends an invoice, a credit note or a payment email, and only by hand.' };
+  const refused = moneyEmailRefusal();
+  return refused === null ? null : { ok: false, why: refused };
+}
+
+function queueMoneyEmail(d: MoneyEmailDeps, actor: Actor, r: InvoiceRow, f: MoneyEmailInput, e: BrandedEmail, filename: string | null): InvoiceResult {
+  const ct = getContactsIdBusinessIdById2<{ id: string; business_id: string | null; email: string | null }>(d.db, [f.contact_id.trim()]);
+  if (ct === undefined || ct.business_id !== r.business_id) return { ok: false, why: 'Choose one of this company’s own contacts.', field: 'contact_id' };
+  if (ct.email === null || ct.email.trim() === '') return { ok: false, why: 'That contact has no email address recorded. Record their address first.', field: 'contact_id' };
+  if (filename !== null && (f.pdf === undefined || f.pdf === null || f.pdf.length === 0)) return { ok: false, why: 'Attach the PDF first.', field: 'pdf' };
+  const pdf = f.pdf ?? null;
+  const sent = d.email.send({
+    to_email: ct.email.trim(), subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION',
+    business_id: r.business_id, claim_id: r.claim_id, contact_id: ct.id, written_by: actor.id,
+    ...(filename === null || pdf === null ? {} : { inline_files: [{ filename, content_type: 'application/pdf' as const, bytes: pdf }] }),
+  });
+  if (sent.id === null) return { ok: false, why: 'This company asked us not to contact them. Nothing was sent.' };
+  record(d, actor, 'EMAIL_QUEUED', 'outbox', sent.id, 'ALLOWED', { invoice: r.id, contact: ct.id, business: r.business_id });
+  return { ok: true, id: sent.id };
+}
+
+/** AN ADMIN SENDS AN INVOICE BY HAND, the invoice PDF attached. Refused while the invoice-fraud procedure is not in force. */
+export function emailInvoice(d: MoneyEmailDeps, actor: Actor, invoice_id: string, f: MoneyEmailInput): InvoiceResult {
+  const r = loadInvoice(d.db, invoice_id);
+  const gate = moneyEmailGate(actor, r);
+  if (gate !== null) return gate;
+  const number = formatInvoiceNumber(r.seq);
+  if (number === null || r.invoice_status === 'CANCELLED') return { ok: false, why: 'Only a raised invoice with its number is sent.' };
+  const m = invoiceMoney(d.db, r, d.now());
+  const e = invoiceEmail({
+    invoice_number: number, organisation: r.client_name, rate: r.kind === 'FEE' ? r.fee_rate : null,
+    allowances_pence: r.kind === 'FEE' ? r.claim_value_pence : null, amount_pence: m.outstanding_pence,
+    invoice_date: r.invoice_date, due_on: r.due_on, origin: f.origin,
+  });
+  return queueMoneyEmail(d, actor, r, f, e, `invoice-${number}.pdf`);
+}
+
+/** AN ADMIN SENDS A CLAUSE 13 CREDIT NOTE BY HAND, the credit note attached. Refused as the invoice is. */
+export function emailCreditNote(d: MoneyEmailDeps, actor: Actor, credit_note_id: string, f: MoneyEmailInput): InvoiceResult {
+  const c = getInvoiceCreditNotesEmailById<{ id: string; invoice_id: string; basis: string; amount_pence: number; vat_pence: number;
+    corrected_claim_value_pence: number | null; seq: number | null }>(d.db, [credit_note_id]);
+  if (c === undefined) throw new NotFoundAsRefusal();
+  const r = loadInvoice(d.db, c.invoice_id);
+  const gate = moneyEmailGate(actor, r);
+  if (gate !== null) return gate;
+  const number = formatInvoiceNumber(c.seq);
+  if (c.basis !== 'CLAUSE_13_REDUCTION' || c.corrected_claim_value_pence === null || r.claim_value_pence === null || number === null) {
+    return { ok: false, why: 'This email is for a clause 13 credit note, where the claim was reduced.' };
+  }
+  const e = creditNoteEmail({
+    credit_number: number, old_allowances_pence: r.claim_value_pence, new_allowances_pence: c.corrected_claim_value_pence,
+    old_fee_pence: r.fee_pence, new_fee_pence: r.fee_pence - creditedSoFar(d.db, r.id).amount, credit_pence: c.amount_pence,
+    credit_vat_pence: c.vat_pence, origin: f.origin,
+  });
+  return queueMoneyEmail(d, actor, r, f, e, `credit-note-${number}.pdf`);
+}
+
+/** AN ADMIN THANKS A CLIENT FOR A PAYMENT RECORDED. Refused as the invoice is: see the top of this section. */
+export function emailPaymentReceived(d: MoneyEmailDeps, actor: Actor, payment_id: string, f: MoneyEmailInput): InvoiceResult {
+  const p = getInvoicePaymentsEmailById<{ id: string; invoice_id: string; amount_pence: number; voided_at: string | null }>(d.db, [payment_id]);
+  if (p === undefined) throw new NotFoundAsRefusal();
+  const r = loadInvoice(d.db, p.invoice_id);
+  const gate = moneyEmailGate(actor, r);
+  if (gate !== null) return gate;
+  const number = formatInvoiceNumber(r.seq);
+  if (p.voided_at !== null || number === null) return { ok: false, why: 'A voided record, or an invoice with no number, has no thank-you.' };
+  return queueMoneyEmail(d, actor, r, f, paymentReceivedEmail({ amount_pence: p.amount_pence, invoice_number: number, origin: f.origin }), null);
 }

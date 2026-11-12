@@ -290,12 +290,15 @@ describe('the accountant’s sign-off', () => {
     const o = made.app.db.get<{ id: string; to_email: string; subject: string; body: string; contact_id: string; business_id: string }>(
       "SELECT id, to_email, subject, body, contact_id, business_id FROM outbox WHERE kind = 'REPORT_FOR_SIGNOFF'")!;
     assert.deepEqual([o.to_email, o.contact_id, o.business_id], ['avery@smithco.example.com', 'c-sr-acct', 'b-sr']);
-    assert.equal(o.subject, 'Survey report to sign off: Report Practice Limited');
+    assert.equal(o.subject, 'Capital allowances report to sign off: Report Practice Limited'); // PHASE 161m2: the approved wording
     const link = /https:\/\/caprebate\.example\.invalid\/signoff\/([A-Za-z0-9_-]{43})/.exec(o.body);
     assert.ok(link !== null, o.body);
     token = link[1]!;
-    assert.match(o.body, /^Dear Avery Accountant,/);
-    assert.match(o.body, /version 1, approved on 2 October 2026 by Sam Surveyor \(RICS no\. 1234567\)/);
+    // PHASE 161m2: on the branded layout. The plain text: the greeting, the company's request, the figure and the button's link.
+    assert.match(o.body, /^Dear Avery Accountant,$/m);
+    assert.match(o.body, /^Report Practice Limited has asked us to send you their capital allowances report.* It is attached, with the figures as a spreadsheet\.$/m);
+    assert.match(o.body, /^Capital allowances identified: £[\d,]+(\.\d\d)?$/m);
+    assert.match(o.body, /^Review and sign off: https:\/\/caprebate\.example\.invalid\/signoff\/[A-Za-z0-9_-]{43}$/m);
     const r = made.app.db.get<{ token_sha256: string; permission_note: string }>('SELECT token_sha256, permission_note FROM pack_signoff_requests')!;
     assert.equal(r.token_sha256, createHash('sha256').update(token).digest('hex'));
     assert.equal(r.permission_note, 'The client, by email on 2 October');

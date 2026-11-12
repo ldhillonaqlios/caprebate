@@ -40,6 +40,15 @@ export function updateInvoiceNumbersStateCancelledAtByInvoiceIdKind(db: Db, para
   return db.run("UPDATE invoice_numbers SET state = 'CANCELLED', cancelled_at = ?, cancelled_by = ? WHERE invoice_id = ? AND kind = 'INVOICE'", params);
 }
 
+// invoice_credit_notes and invoice_payments, for their emails (Phase 161m2: src/modules/finance/invoices.ts, section 9)
+export function getInvoiceCreditNotesEmailById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT c.id, c.invoice_id, c.basis, c.amount_pence, c.vat_pence, c.corrected_claim_value_pence, n.seq ' +
+    'FROM invoice_credit_notes c LEFT JOIN invoice_numbers n ON n.credit_note_id = c.id WHERE c.id = ?', params);
+}
+export function getInvoicePaymentsEmailById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT id, invoice_id, amount_pence, voided_at FROM invoice_payments WHERE id = ?', params);
+}
+
 // invoice_payments
 export function getInvoicePaymentsCountByInvoiceIdVoidedAt<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT COUNT(*) AS n FROM invoice_payments WHERE invoice_id = ? AND voided_at IS NULL ' +

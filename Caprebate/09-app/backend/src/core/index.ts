@@ -11,6 +11,8 @@ export { AuditLog, GENESIS, _canonical, screenDetail } from './audit.ts';
 export { BackOfficeError, NotFoundAsRefusal, answerLabel, assertBackOffice, assertSection, mayArrangeCalls, mayEnterBackOffice } from './backoffice.ts';
 export { EventOutsideTransaction, ListenerFailed, announce, listen, listenersOf } from './events.ts';
 export { BORROWABLE_ROLES, NEVER_GRANTED, customRoleKey, customRoleOf, isCustomRoleKey, loadCustomRoles, roleRefusal } from './custom-roles.ts';
+// Phase 161m2: whether an email that goes once only has gone (the letter reminder, the identity check's emails, the digest).
+export { getAuditLogCountByKindObjectIdOnce, getAuditLogCountByKindObjectIdSince } from './data.ts';
 export { deleteCustomRoleGrantsByRole, fillUser, fillUsers, getAuditLogCount, getAuditLogCountByKindAt, getAuditLogCountByKindObjectId, getCustomRolesNameRetiredAtByRole, getCustomRolesRoleByName, getRolesRoleByRole, getSessionsCountByUserIdRevokedReason, getSessionsIdByTokenHashRevokedAt, getUsersCountByBusinessId, getUsersCountByBusinessIdRole, getUsersCountByEmailCanonical, getUsersCountByIdBusinessId, getUsersCountByRole, getUsersCountByRoleDisabledAt, getUsersDisplayNameById, getUsersEmailById, getUsersEmailDisplayNameById, getUsersEmailRoleById, getUsersHByIdDisabledAt, getUsersIdByEmailCanonical, getUsersIdByEmailCanonicalId, getUsersIdByIdEmailCanonical, getUsersIdByIdRole, getUsersIdByIdRole2, getUsersIdEmailByIdDisabledAt, getUsersNById, getUsersRoleById, getUsersRoleByIdDisabledAt, getUsersRoleDisabledAtById, insertCustomRoleGrants, insertCustomRoles, insertRoles, listAuditLogAtKindByOutcomeKind, listAuditLogAtKindByOutcomeKind2, listAuditLogAtKindByOutcomeKind3, listAuditLogAtKindByOutcomeKind4, listAuditLogAtWhoByKindObjectId, listAuditLogDetailSByKindM, listAuditLogKind, listCustomRoleGrantsActionAsRoleByRole, listCustomRolesRoleName, listSessionsDisplayNameRoleByUserIdLastSeenAt, listSessionsIdDisplayNameByUserIdRole, listUserPhotosUserId, listUsersDisplayNameByIds, listUsersIdByRole, listUsersIdDisplayNameByRoleADM, listUsersIdDisplayNameByRoleADM2, listUsersIdDisplayNameByRoleDisabledAt, listUsersIdDisplayNameByRoleEmailCanonical, listUsersIdDisplayNameRoleEmailByIds, listUsersIdEmailByBusinessIdRole, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt, listUsersIdNameByBusinessIdRole, listUsersIdNameByRoleDisabledAt, listUsersIdNameByRoleDisabledAt2, listUsersIdRoleByDisabledAt, updateCustomRolesRetiredAtUpdatedAtByRole, updateCustomRolesUpdatedAtByRole, updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt, updateUsersDisplayNameUpdatedAtById, updateUsersEmailEmailCanonicalById, updateUsersPasswordTemporaryUntilById } from './data.ts';
 // The users the client record's statements joined, by a list of ids (Phase 161l2).
 export { getUsersCountByBusinessIdsEmailCanonical, listUsersIdDisplayNameByIdsDisabledAt } from './data.ts';
@@ -40,7 +42,7 @@ export { MFA_KEY_NAME, mfaKeyFrom, resealSecrets, sealTextSecrets } from './mfa-
 export { defaultHasher } from './password.ts';
 export { RECOVERY_CODES_LOW } from './recovery-codes.ts';
 export { refillForm, typedValues } from './refill.ts';
-export { MIN_PASSWORD, STEP_COOKIE, STEP_GONE, STEP_TTL_MS, TEMPORARY_PASSWORD_DAYS, beginSignIn, chooseMethod, describeStep, issueTemporaryPassword, makeNewRecoveryCodes, ownRecoveryCodesLeft, ownTwoFactor, recoveryCodesPage, recoveryCodesWords, removeOwnTwoFactor, resendCode, resetTwoFactor, startAccountSetup, stepPage, submitCode, submitNewPassword, submitRecoveryCode, temporaryPassword, temporaryUntil } from './sign-in.ts';
+export { MIN_PASSWORD, STEP_COOKIE, STEP_GONE, STEP_TTL_MS, TEMPORARY_PASSWORD_DAYS, beginSignIn, chooseMethod, describeStep, issueTemporaryPassword, makeNewRecoveryCodes, ownRecoveryCodesLeft, ownTwoFactor, recoveryCodesPage, recoveryCodesWords, removeOwnTwoFactor, resendCode, recoveryCodeUsedEmail, resetTwoFactor, setEmailLayout, signInCodeEmail, startAccountSetup, stepPage, submitCode, submitNewPassword, submitRecoveryCode, temporaryPassword, temporaryUntil } from './sign-in.ts';
 export type { Deps, LoginResult } from './auth.ts';
 export type { AuditEntry, AuditKind, Outcome } from './audit.ts';
 export type { Actor, DocumentFacts, Obj, ObjType, Rule, RuleTable } from './authz.ts';
@@ -61,6 +63,6 @@ export type { PersonFacts } from './data.ts';
 export type { App, BuildOptions } from './app.ts';
 export type { FormTokens } from './form-token.ts';
 export type { PasswordHasher } from './password.ts';
-export type { Method } from './sign-in.ts';
+export type { EmailLayout, Method } from './sign-in.ts';
 // Phase 161m: the core's rules register.
 export { CORE_RULES, rulesThroughCore } from './logic/rules.ts';

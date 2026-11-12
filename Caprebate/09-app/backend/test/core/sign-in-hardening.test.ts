@@ -66,7 +66,7 @@ async function world() {
     (await fetch(`${base}/api/whoami`, { headers: session === undefined ? {} : { cookie: `cb_session=${session}` } })).status;
   const user = (email: string) => db.get<{ id: string; mfa_method: string | null; mfa_secret: string | null; mfa_last_step: number | null }>(
     'SELECT id, mfa_method, mfa_secret, mfa_last_step FROM users WHERE email_canonical = ?', [email]);
-  const lastCode = () => /code is (\d{6})/.exec(db.get<{ body: string }>(
+  const lastCode = () => /^(\d{6})$/m.exec(db.get<{ body: string }>(
     "SELECT body FROM outbox WHERE subject = 'Your Cap Rebate sign-in code' ORDER BY rowid DESC LIMIT 1")?.body ?? '')?.[1] ?? '';
   const appCode = (key: string, ahead = 0) => codeAt(key.replace(/\s/g, ''), stepAt(NOW_MS) + ahead);
   /** Sign a staff login in through the API with an app. Returns the key and the session. */

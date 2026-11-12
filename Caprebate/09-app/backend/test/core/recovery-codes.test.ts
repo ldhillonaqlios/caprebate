@@ -29,8 +29,9 @@ const WRONG_RECOVERY = 'That recovery code is not right, or it has been used. Tr
 type Res = { status: number; body: string; location: string | null };
 type Json = { status: number; body: Record<string, unknown>; cookies: Map<string, string> };
 
-async function world() {
-  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151m-')), now: () => NOW });
+/** `publicOrigin` (Phase 161m2): the site's address, for the links in the emails. Absent, as before. */
+async function world(publicOrigin?: string) {
+  const made = await createApp(':memory:', { documentRoot: mkdtempSync(join(tmpdir(), 'cb-151m-')), now: () => NOW, ...(publicOrigin === undefined ? {} : { publicOrigin }) });
   await seed(made.app.db, made.app.hasher, made.app.now);
   await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
   const a = made.server.address();
@@ -188,7 +189,7 @@ describe('151m · 2 · a recovery code in place of the app or email code', () =>
       const b = w.browser();
       await b.post('/login', { email: 'surveying@example.invalid', password: SEED_PASSWORD });
       await b.post('/login/step/method', { method: 'EMAIL' });
-      const code = /code is (\d{6})/.exec(w.db.get<{ body: string }>("SELECT body FROM outbox WHERE kind = 'SIGN_IN_CODE' ORDER BY rowid DESC LIMIT 1")?.body ?? '')?.[1] ?? '';
+      const code = /^(\d{6})$/m.exec(w.db.get<{ body: string }>("SELECT body FROM outbox WHERE kind = 'SIGN_IN_CODE' ORDER BY rowid DESC LIMIT 1")?.body ?? '')?.[1] ?? '';
       const codes = w.codesOn((await b.post('/login/step/code', { code })).body);
       assert.equal(codes.length, 10);
       const v = await w.atVerify('surveying@example.invalid');
@@ -232,7 +233,7 @@ describe('151m · 2 · a recovery code in place of the app or email code', () =>
         "SELECT to_email, kind, subject, body FROM outbox WHERE kind = 'RECOVERY_CODE_USED'");
       assert.ok(mail !== undefined, 'no email about the used code');
       assert.equal(mail.to_email, 'sales@example.invalid');
-      assert.match(mail.body, /You have 9 codes left/);
+      assert.match(mail.body, /You have 9 recovery codes left\./);
       const all = w.everywhere();
       for (const c of codes) assert.ok(!all.includes(c) && !all.includes(c.replace('-', '')), `${c} was written down`);
       assert.ok(!EP.SENT_SECRET_KINDS.includes('RECOVERY_CODE_USED'), 'an email with no code in it is emptied');
@@ -259,7 +260,7 @@ describe('151m · 2 · a recovery code in place of the app or email code', () =>
       assert.match(page.body, /You have 2 recovery codes left\. Make new ones now/);
       assert.match(page.body, /Make new recovery codes/);
       assert.match(w.db.get<{ body: string }>("SELECT body FROM outbox WHERE kind = 'RECOVERY_CODE_USED' ORDER BY rowid DESC LIMIT 1")!.body,
-        /You have 2 codes left\. Make new ones soon/);
+        /You have 2 recovery codes left\. When you are down to two, please make a new set in your account settings\./);
     } finally { w.close(); }
   });
 
@@ -440,5 +441,79 @@ describe('151m · 5 · the words: the step page, Help and the guide name recover
       assert.match(text, /Make new recovery codes/, `${name} does not say how to get new ones`);
       assert.match(text, /works once/i, `${name} does not say each works once`);
     }
+  });
+});
+
+/* ================================================================== 6. the branded emails (Phase 161m2) */
+
+/*
+ * PHASE 161m2, 11 November 2026: the sign-in code, the recovery-code email and the password reset in the branded layout
+ * (emails.py: signin-code, recovery-code-used, password-reset). Each has an HTML version and a text version. Proved red
+ * on the code before it: there every one of these emails had no HTML version (html_body NULL), the code sat in a sentence
+ * ("Your Cap Rebate sign-in code is 123456."), and the recovery email had no link to the person's own settings.
+ */
+describe('161m2 · the sign-in emails, in the branded layout', () => {
+  const ORIGIN = 'https://caprebate.example.invalid';
+  type Mail = { to_email: string; subject: string; body: string; html: string | null };
+  const last = (w: Awaited<ReturnType<typeof world>>, kind: string) =>
+    w.db.get<Mail>('SELECT to_email, subject, body, html_body AS html FROM outbox WHERE kind = ? ORDER BY rowid DESC LIMIT 1', [kind]);
+
+  test('signin-code: the code large, on its own line; the subject never carries it; the security note', async () => {
+    const w = await world(ORIGIN);
+    try {
+      const b = await w.atVerify('surveying@example.invalid');
+      await b.post('/login/step/method', { method: 'EMAIL' });
+      const m = last(w, 'SIGN_IN_CODE');
+      assert.ok(m !== undefined);
+      assert.equal(m.to_email, 'surveying@example.invalid');
+      assert.equal(m.subject, 'Your Cap Rebate sign-in code');
+      const code = /^Your sign-in code\n\n(\d{6})\n\nEnter this code to finish signing in\. It works once, for 10 minutes\.\n/.exec(m.body)?.[1];
+      assert.ok(code !== undefined, m.body);
+      assert.ok(!m.subject.includes(code), 'the code is in the subject, which the outbox keeps after sending');
+      assert.ok(m.html !== null && m.html.includes('>Your sign-in code</h1>'), 'no branded HTML version');
+      assert.ok(m.html.includes(`letter-spacing:0.3em;color:#111111">${code}</p>`), 'the code is not drawn large');
+      assert.match(m.body, /We will never ask for your password, sign-in code or bank details by email or phone\./);
+      // and it signs in
+      assert.equal((await b.post('/login/step/code', { code })).status, 200);
+    } finally { w.close(); }
+  });
+
+  test('recovery-code-used: when, how many are left, and a button to the person\'s own second-step page', async () => {
+    const w = await world(ORIGIN);
+    try {
+      const { codes } = await w.setUpApp('sales@example.invalid');
+      const b = await w.atVerify('sales@example.invalid');
+      await b.post('/login/step/recovery', { code: codes[2]! });
+      const all = w.db.all<{ n: number }>("SELECT 1 AS n FROM outbox WHERE kind = 'RECOVERY_CODE_USED'");
+      assert.equal(all.length, 1, 'not exactly one email');
+      const m = last(w, 'RECOVERY_CODE_USED')!;
+      assert.equal(m.subject, 'A recovery code was used to sign in to Cap Rebate');
+      assert.match(m.body, /^A recovery code was used\n\nA recovery code was used to sign in to your Cap Rebate login on Monday 28 Sep 2026 at 11:00 BST\.\n/);
+      assert.match(m.body, /You have 9 recovery codes left\./);
+      assert.ok(m.html !== null && m.html.includes('>A recovery code was used</h1>'), 'no branded HTML version');
+      assert.ok(m.html.includes(`href="${ORIGIN}/staff/two-factor"`), 'the button does not open the person\'s own second-step page');
+      assert.ok(m.body.includes(`Open account settings: ${ORIGIN}/staff/two-factor`));
+    } finally { w.close(); }
+  });
+
+  test('password-reset: the same single-use link, behind the button and in the text', async () => {
+    const w = await world(ORIGIN);
+    try {
+      const b = w.browser();
+      await b.post('/login/forgot', { email: 'accounting@example.invalid' });
+      const m = last(w, 'PASSWORD_RESET')!;
+      assert.equal(m.to_email, 'accounting@example.invalid');
+      assert.equal(m.subject, 'Reset your Cap Rebate password');
+      const link = new RegExp(`Choose a new password: (${ORIGIN.replace(/\./g, '\\.')}/login/reset\\?token=[0-9a-f]+)\n`).exec(m.body)?.[1];
+      assert.ok(link !== undefined, m.body);
+      assert.match(m.body, /The link below works once, for 30 minutes\./);
+      assert.ok(m.html !== null && m.html.includes('>Reset your password</h1>'), 'no branded HTML version');
+      assert.ok(m.html.includes(`href="${link}"`), 'the button does not carry the link');
+      // the link works
+      const token = new URL(link).searchParams.get('token') ?? '';
+      const done = await b.post('/login/reset', { token, password: 'a new invented password 161m2', again: 'a new invented password 161m2' });
+      assert.equal(done.status, 200);
+      assert.match(done.body, /Your password has been changed/);
+    } finally { w.close(); }
   });
 });

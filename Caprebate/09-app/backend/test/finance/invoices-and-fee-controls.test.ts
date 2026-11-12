@@ -129,6 +129,11 @@ function raise(app: Base, claim: string, opts: I.InvoiceOptions = {}, kind = 'FE
   return r.ok ? r.id : '';
 }
 
+/** Today on the app's clock, as a date. */
+function localDateOf(app: Base): string {
+  return app.now().slice(0, 10);
+}
+
 /** A row from node:sqlite has no prototype and a literal does; compare what they say, not what they are made of. */
 function plain<X>(v: X): X {
   return JSON.parse(JSON.stringify(v)) as X;
@@ -970,6 +975,87 @@ describe('5 · the invoice email is not built', () => {
       const seeded = app.db.get<{ label: string; subject: string; body: string }>("SELECT label, subject, body FROM email_templates WHERE id = 'template-next-step'");
       assert.ok(seeded);
       assert.equal(M.templateRefusal(seeded), null, 'the negative control: the seeded template is now refused');
+    } finally { app.close(); }
+  });
+});
+
+/* ================================================================== *
+ * 5a · THE MONEY EMAILS: BUILT ON THE BRANDED LAYOUT, AND REFUSED (Phase 161m2)
+ * ================================================================== */
+
+describe('5a · the money emails are built, and refused while the invoice-fraud procedure is not in force', () => {
+  const ORIGIN = 'https://caprebate.example.invalid';
+
+  test('the invoice email: the approved subject, facts, warning and button, with the security note', () => {
+    const e = I.invoiceEmail({
+      invoice_number: 'CR-0042', organisation: 'Smith & Co Dental Limited', rate: 0.03, allowances_pence: 240_000_00,
+      amount_pence: 8_640_00, invoice_date: '2026-11-01', due_on: '2026-11-15', origin: ORIGIN,
+    });
+    assert.equal(e.subject, 'Invoice CR-0042 from Cap Rebate');
+    assert.match(e.html, /<h1[^>]*>Your invoice<\/h1>/);
+    assert.match(e.html, /<a href="https:\/\/caprebate\.example\.invalid\/portal"[^>]*>See the invoice in your portal<\/a>/);
+    assert.match(e.html, /Smith &amp; Co Dental Limited/, 'a value was not escaped in the HTML');
+    assert.match(e.text, /^Thank you for working with us\. Our invoice for Smith & Co Dental Limited is attached\.$/m);
+    assert.match(e.text, /^Our fee: 3% of £240,000 capital allowances identified$/m);
+    assert.match(e.text, /^Amount due: £8,640$/m);
+    assert.match(e.text, /^Due by: 15 Nov 2026 \(14 days\)$/m);
+    assert.match(e.text, /^Before you pay, please check the bank details on the invoice match the ones in your portal\./m);
+    assert.match(e.text, /We will never ask for your password, sign-in code or bank details by email or phone\./);
+    assert.equal(/\u2014/.test(e.text + e.html), false, 'a long dash in the email');
+  });
+
+  test('the clause 13 credit note email and the thank-you for a payment', () => {
+    const c = I.creditNoteEmail({
+      credit_number: 'CR-0043', old_allowances_pence: 240_000_00, new_allowances_pence: 200_000_00, old_fee_pence: 7_200_00,
+      new_fee_pence: 6_000_00, credit_pence: 1_200_00, credit_vat_pence: 240_00, origin: ORIGIN,
+    });
+    assert.equal(c.subject, 'Credit note CR-0043 from Cap Rebate');
+    assert.match(c.html, /<h1[^>]*>A credit to your account<\/h1>/);
+    assert.match(c.html, /<a href="https:\/\/caprebate\.example\.invalid\/portal"[^>]*>See your account<\/a>/);
+    assert.match(c.text, /^The capital allowances on your claim have been reduced from £240,000 to £200,000\./m);
+    assert.match(c.text, /^Credit to you: £1,200 plus £240 VAT$/m);
+    assert.match(c.text, /we will refund £1,440 to the account you paid from/);
+    const p = I.paymentReceivedEmail({ amount_pence: 8_640_55, invoice_number: 'CR-0042', origin: ORIGIN });
+    assert.equal(p.subject, 'Thank you for your payment');
+    assert.match(p.html, /<h1[^>]*>Thank you for your payment<\/h1>/);
+    assert.equal(/<a href=/.test(p.html), false, 'the thank-you carries a link');
+    assert.match(p.text, /^We have received your payment of £8,640\.55 for invoice CR-0042\. Thank you\.$/m);
+    assert.equal(/sort code|account number|bank details/i.test(p.text), false, 'the thank-you carries bank details');
+  });
+
+  test('THE SAME BLOCK: the CRM names the finance module’s flag, and it is not in force', () => {
+    assert.equal(A.INVOICE_FRAUD_PROCEDURE, I.INVOICE_FRAUD_PROCEDURE, 'two flags where there should be one');
+    assert.equal(I.INVOICE_FRAUD_PROCEDURE.in_force, false);
+    assert.equal(I.moneyEmailRefusal(), I.MONEY_EMAIL_REFUSED);
+    assert.equal(I.moneyEmailRefusal({ in_force: true }), null, 'the negative control: in force, nothing refuses');
+  });
+
+  test('an admin sending an invoice, a credit note or a payment thank-you by hand is REFUSED, and nothing reaches the outbox', async () => {
+    const app = await testApp();
+    try {
+      staff(app);
+      const { org, claim } = readyToInvoice(app);
+      const id = raise(app, claim);
+      const contact = randomUUID();
+      app.db.run('INSERT INTO contacts (id, business_id, full_name, contact_consent, marketing_optin, email, created_at) VALUES (?, ?, ?, 0, 0, ?, ?)',
+        [contact, org.business, 'Pat Payer', 'accounts@org.example.invalid', T0]);
+      const paid = I.recordReceived(deps(app), ACC, id, { received_on: localDateOf(app), amount: '10' });
+      assert.ok(paid.ok, paid.ok ? '' : paid.why);
+      const credit = I.creditInFull(deps(app), ACC, id, { reason: 'a test credit' });
+      assert.ok(credit.ok, credit.ok ? '' : credit.why);
+      const before = app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM outbox')?.n ?? 0;
+      const d = { ...deps(app), email: app.email };
+      const f = { contact_id: contact, origin: 'https://caprebate.example.invalid', pdf: new Uint8Array([37, 80, 68, 70]) };
+      for (const r of [I.emailInvoice(d, ADMIN, id, f), I.emailCreditNote(d, ADMIN, credit.ok ? credit.id : '', f), I.emailPaymentReceived(d, ADMIN, paid.ok ? paid.id : '', f)]) {
+        assert.equal(r.ok, false, 'a money email was queued');
+        if (!r.ok) assert.equal(r.why, I.MONEY_EMAIL_REFUSED);
+      }
+      // Accounting may write an invoice, but only an admin sends one by hand.
+      const acc = I.emailInvoice(d, ACC, id, f);
+      assert.equal(acc.ok, false);
+      if (!acc.ok) assert.match(acc.why, /Only an admin/);
+      assert.throws(() => I.emailInvoice(d, SALES, id, f), NotAuthorised);
+      assert.equal(app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM outbox')?.n ?? 0, before, 'a refused money email reached the outbox');
     } finally { app.close(); }
   });
 });

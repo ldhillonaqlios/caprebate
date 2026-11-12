@@ -193,6 +193,40 @@ describe('4 · the complaint form', () => {
   });
 });
 
+/* PHASE 161m2: the person who complained is told it arrived (emails.py, complaint-received). Before, they got nothing. */
+describe('4a · the person who complained gets a note with their reference (Phase 161m2)', () => {
+  test('one email to the address they gave: the reference, 20 working days, the ICO; branded, with a text part', async () => {
+    const b = await boot();
+    try {
+      assert.equal((await b.send(GOOD)).status, 200);
+      const ref = refOf(b.db.get<{ id: string }>('SELECT id FROM complaint_forms')!.id);
+      const mails = b.db.all<{ subject: string; body: string; html: string | null; kind: string }>(
+        'SELECT subject, body, html_body AS html, kind FROM outbox WHERE to_email = ?', [GOOD.reply_to]);
+      assert.equal(mails.length, 1, 'not exactly one email to the person');
+      const m = mails[0]!;
+      assert.equal(m.subject, `We have received your complaint (${ref})`);
+      assert.equal(m.kind, 'NOTIFICATION');
+      assert.ok(m.html !== null && m.html.includes('We have received your complaint'), 'no branded HTML version');
+      assert.ok(m.html.includes(`<strong style="color:#111111;font-weight:700">${ref}</strong>`), 'the reference is not shown');
+      assert.match(m.body, new RegExp(`Thank you for telling us\\. Your reference is ${ref}\\.`));
+      assert.match(m.body, /reply in writing within 20 working days/);
+      assert.match(m.body, /you can contact the Information Commissioner's Office, at ico\.org\.uk\. It looks at how we handle personal data\./);
+      assert.doesNotMatch(m.body, /You named me in a report/, 'what they wrote was sent back by email');
+    } finally { b.close(); }
+  });
+  test('a postal address to reply to gets no email, and an address marked do not contact gets none', async () => {
+    const b = await boot();
+    try {
+      assert.equal((await b.send({ ...GOOD, reply_to: '1 Invented Street, Leicester LE1 1AA' })).status, 200);
+      b.db.run("UPDATE businesses SET client_status = 'DO_NOT_CONTACT', contact_email = 'blocked.161m2@example.invalid' WHERE id = (SELECT id FROM businesses ORDER BY id LIMIT 1)");
+      assert.equal((await b.send({ ...GOOD, reply_to: 'blocked.161m2@example.invalid' })).status, 200);
+      assert.equal(b.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM complaint_forms')?.n, 2, 'a complaint was not kept');
+      assert.equal(b.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM outbox WHERE subject LIKE 'We have received your complaint%'")?.n, 0);
+      assert.equal(b.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM outbox WHERE to_email = ?', [DP_MAIL])?.n, 2, 'the data protection address was not told');
+    } finally { b.close(); }
+  });
+});
+
 describe('5 · staff log it with its arrival time, once', () => {
   test('listed on the complaints page, logged as received by the form at the time it arrived, then gone from the list', async () => {
     const b = await boot();

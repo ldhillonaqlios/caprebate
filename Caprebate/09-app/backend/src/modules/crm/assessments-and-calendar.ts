@@ -14,11 +14,10 @@ import type { AuditLog } from '../../core/audit.ts';
 import { answerLabel, assertSection, BackOfficeError, mayArrangeCalls, NotFoundAsRefusal } from '../../core/index.ts';
 import { formatShownRange, type ShownRange } from '../../shared/index.ts';
 import { BOOKING } from '../../shared/index.ts';
-import { localWhen } from '../../shared/index.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
 import { booksATime } from '../clients/index.ts';
 import { SLOT_MINUTES, addLocalDays, isBookable, startOfLocalDay, startOfLocalWeek, staffSlots, type Availability } from '../clients/index.ts';
-import { bookingInviteFile } from '../clients/index.ts';
+import { bookingInviteFile, callBookedPhoneEmail, callChangedEmail, callsLink, drawCallEmail, getContactsFullNamePhoneByBusinessId } from '../clients/index.ts';
 import { getBookingsChannelSmsVariantByBusinessId, getBookingsChannelSmsVariantByLeadId, getBusinessesContactEmailNameById, getContactsContactEmailNameByLeadId, insertBookingChanges, updateBookingsStartsAtEndsAtById } from '../clients/index.ts';
 import { listBookingChangesFromStartsAtToStartsAtByBookingId, listUsersIdDisplayNameByDisabledAt, getBookingById, listBookingsCancelled, listBookingsScheduled, listBookingsWithNoTime } from '../clients/index.ts';
 import { getAssessmentsIdBusinessIdById, listAssessmentsIdBusinessId } from './split-reads.ts';
@@ -352,7 +351,8 @@ export function bookingById(db: Db, actor: Actor, id: string): BookingRow {
  * refusal is the control.
  */
 export function scheduleBooking(
-  d: { db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string },
+  /** `origin`: the site's address, for the link in the client's email. */
+  d: { db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string; origin?: string | undefined },
   actor: Actor,
   args: { booking_id: string; starts_at: string; assigned_to?: string | null },
 ): { ok: true; booking: BookingRow } | { ok: false; why: string } {
@@ -407,21 +407,23 @@ export function scheduleBooking(
   // IT IS UK TIME, NOT UTC. This message is addressed to
   // the client: an invitation reading "09:00 UTC" for a call at ten in the
   // morning is the exact defect that phase went looking for, and slicing the
-  // ISO string was how it survived here after the screens were fixed.
-  const readable = localWhen(args.starts_at);
+  // ISO string was how it survived here after the screens were fixed. (The call emails read it in UK time: callWhen,
+  // src/modules/clients/booking-invite.ts.)
   // The invitation itself, a standard .ics, carried by the same email (src/integrations/email/calendar.ts).
   const invite = bookingInviteFile(d.db, d.now, {
     booking_id: before.id, method: 'REQUEST', starts_at: args.starts_at, ends_at: ends, to: business?.contact_email,
   });
   // A VIDEO call's invitation is sent by the route once its Zoom meeting is made, so it carries the link.
+  // call-booked-phone when it is given its first time, call-changed when it is moved (emails.py): to the client.
+  const site = d.origin ?? 'http://localhost:8103';
+  const phone = getContactsFullNamePhoneByBusinessId<{ phone: string | null }>(d.db, [before.business_id ?? '', before.lead_id ?? ''])?.phone ?? null;
+  const e = drawCallEmail(before.starts_at === null
+    ? callBookedPhoneEmail({ starts_at: args.starts_at, phone: phone !== null && phone.trim() !== '' ? phone.trim() : null, invite: invite !== null, manageLink: callsLink(site) })
+    : callChangedEmail({ what: 'moved', starts_at: args.starts_at, was_starts_at: before.starts_at, invite: invite !== null, portalLink: callsLink(site) }),
+  d.origin ?? null);
   if (before.channel !== 'video') d.email.send({
     to_email: business?.contact_email ?? 'no-address-recorded@example.invalid',
-    subject: `Your call with Cap Rebate — ${readable}`,
-    body:
-      `A telephone call has been ${before.starts_at === null ? 'arranged' : 'moved'} for ` +
-      `${readable}, lasting ${SLOT_MINUTES} minutes.\n\n` +
-      'Not sent yet. Emails and calendar invites are not switched on yet. ' +
-      'This message and its invite are saved with the emails waiting to send.',
+    subject: e.subject, body: e.text, html: e.html,
     kind: 'CALENDAR_INVITE',
     // CRM 1 of 10: named, so a DO_NOT_CONTACT organisation is refused by id
     // and not only by whichever address happened to be on the row.

@@ -74,7 +74,7 @@ async function staff(role: string) {
 }
 
 /** A visitor through the whole assessment to the thank-you page. */
-async function funnel(): Promise<{ visitor: ReturnType<typeof makeClient>; page: Res }> {
+async function funnel(email = 'a.person@example.invalid'): Promise<{ visitor: ReturnType<typeof makeClient>; page: Res }> {
   const visitor = makeClient(base);
   // PHASE 153f: the six old screens are retired; the same answers go through the four-stage funnel.
   await visitor.req('/assessment');
@@ -86,7 +86,7 @@ async function funnel(): Promise<{ visitor: ReturnType<typeof makeClient>; page:
   await visitor.post('/assessment/works', { b0_works: 'no' });
   await visitor.post('/assessment/details', { b0_business: 'Meadowcroft Care Limited', b0_entity: 'ltd', b0_line1: 'Meadowcroft House', b0_postcode: 'ZZ9 9ZZ' });
   const page = await visitor.post('/assessment/close', { first_name: 'A', surname: 'Person',
-    job_role: 'owner_director', channel: 'email', email: 'a.person@example.invalid', contact_consent: 'on' });
+    job_role: 'owner_director', channel: 'email', email, contact_consent: 'on' });
   assert.equal(page.status, 200, 'the funnel did not close');
   return { visitor, page };
 }
@@ -273,7 +273,13 @@ describe('a client creates their own login after the assessment, checked by emai
     assert.equal(r.status, 200);
     assert.match(r.body, /Check your email/);
     assert.equal(outbox('ACCOUNT_VERIFY').length, verifyBefore);
-    assert.match(outbox('NOTIFICATION').at(-1)?.body ?? '', /You already have one/);
+    // Phase 161m2: the branded login-exists email (emails.py), to the address that has a login.
+    const told = made.app.db.get<{ subject: string; body: string; html: string | null }>(
+      "SELECT subject, body, html_body AS html FROM outbox WHERE to_email = 'sales@example.invalid' AND kind = 'NOTIFICATION' ORDER BY rowid DESC LIMIT 1");
+    assert.equal(told?.subject, 'You already have a Cap Rebate login');
+    assert.match(told?.body ?? '', /It already has one\./);
+    assert.ok(told?.html?.includes('>You already have a login</h1>') === true, 'no branded HTML version');
+    assert.ok(told?.html?.includes(`href="${ORIGIN}/login"`) === true, 'the button does not open the sign-in page');
     assert.equal(made.app.db.get<{ role: string }>("SELECT role FROM users WHERE email_canonical = 'sales@example.invalid'")?.role, 'SALES');
   });
 
@@ -286,5 +292,149 @@ describe('a client creates their own login after the assessment, checked by emai
     assert.equal((await c.req(`/account/verify?token=${'0'.repeat(64)}`)).status, 400);
     assert.equal((await c.post('/account/verify', { token: '0'.repeat(64) })).status, 400);
     assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM users WHERE email_canonical = 'z@example.invalid'")?.n, 0);
+  });
+});
+
+/* ================================================================== *
+ * PHASE 161m2, 11 November 2026: THE BRANDED EMAILS OF AN ENQUIRY, AN ASSESSMENT AND A CLIENT'S OWN LOGIN
+ * (emails.py: enquiry-received, staff-new-enquiry, assessment-complete, confirm-login, welcome). Four of them are new:
+ * proved red on the code before this phase, where an enquiry, a finished assessment and a confirmed login sent nothing
+ * (each "exactly one" below found none), and the confirmation email had no HTML version.
+ * ================================================================== */
+
+type Mail = { to_email: string; subject: string; body: string; html: string | null; kind: string };
+const mailsTo = (to: string): Mail[] =>
+  made.app.db.all<Mail>('SELECT to_email, subject, body, html_body AS html, kind FROM outbox WHERE to_email = ? ORDER BY rowid', [to]);
+/** An address marked do not contact: the channel address of an organisation so marked. */
+function doNotContact(address: string): void {
+  made.app.db.run('INSERT INTO businesses (id, name, sector, stage, contact_email, contact_phone, created_at) VALUES (?, ?, ?, ?, ?, NULL, ?)',
+    [`b-dnc-${address}`, `Do Not Contact ${address}`, 'dental', 'ENQUIRY', address, T]);
+  made.app.db.run("UPDATE businesses SET client_status = 'DO_NOT_CONTACT' WHERE id = ?", [`b-dnc-${address}`]);
+}
+
+describe('161m2 · an enquiry: a thank you to the person, and a note to Sales with no personal details', () => {
+  const enquiry = { name: 'Rosa Invented', firm: 'Quayside Dental Limited', email: 'rosa.161m2@example.invalid', phone: '01632 960999',
+    ptype: 'Dental practice', message: 'A private note about our building, 2019.' };
+
+  test('enquiry-received: exactly one email to the person, by their first name', async () => {
+    assert.equal((await makeClient(base).post('/enquiry', enquiry)).status, 200);
+    const mine = mailsTo(enquiry.email);
+    assert.equal(mine.length, 1, 'not exactly one email to the person');
+    const m = mine[0]!;
+    assert.equal(m.subject, 'Thank you for your enquiry');
+    assert.ok(m.html !== null && m.html.includes('>Thank you, Rosa</h1>'), 'no branded HTML version, or not by first name');
+    assert.match(m.body, /^Thank you, Rosa\n\nWe have your enquiry about your property\. One of our team will read it and reply within one working day\.\n/);
+    assert.match(m.body, /- On the call we explain what you could claim and how we work\. There is no charge for this\./);
+  });
+
+  test('staff-new-enquiry: one email to each Sales login, the organisation, sector and time only, and the back office link', async () => {
+    const before = mailsTo('sales@example.invalid').length;
+    assert.equal((await makeClient(base).post('/enquiry', { ...enquiry, firm: 'Quayside Two Limited', email: 'rosa2.161m2@example.invalid' })).status, 200);
+    const news = mailsTo('sales@example.invalid').slice(before);
+    assert.equal(news.length, 1, 'not exactly one email to Sales');
+    const m = news[0]!;
+    assert.equal(m.subject, 'New enquiry: Quayside Two Limited');
+    assert.match(m.body, /^A new enquiry has come in\n\nOrganisation: Quayside Two Limited\nSector: Dental practice\nReceived: .+\n\nWe have told them we will reply within one working day\./);
+    assert.ok(m.html !== null && m.html.includes('BACK OFFICE') && m.html.includes(`href="${ORIGIN}/staff/enquiries"`), 'not the back office layout, or no link');
+    for (const personal of ['Rosa', 'rosa2.161m2', '01632 960999', 'private note']) {
+      assert.ok(!m.body.includes(personal) && !m.html.includes(personal), `the staff email carries ${personal}`);
+    }
+    // Nobody but Sales: the accounting and read-only logins get nothing.
+    for (const other of ['accounting@example.invalid', 'read_only@example.invalid']) {
+      assert.equal(mailsTo(other).filter((x) => x.subject.startsWith('New enquiry')).length, 0, other);
+    }
+  });
+
+  test('an address marked do not contact is not written to; the enquiry is still kept, and Sales still told', async () => {
+    doNotContact('blocked.161m2@example.invalid');
+    const before = mailsTo('sales@example.invalid').length;
+    assert.equal((await makeClient(base).post('/enquiry', { ...enquiry, firm: 'Blocked Dental Limited', email: 'blocked.161m2@example.invalid' })).status, 200);
+    assert.equal(mailsTo('blocked.161m2@example.invalid').length, 0, 'a do-not-contact address was written to');
+    assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM website_enquiries WHERE email = 'blocked.161m2@example.invalid'")?.n, 1);
+    assert.equal(mailsTo('sales@example.invalid').length, before + 1);
+  });
+
+  test('a refused enquiry sends nothing at all', async () => {
+    const before = made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM outbox')?.n;
+    assert.equal((await makeClient(base).post('/enquiry', { ...enquiry, email: 'refused.161m2@example.invalid', ptype: 'Castle' })).status, 400);
+    assert.equal(made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM outbox')?.n, before);
+  });
+});
+
+describe('161m2 · the assessment: the figure the person was shown, by email', () => {
+  test('assessment-complete: exactly one email, the "up to" figure the page showed, and a button to book a call', async () => {
+    const { page } = await funnel('assess.161m2@example.invalid');
+    const shown = /The figure you were shown: <strong>up to (£[0-9,]+)<\/strong>/.exec(page.body)?.[1];
+    assert.ok(shown !== undefined, 'the thank-you page shows no figure');
+    const mine = mailsTo('assess.161m2@example.invalid').filter((m) => m.kind === 'NOTIFICATION');
+    assert.equal(mine.length, 1, 'not exactly one assessment email');
+    const m = mine[0]!;
+    assert.equal(m.subject, 'Your Cap Rebate assessment: what happens next');
+    assert.ok(m.body.includes(`Indicative figure of capital allowances: Up to ${shown}\n`), m.body);
+    assert.match(m.body, /Based on your answers about Meadowcroft House, ZZ9 9ZZ, the capital allowances you may be able to claim are:/);
+    assert.match(m.body, /Our fee is 3% of the capital allowances identified\. We charge it only once we deliver our report\./);
+    assert.ok(m.html !== null && m.html.includes('>Thank you for completing our assessment</h1>'), 'no branded HTML version');
+    assert.ok(m.html.includes(`href="${ORIGIN}/portal#appointment"`), 'no call was booked, and the button does not book one');
+  });
+
+  test('an address marked do not contact gets no assessment email; the assessment is still kept', async () => {
+    doNotContact('assess.dnc.161m2@example.invalid');
+    const { page } = await funnel('assess.dnc.161m2@example.invalid');
+    assert.match(page.body, /We have your assessment/);
+    assert.equal(mailsTo('assess.dnc.161m2@example.invalid').length, 0);
+  });
+});
+
+describe('161m2 · a client\'s own login: the confirmation, then one welcome', () => {
+  async function asked(email: string): Promise<{ c: ReturnType<typeof makeClient>; token: string }> {
+    const { page } = await funnel(`f.${email}`);
+    const offer = /name="offer" value="([0-9a-f]{64})"/.exec(page.body)?.[1] ?? '';
+    const c = makeClient(base);
+    assert.equal((await c.post('/account/create', { offer, email, display_name: 'Welcome Client', password: PASSWORD })).status, 200);
+    const m = mailsTo(email).find((x) => x.kind === 'ACCOUNT_VERIFY');
+    const token = /\/account\/verify\?token=([0-9a-f]{64})/.exec(m?.body ?? '')?.[1] ?? '';
+    assert.notEqual(token, '', 'no confirmation link');
+    return { c, token };
+  }
+
+  test('confirm-login: branded, the link behind the button and in the text, and the security note', async () => {
+    await asked('confirm.161m2@example.invalid');
+    const m = mailsTo('confirm.161m2@example.invalid').find((x) => x.kind === 'ACCOUNT_VERIFY')!;
+    assert.equal(m.subject, 'Confirm your Cap Rebate login');
+    assert.match(m.body, /^Confirm your login\n\nPlease confirm this is your email address to finish setting up your Cap Rebate login\.\n\nThe link works once, for 24 hours\./);
+    const link = new RegExp(`Confirm my login: (${ORIGIN.replace(/\./g, '\\.')}/account/verify\\?token=[0-9a-f]{64})\n`).exec(m.body)?.[1];
+    assert.ok(link !== undefined, m.body);
+    assert.ok(m.html !== null && m.html.includes('>Confirm your login</h1>') && m.html.includes(`href="${link}"`), 'no branded HTML version, or no link');
+    assert.match(m.body, /We will never ask for your password, sign-in code or bank details/);
+  });
+
+  test('welcome: exactly one, to the new login\'s address, once the login is confirmed, and never again', async () => {
+    const { c, token } = await asked('welcome.161m2@example.invalid');
+    assert.equal(mailsTo('welcome.161m2@example.invalid').filter((x) => x.subject === 'Welcome to your Cap Rebate portal').length, 0, 'welcomed before confirming');
+    assert.equal((await c.post('/account/verify', { token })).status, 200);
+    const welcome = mailsTo('welcome.161m2@example.invalid').filter((x) => x.subject === 'Welcome to your Cap Rebate portal');
+    assert.equal(welcome.length, 1, 'not exactly one welcome');
+    const m = welcome[0]!;
+    assert.equal(m.kind, 'NOTIFICATION');
+    assert.match(m.body, /^Welcome to your portal\n\nYour login is ready\. Your portal is where you can:\n\n- see where your claim is, step by step;/);
+    assert.ok(m.html !== null && m.html.includes('>Welcome to your portal</h1>') && m.html.includes(`href="${ORIGIN}/portal"`), 'no branded HTML version, or no link');
+    // the link works once: a second press makes no login and no second welcome
+    assert.equal((await c.post('/account/verify', { token })).status, 400);
+    assert.equal(mailsTo('welcome.161m2@example.invalid').filter((x) => x.subject === 'Welcome to your Cap Rebate portal').length, 1);
+  });
+
+  test('a login for an organisation marked do not contact is made, and is not welcomed', async () => {
+    const { c, token } = await asked('welcome.dnc.161m2@example.invalid');
+    // the organisation this login is for: the offer's
+    const biz = made.app.db.get<{ id: string; was: string | null }>(
+      'SELECT b.id, b.client_status AS was FROM client_signups s JOIN businesses b ON b.id = s.business_id ORDER BY s.rowid DESC LIMIT 1')!;
+    made.app.db.run("UPDATE businesses SET client_status = 'DO_NOT_CONTACT' WHERE id = ?", [biz.id]);
+    try {
+      assert.equal((await c.post('/account/verify', { token })).status, 200);
+      assert.equal(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM users WHERE email_canonical = 'welcome.dnc.161m2@example.invalid'")?.n, 1);
+      assert.equal(mailsTo('welcome.dnc.161m2@example.invalid').filter((x) => x.subject === 'Welcome to your Cap Rebate portal').length, 0);
+    } finally {
+      made.app.db.run('UPDATE businesses SET client_status = ? WHERE id = ?', [biz.was, biz.id]);
+    }
   });
 });

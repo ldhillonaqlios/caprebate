@@ -1726,3 +1726,18 @@ export function listDocumentFieldVouchesIdBusinessIdByRequestIdJO2<T extends Row
   return requestsWithClaimsRows<T>(db, listClientTasksDocumentRequestsByBusinessId<RequestFromClients>(db, params));
 }
 
+
+/* Phase 161m2, the branded emails. The letters sent and not yet signed, for the one reminder; the documents uploaded
+   since a moment, for the day's digest (who uploaded them is the core's, asked by the caller); the claims' owners with
+   their claim, for the "a client has signed" email. */
+export function listEngagementsIdBusinessIdSentAtUnsigned<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT id, business_id, sent_at FROM engagements WHERE letter_state IN ('SENT','VIEWED') AND sent_at IS NOT NULL ORDER BY sent_at ASC, id ASC", params);
+}
+export function listDocumentsUploadedSince<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT d.id, d.business_id, d.uploaded_by, d.created_at, d.failure_code, d.version_no, t.label AS type_label, l.seq ' +
+    'FROM documents d JOIN logical_documents l ON l.id = d.logical_document_id JOIN document_types t ON t.code = l.type_code ' +
+    'WHERE d.created_at >= ? AND d.created_at <= ? ORDER BY d.business_id ASC, d.created_at ASC, d.id ASC', params);
+}
+export function listClaimsIdOwnerIdByBusinessId<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, owner_id FROM claims WHERE business_id = ? AND owner_id IS NOT NULL ORDER BY created_at ASC, id ASC', params);
+}

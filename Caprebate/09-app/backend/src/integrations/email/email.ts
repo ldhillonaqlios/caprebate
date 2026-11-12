@@ -10,7 +10,7 @@
 
 import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
-import { plainDashLines } from '../../shared/index.ts';
+import { plainDashLines, plainDashes } from '../../shared/index.ts';
 import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles } from '../data.ts';
 
 /**
@@ -30,6 +30,11 @@ export type OutboundMessage = {
   to_email: string;
   subject: string;
   body: string;
+  /**
+   * THE BRANDED HTML VERSION (Phase 161m2, src/integrations/email/email-layout.ts, brandedEmail), sent beside `body`
+   * as multipart/alternative. Absent or null: a plain-text email, exactly as before.
+   */
+  html?: string | null;
   /**
    * TEMPLATE — CRM 3 of 10: a staff member's merge of an email template, queued
    * here like everything else. It is not a notice and it is not an invitation,
@@ -171,14 +176,19 @@ export function outboxTransport(
       const requested = sending() ? 1 : 0;
       // An email that really goes does not tell its reader it has not been sent.
       if (requested === 1) m = { ...m, body: withoutNotSentWords(m.body) };
+      // The HTML version too (Phase 161m2): the same sentences, as the layout drew them.
+      if (requested === 1 && typeof m.html === 'string') m = { ...m, html: withoutNotSentWordsHtml(m.html) };
       // No long dash in the words we send (src/shared/plain-dashes.ts, line by line), in the
       // subject or the body. Not in an email a member of staff typed themselves (FREE_TYPED): those are their words, as a
       // text box on a screen is left alone. The attached files (the signed letter, a report, a calendar file) are not
       // touched here.
       if (m.kind !== 'FREE_TYPED') m = { ...m, subject: plainDashLines(m.subject), body: plainDashLines(m.body) };
+      // The HTML version reads the same as the text: its words between the tags, by the screens' own rule.
+      if (m.kind !== 'FREE_TYPED' && typeof m.html === 'string') m = { ...m, html: plainDashes(m.html) };
+      const html = typeof m.html === 'string' && m.html !== '' ? m.html : null;
       insertOutbox(db, [id, now(), m.to_email, m.subject, m.body, m.kind, 'STUB', m.business_id ?? null, from.from_header, from.reply_to,
           m.claim_id ?? null, m.lead_id ?? null, m.contact_id ?? null, m.written_by ?? null, requested,
-          m.thread_key ?? null, m.in_reply_to ?? null, (m.references ?? []).length === 0 ? null : (m.references ?? []).join(' ')]);
+          m.thread_key ?? null, m.in_reply_to ?? null, (m.references ?? []).length === 0 ? null : (m.references ?? []).join(' '), html]);
       for (const a of m.attachments ?? []) {
         insertOutboxAttachments(db, [ids(), id, a.logical_document_id, a.document_id]);
       }
@@ -204,6 +214,17 @@ export function withoutNotSentWords(body: string): string {
   let out = body;
   for (const w of NOT_SENT_WORDS) out = out.split(w).join('');
   return out.replace(/\n{3,}/g, '\n\n').trimEnd();
+}
+
+/**
+ * THE SAME SENTENCES OUT OF AN HTML VERSION. A sentence that is a paragraph of its own goes with its paragraph, so
+ * no empty box is left; anywhere else, the sentence alone.
+ */
+export function withoutNotSentWordsHtml(html: string): string {
+  const words = NOT_SENT_WORDS.map((w) => w.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+  let out = html.replace(/<p\b[^>]*>([^<]*)<\/p>/g, (p: string, inner: string) => (words.includes(inner.trim()) ? '' : p));
+  for (const e of words) out = out.split(e).join('');
+  return out;
 }
 
 /** An address nobody can receive at — the reserved test names (RFC 2606 and 6761). */

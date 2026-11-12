@@ -70,6 +70,8 @@ export type CrmPageDeps = {
   nav: (actor: Actor) => Safe;
   stamp: (iso: string) => string;
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
+  /** The website's public address, for the links in the emails these screens send (Phase 161m2). Absent: CAPREBATE_PUBLIC_ORIGIN. */
+  publicOrigin?: string;
 };
 
 /**

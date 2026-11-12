@@ -86,6 +86,13 @@ export type AuditKind =
   | 'MAIL_SERVER_CONNECTED' | 'EMAIL_BOUNCED' | 'ENGAGEMENT_SIGNED'
   /** The engagement letter sent (or sent again) to the client's logins; whether it was a re-send, and how many. */
   | 'ENGAGEMENT_LETTER_SENT'
+  /**
+   * Phase 161m2, the branded emails: an automatic email that must go once only, recorded so it never goes twice. The
+   * letter reminder (once, 5 working days after the letter was sent, if unsigned), the identity check's link emailed to
+   * the person, its "complete" email on a pass, the documents asked for, and the day's digest of documents a client sent.
+   * Ids and counts only, never an address and never the words.
+   */
+  | 'ENGAGEMENT_LETTER_REMINDED' | 'IDENTITY_CHECK_EMAILED' | 'IDENTITY_CHECK_DONE_EMAILED' | 'DOCUMENTS_NEEDED_EMAILED' | 'DOCUMENTS_RECEIVED_EMAILED'
   // Staff recorded who must sign the letter
   | 'ENGAGEMENT_SIGNERS_SET'
   // Staff opened a survey job on a claim (src/modules/survey/survey-open.ts); whether an estimate was sealed with it. No figure.

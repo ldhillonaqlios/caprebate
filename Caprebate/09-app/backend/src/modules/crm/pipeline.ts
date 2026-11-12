@@ -67,9 +67,10 @@ import { portalStepLine } from './portal-steps.ts';
 import { REOPEN_VOIDS_WORDS, VOIDING_REOPEN_STAGES, lastReopen, setAsideOnReopen, valuationLock, voidLine, type SetAside } from '../claims/index.ts';
 
 import { getInvoicesSentOnByClaimIdKind } from '../finance/index.ts';
-import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList } from '../admin/index.ts';
+import { getReasonListsCodeLabelByListCode, getReasonListsLabelByListCode, listReasonListsCodeLabelActiveByList, mergeValues } from '../admin/index.ts';
+import { brandedEmail, listOutboxCreatedAtKindClaimIdByBusinessId, type BrandedEmail, type EmailTransport } from '../../integrations/index.ts';
 import { getSurveyPackApprovalsSnapshotJsonVersionByClaimId, getSurveyorCommitmentsCommittedAtByClaimId } from '../survey/index.ts';
-import { getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateLeadsUpdatedAtById } from '../clients/index.ts';
+import { getBusinessesEById, getContactsEByBusinessIdEmail, getBusinessesSectorById, getBusinessesStageById, getLeadsIdBusinessIdById4, getLeadsIdByClaimId, updateLeadsUpdatedAtById } from '../clients/index.ts';
 import { insertEnquiryChecks } from '../clients/index.ts';
 import { getClaimMilestonesAtByClaimIdMilestone, getClaimsCountByBusinessIdStage, insertClaimMilestones, insertClaimStageMoves, insertClaimStageMoves2, listClaimStageMovesFromStageToStageByClaimId, listPropertiesBusinessIdLabelByBusinessId, updateClaimsStageHoldReturnStageById } from '../claims/index.ts';
 import { getAssessmentsIdByBusinessId2, getAssessmentsSubmittedAtByBusinessId, listAssessmentAnswersQuestionIdQuestionTextByAssessmentId } from '../assessment/index.ts';
@@ -87,7 +88,15 @@ import { clientStageForClaim, enteredAt, loadPipelineClaim, raiseBusinessStage, 
 import { liveFeeInvoiceCount, type FeeTrigger } from '../finance/index.ts';
 import { claimObjFor } from '../claims/index.ts';
 
-export type PipelineDeps = { db: Db; audit: AuditLog; now: () => string; newId: () => string };
+export type PipelineDeps = {
+  db: Db; audit: AuditLog; now: () => string; newId: () => string;
+  /**
+   * PHASE 161m2: where a person moves a claim with the email at hand (the Move button, "tell the client and move on"),
+   * closing it, or ending it at a reasoned negative, emails the client once (`tellClientClaimEnded`). Without it (a
+   * test, a script), nothing is emailed. `origin` is the site's address for the portal button.
+   */
+  email?: EmailTransport; origin?: string | null;
+};
 /** `field` is the posted name a refusal is about, where it is about one; a gate's refusal has none. */
 export type Result = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string; readonly field?: string };
 
@@ -733,7 +742,102 @@ function apply(d: PipelineDeps, actor: Actor, c: PipelineClaim, m: Apply, next: 
      under the client's opt-in — and a referred claim closing under reward model B accrues the firm's fee. After the
      commit, as the automation is: neither can undo a move a gate allowed. */
   if (m.kind !== 'RESUME') onClaimStageEntered(d, actor, c.id, m.to);
+  /* PHASE 161m2: a claim a person closed after the return was filed, or ended at a reasoned negative, is told to the
+     client by email, once. After the commit, as above: the email can never undo the move. */
+  if (d.email !== undefined && ((m.kind === 'FORWARD' && m.to === 'CLOSED') || (m.kind === 'EXIT' && m.to === 'REASONED_NEGATIVE'))) {
+    tellClientClaimEnded({ ...d, email: d.email }, actor, c, m.to === 'CLOSED' ? 'COMPLETE' : 'NO_CLAIM', { from: c.stage, reason_code: m.reason_code });
+  }
   return { ok: true, id, from: c.stage, to: m.to };
+}
+
+/* ================================================================== *
+ * THE CLIENT TOLD THAT THEIR CLAIM HAS ENDED (Phase 161m2)
+ * ================================================================== */
+
+export const CLAIM_COMPLETE_SUBJECT = 'Your capital allowances claim is complete';
+const NO_CLAIM_SUBJECT_LEAD = 'The result of ';
+/** Stages before the survey is done: a reasoned negative from one of them is "our review", not "the survey". */
+const BEFORE_SURVEY_DONE: readonly string[] = Object.freeze(['DATA_GATHERING', 'SURVEY']);
+
+/**
+ * THE TWO EMAILS (claim-complete and no-claim in 05-reports-and-templates/emails/emails.py, the approved wording). The
+ * property is named by its recorded address where there is one. The no-claim email names the listed reason's label (never
+ * the note, which is staff prose), and says there is no fee; a claim ended before the survey was done says "our review".
+ */
+export function claimEndedEmail(f: {
+  readonly kind: 'COMPLETE' | 'NO_CLAIM'; readonly property: string | null; readonly reason: string | null;
+  readonly surveyed: boolean; readonly origin: string | null;
+}): BrandedEmail {
+  const o = (f.origin ?? '').trim().replace(/\/+$/, '');
+  const portal = /^https?:\/\/[^\s/?#]+$/i.test(o) ? `${o}/portal` : null;
+  if (f.kind === 'COMPLETE') {
+    return brandedEmail({
+      subject: CLAIM_COMPLETE_SUBJECT,
+      preheader: 'Thank you for working with Cap Rebate.',
+      heading: 'Your claim is complete',
+      blocks: [
+        `Your capital allowances claim${f.property === null ? '' : ` for ${f.property}`} is complete. Thank you for working with us.`,
+        '**If HMRC asks about it**, forward us their letter. We support you on our valuation and apportionment free of charge, with no time limit.',
+        // The full stop after the bold, so the plain-words check reads two sentences (the approved words, unchanged).
+        '**Keep your report**. It is in your portal, and you will need it if you sell the building, as the buyer will ask about the allowances.',
+        'If you have another property, or know someone who might, we would be glad to help.',
+      ],
+      button: portal === null ? null : { label: 'Open your portal', href: portal },
+      sign: 'The Cap Rebate team',
+    }, { publicOrigin: o === '' ? null : o });
+  }
+  const what = f.surveyed ? 'your survey' : 'our review';
+  const heading = `${NO_CLAIM_SUBJECT_LEAD}${what}`;
+  const reason = f.reason === null ? null : `${f.reason.trim().replace(/\.$/, '')}.`;
+  return brandedEmail({
+    subject: f.property === null ? heading : `${heading}: ${f.property}`,
+    preheader: 'We did not find a claim worth making. There is no fee.',
+    heading,
+    blocks: [
+      `Thank you for working with us on ${f.property ?? 'your claim'}. After ${f.surveyed ? 'the survey and our review' : 'our review'}, we have not found capital allowances that are worth claiming.`,
+      ...(reason === null ? [] : [reason]),
+      'As our engagement letter says, **there is no fee** when we find no material claim.',
+      'We have put a short note of our findings in your portal. If anything changes, for example you carry out building works, we would be glad to look again.',
+    ],
+    button: portal === null ? null : { label: 'Read our findings', href: portal },
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin: o === '' ? null : o });
+}
+
+/**
+ * EMAIL THE CLIENT THAT THEIR CLAIM HAS ENDED, ONCE: to the company's own address, else its first contact with one,
+ * as "tell the client and move on" writes. Once a claim: an email of the same kind already saved for this claim is not
+ * saved again, whatever re-enters the stage. Every rule every email follows applies (do not contact, the sending switch,
+ * an invented address). Returns whether one was saved.
+ */
+export function tellClientClaimEnded(
+  d: PipelineDeps & { email: EmailTransport }, actor: Actor, c: PipelineClaim, kind: 'COMPLETE' | 'NO_CLAIM',
+  m: { readonly from: string | null; readonly reason_code: string | null },
+): boolean {
+  const to = getBusinessesEById<{ e: string | null }>(d.db, [c.business_id])?.e?.trim()
+    || getContactsEByBusinessIdEmail<{ e: string | null }>(d.db, [c.business_id])?.e?.trim()
+    || null;
+  if (to === null) return false;
+  const already = listOutboxCreatedAtKindClaimIdByBusinessId<{ kind: string; subject: string; claim_id: string | null }>(d.db, [c.business_id])
+    .some((o) => o.kind === 'NOTIFICATION' && o.claim_id === c.id
+      && (kind === 'COMPLETE' ? o.subject === CLAIM_COMPLETE_SUBJECT : o.subject.startsWith(NO_CLAIM_SUBJECT_LEAD)));
+  if (already) return false;
+  const reason = kind === 'COMPLETE' || m.reason_code === null || m.reason_code === 'OTHER' ? null
+    : getReasonListsCodeLabelByListCode<ReasonRow>(d.db, [m.reason_code])?.label ?? null;
+  const property = mergeValues(d.db, c.id, null)['property_address'] ?? null;
+  const e = claimEndedEmail({
+    kind, property, reason, surveyed: !BEFORE_SURVEY_DONE.includes(m.from ?? ''),
+    origin: d.origin ?? process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? null,
+  });
+  const sent = d.email.send({
+    to_email: to, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id: c.business_id, claim_id: c.id,
+  });
+  if (sent.id === null) return false;
+  d.audit.append({
+    at: d.now(), kind: 'EMAIL_QUEUED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role, object_type: 'outbox', object_id: sent.id,
+    detail: { claim: c.id, business: c.business_id, told: kind === 'COMPLETE' ? 'CLAIM_COMPLETE' : 'NO_CLAIM' },
+  });
+  return true;
 }
 
 /**

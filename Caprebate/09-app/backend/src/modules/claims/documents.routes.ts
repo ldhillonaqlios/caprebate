@@ -287,6 +287,8 @@ export async function handleDocuments(
       early_vouch: earlyVouchesFrom((n) => f.get(n)),
     });
     if (!r.ok) return d.problem(res, actor, 'Not requested', r.why, `/staff/claims/${id}`, r.field);
+    // Phase 161m2: the client is emailed what we asked for (documents-needed)
+    D.emailDocumentsNeeded({ ...deps, email: d.app.email }, actor, D.businessOfClaim(db, id), [r.id], d.publicOrigin);
     redirect(res, `/staff/claims/${id}?done=requested`);
     return 'handled';
   }

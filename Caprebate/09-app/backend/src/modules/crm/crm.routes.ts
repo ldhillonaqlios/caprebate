@@ -33,6 +33,7 @@ import { timelineIfPermitted } from './timeline.ts';
 import { getContactsBusinessIdLeadIdById } from '../clients/index.ts';
 import { provideNav } from '../../core/index.ts';
 import { claimObjFor, loadClaimRow } from '../claims/index.ts';
+import { emailDocumentsNeeded } from '../claims/index.ts';
 import { type Fields } from '../clients/index.ts';
 // The Claims tab's gate is the claims list's own (the menu asks it; src/core/navigation.ts).
 provideNav({ gates: { claims: LI.claimListGate } });
@@ -317,6 +318,8 @@ export async function handleCrm(
     const id = workDocs[1] ?? '';
     const r = requestWorkDocuments({ db, audit: d.app.audit, now: d.app.now, newId: d.newId }, actor, id, workDocs[2] ?? '');
     if (!r.ok) return d.problem(res, actor, 'Not asked', r.why, `/staff/claims/${id}#claim-events`);
+    // Phase 161m2: one email for the requests raised together (documents-needed)
+    emailDocumentsNeeded({ db, audit: d.app.audit, now: d.app.now, email: d.app.email }, actor, loadClaimRow(db, id).business_id, r.ids, d.publicOrigin);
     redirect(res, `/staff/claims/${id}?done=${r.asked === 0 ? 'nothing-to-ask' : 'requested'}#claim-events`);
     return 'handled';
   }

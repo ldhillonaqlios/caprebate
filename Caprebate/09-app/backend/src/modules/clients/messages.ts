@@ -14,6 +14,7 @@ import { NotFoundAsRefusal } from '../../core/index.ts';
 import { surveyorsOnBusiness } from '../../core/index.ts';
 import { EMAIL_SENDING, sendingOn, smtpLoginFromKeyFile, type EmailSending, type MailWhere, type SmtpLogin } from '../../integrations/index.ts';
 import { outboxTransport } from '../../integrations/index.ts';
+import { brandedEmail } from '../../integrations/index.ts';
 import { getUsersIdEmailByIdDisabledAt, listUsersIdEmailByRoleBusinessId, listUsersIdEmailByRoleDisabledAt } from '../../core/index.ts';
 import { getBusinessesIdNameById2, getChannelReadsAtByUserIdBusinessId, getClientMessagesBusinessIdDirectionById, getClientMessagesCountByBusinessIdDirection, getInternalNotesCountByBusinessIdAuthorId, getThreadReadsAtByUserIdBusinessId, insertClientMessageFiles, insertClientMessages, insertThreadReads } from './data.ts';
 
@@ -171,20 +172,34 @@ export type AlertResult =
   | { readonly state: 'QUEUED'; readonly outbox: readonly string[] }
   | { readonly state: 'NOT_QUEUED'; readonly why: 'DO_NOT_CONTACT' | 'NOBODY_TO_TELL' };
 
-/** The words of an alert. It says only that something is waiting — never the message, never who wrote it. */
-export function alertWords(to: 'STAFF' | 'CLIENT', company: string | null, business_id: string, origin: string | null): { subject: string; body: string } {
+/**
+ * The words of an alert. It says only that something is waiting — never the message, never who wrote it. Phase 161m2:
+ * on the branded layout, `html` beside the text. To a client, emails.py "new-message", the approved words; to our staff,
+ * the words it had, as a back-office email.
+ */
+export function alertWords(to: 'STAFF' | 'CLIENT', company: string | null, business_id: string, origin: string | null): { subject: string; body: string; html: string } {
   if (to === 'STAFF') {
     const subject = noticeSubject('A client has sent a new message', company);
     const link = `${origin ?? ''}/staff/clients/${business_id}?chat=client#chat`;
-    return { subject, body: `${subject}.\n\nRead it and reply in the back office: ${link}\n\nThe message is not in this email.` };
+    const e = brandedEmail({
+      subject, preheader: 'Read it and reply in the back office.', heading: subject,
+      blocks: ['Read it and reply in the back office.', 'The message is not in this email.'],
+      button: { label: 'Open the chat', href: link }, sign: 'Cap Rebate back office', staff: true,
+    }, { publicOrigin: origin });
+    return { subject: e.subject, body: e.text, html: e.html };
   }
   const subject = noticeSubject('You have a new message from Cap Rebate', company);
-  return {
-    subject,
-    body: 'There is a new message waiting for you in your Cap Rebate portal.\n\n' +
-      (origin === null ? 'Sign in to your portal to read it.' : `Sign in to read it: ${origin}/portal/messages`) +
-      '\n\nFor your privacy, we never put the message itself in an email.',
-  };
+  const e = brandedEmail({
+    subject, preheader: 'Read it in your portal.', heading: 'You have a new message',
+    blocks: [
+      'There is a new message from us waiting in your Cap Rebate portal.',
+      ...(origin === null ? ['Sign in to your portal to read it.'] : []),
+      'To keep your details private, we never put the message itself in an email.',
+    ],
+    button: origin === null ? null : { label: 'Read the message', href: `${origin}/portal/messages` },
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin: origin });
+  return { subject: e.subject, body: e.text, html: e.html };
 }
 
 /**
@@ -221,7 +236,7 @@ export function alertNewMessage(d: MessageDeps, message_id: string): AlertResult
   let refused = 0;
   d.db.tx(() => {
     for (const p of people) {
-      const r = transport.send({ to_email: p.email, subject: w.subject, body: w.body, kind: 'NOTIFICATION', business_id: m.business_id });
+      const r = transport.send({ to_email: p.email, subject: w.subject, body: w.body, html: w.html, kind: 'NOTIFICATION', business_id: m.business_id });
       if (r.id === null) refused++; else queued.push(r.id);
     }
   });

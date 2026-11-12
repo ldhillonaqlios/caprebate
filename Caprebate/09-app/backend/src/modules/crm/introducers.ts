@@ -56,9 +56,9 @@ import type { Db } from '../../core/index.ts';
 import type { AuditLog, AuditKind, Outcome } from '../../core/audit.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
 import { NotFoundAsRefusal } from '../../core/index.ts';
-import { outboxTransport } from '../../integrations/index.ts';
+import { brandedEmail, outboxTransport, type BrandedEmail } from '../../integrations/index.ts';
 import { loadLetter, type OpenTerm } from '../claims/index.ts';
-import { localDate, localStamp } from '../../shared/index.ts';
+import { localDate, localStamp, ukDate } from '../../shared/index.ts';
 import { formatPence, toPence } from '../../shared/index.ts';
 import { PROCEDURE_KEYS, anyStageLabel } from '../../shared/index.ts';
 import { fireAutomation } from './automation.ts';
@@ -1174,6 +1174,43 @@ export function noticeForStage(stage: string): NoticeKey | null {
   return null;
 }
 
+/** The subject's and heading's fixed words, the client's name after them (constants: the SQL check reads a word of them as SQL). */
+const INTRODUCER_SUBJECT_LEAD = 'Cap Rebate update: ';
+const INTRODUCER_HEADING_LEAD = 'An update on ';
+
+/** The person at the firm named to get notices, or null where none is named. */
+function noticeContactName(db: Db, introducer_id: string): string | null {
+  const r = getIntroducersIdFirmNameById<{ notice_contact_id: string | null }>(db, [introducer_id]);
+  if (r === undefined || r.notice_contact_id === null) return null;
+  const name = getContactsIdFullNameByIdIntroducerId<{ full_name: string }>(db, [r.notice_contact_id, introducer_id])?.full_name?.trim() ?? '';
+  return name === '' ? null : name;
+}
+
+/**
+ * THE NOTICE TO THE FIRM (Phase 161m2, introducer-update in 05-reports-and-templates/emails/emails.py, the approved
+ * wording): on the branded layout. The stage is the paper's label, its explanation the notice's own `says`, and for a
+ * reasoned negative the listed reason's label after it, never the note. It greets the person the firm named to get
+ * notices, or the firm where it named nobody by name.
+ */
+export function introducerUpdateEmail(f: {
+  readonly firm: string; readonly person: string | null; readonly organisation: string; readonly notice: NoticeKey;
+  readonly reason: string | null; readonly date: string;
+}): BrandedEmail {
+  const n = NOTICES[f.notice];
+  return brandedEmail({
+    subject: `${INTRODUCER_SUBJECT_LEAD}${f.organisation}`,
+    preheader: `${f.organisation}: ${n.label}.`,
+    heading: `${INTRODUCER_HEADING_LEAD}${f.organisation}`,
+    blocks: [
+      `Dear ${f.person ?? f.firm},`,
+      { kind: 'facts', rows: [['Client', f.organisation], ['Stage', n.label], ['Date', ukDate(localDate(f.date))]] },
+      f.reason === null ? n.says : `${n.says} The reason: ${f.reason}.`,
+      `You are receiving this because ${f.organisation} asked us to keep you updated. Thank you for the introduction.`,
+    ],
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin: process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? null });
+}
+
 /**
  * A NOTICE FALLS DUE. It is kept either way: QUEUED to the outbox under the
  * client's current yes, or NOT_QUEUED with the reason. A notice already queued for
@@ -1213,22 +1250,13 @@ export function evaluateNotice(
     const consent = share.consent_id;
     const to = lead.to_email;
     const reason = notice !== 'REASONED_NEGATIVE' || claim_id === null ? null : getClaimStageMovesLabelByClaimIdToStage<{ label: string }>(d.db, [claim_id])?.label ?? null;
-    const n = NOTICES[notice];
-    const body = [
-      `To ${lead.firm_name},`,
-      '',
-      `${lead.organisation}: ${n.label}.`,
-      n.says,
-      ...(reason === null ? [] : [`The reason: ${reason}.`]),
-      '',
-      `You are receiving this because ${lead.organisation} asked us to share the progress of their claim with ${lead.firm_name}. ` +
-        'They can withdraw that at any time, and then nothing more is sent.',
-      '',
-      'Cap Rebate',
-    ].join('\n');
+    const e = introducerUpdateEmail({
+      firm: lead.firm_name, person: noticeContactName(d.db, introducer_id), organisation: lead.organisation,
+      notice, reason, date: at,
+    });
     const sent = d.db.tx(() => {
       const s = outboxTransport(d.db, d.newId, d.now).send({
-        to_email: to, subject: `Cap Rebate — ${lead.organisation}: ${n.label}`, body, kind: 'NOTIFICATION', business_id: lead.business_id,
+        to_email: to, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id: lead.business_id,
       });
       if (s.refused !== null || s.id === null) return { result: 'DO_NOT_CONTACT' as const, id: keep('NOT_QUEUED', 'DO_NOT_CONTACT', null, null) };
       return { result: 'QUEUED' as const, id: keep('QUEUED', null, consent, s.id) };

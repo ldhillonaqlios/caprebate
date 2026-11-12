@@ -23,6 +23,7 @@ import { rateLimit } from '../../core/index.ts';
 import { hashToken } from '../../core/index.ts';
 import { plainDashes } from '../../shared/index.ts';
 import { insertComplaintForms, refOf } from '../compliance/index.ts';
+import { brandedEmail, type EmailContent } from '../../integrations/index.ts';
 
 /** the app's own copy: edit the original, 03-app/caprebate-notices-page.html, then run `npm run copies`; npm run check fails while they differ (tools/app-copies.cjs). */
 export const NOTICES_PATH = join(import.meta.dirname, '..', '..', '..', 'copies', 'caprebate-notices-page.html');
@@ -98,7 +99,30 @@ const clean = (v: string | null, max: number): string | null => {
   return t === '' ? null : t.slice(0, max);
 };
 
-/** Keep a complaint sent through the page, with when it arrived, and email it to the data protection address. */
+/** complaint-received (emails.py, Phase 161m2): to the person who complained, with their reference. */
+export function complaintReceivedEmail(ref: string): EmailContent {
+  return {
+    subject: `We have received your complaint (${ref})`,
+    preheader: `Your reference is ${ref}. We will reply within 20 working days.`,
+    heading: 'We have received your complaint',
+    blocks: [
+      `Thank you for telling us. Your reference is **${ref}**.`,
+      'We will look into it and reply in writing within 20 working days. If we need longer, we will tell you why and when to expect our answer.',
+      // emails.py's one sentence, in two: it read above the plain-words grade (03-app/caprebate-plain-words-check.cjs).
+      'If you are not happy with our reply, you can contact the Information Commissioner\'s Office, at ico.org.uk. It looks at how we handle personal data.',
+    ],
+    sign: 'The Cap Rebate team',
+  };
+}
+
+/** A reply-to that is an email address (the form also takes a postal address, which gets no email). */
+const REPLY_EMAIL = /^[^@\s<>"]+@[^@\s<>"]+\.[^@\s<>"]+$/;
+
+/**
+ * Keep a complaint sent through the page, with when it arrived, and email it to the data protection address. Then,
+ * when the person gave an email address to reply to, a note that it arrived, with its reference (Phase 161m2). It goes
+ * through the outbox like every other email: do not contact and the sending switch apply there.
+ */
 export function receiveComplaintForm(app: App, f: URLSearchParams, source: string, newId: () => string): ComplaintFormResult {
   if (!rateLimit(app.deps, 'complaint-from:' + hashToken(source), COMPLAINT_SOURCE_LIMIT)) {
     return { ok: false, why: `We have had a lot of complaints from where you are in a short time. Please wait a few minutes, or email ${DP_MAIL}.` };
@@ -127,5 +151,10 @@ export function receiveComplaintForm(app: App, f: URLSearchParams, source: strin
       + `\nWhat they said:\n${verbatim}\n`,
   });
   app.audit.append({ at, kind: 'COMPLAINT_FORM_RECEIVED', outcome: 'ALLOWED', object_type: 'complaint_form', object_id: id, detail: { ref } });
+  if (REPLY_EMAIL.test(reply_to)) {
+    const origin = process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? null;
+    const e = brandedEmail(complaintReceivedEmail(ref), { publicOrigin: origin });
+    app.email.send({ to_email: reply_to, kind: 'NOTIFICATION', subject: e.subject, body: e.text, html: e.html });
+  }
   return { ok: true, id, ref, received_at: at };
 }

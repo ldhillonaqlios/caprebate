@@ -204,8 +204,9 @@ describe('item 5 — a document names its event, and each event counts its own',
       const refit = w.add('REFURBISHMENT', '06/2025', '90000');
       assert.match((D.requestWorkDocuments(w.deps, w.sales, w.j.claim_id, purchase) as { why: string }).why, /not a piece of work/);
       const first = D.requestWorkDocuments(w.deps, w.sales, w.j.claim_id, refit);
-      assert.deepEqual(first, { ok: true, asked: 2 });
-      assert.deepEqual(D.requestWorkDocuments(w.deps, w.sales, w.j.claim_id, refit), { ok: true, asked: 0 }, 'asked once, not twice');
+      assert.deepEqual({ ...first, ids: undefined }, { ok: true, asked: 2, ids: undefined });
+      assert.equal((first as { ids: readonly string[] }).ids.length, 2, 'the two requests raised together, for their one email');
+      assert.deepEqual(D.requestWorkDocuments(w.deps, w.sales, w.j.claim_id, refit), { ok: true, asked: 0, ids: [] }, 'asked once, not twice');
       const asked = w.db.all<{ question: string; event_id: string }>("SELECT question, event_id FROM client_tasks WHERE kind = 'DOCUMENT' AND event_id = ? ORDER BY question", [refit]);
       assert.deepEqual(asked.map((x) => x.question), [
         'Please upload: Contractor\'s invoices for the works — for a refurbishment or refit (June 2025)',

@@ -51,7 +51,11 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
+import { brandedEmail, type EmailContent } from '../../integrations/index.ts';
 import { authorise, type Actor } from '../../core/index.ts';
+import { getUsersIdEmailByIdDisabledAt } from '../../core/index.ts';
+import { getBusinessesIdOwnerIdById } from '../clients/index.ts';
+import { listClaimsIdOwnerIdByBusinessId } from './data.ts';
 import { loadLetter } from './letter.ts';
 import { engagement, readBusiness } from './client-engagement.ts';
 import { localWhen, ukDate } from '../../shared/index.ts';
@@ -421,7 +425,11 @@ function certificateV3(letter: ShownLetter, all: readonly Omit<SignatureFields, 
   ];
 }
 
-type Deps = { db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string };
+type Deps = {
+  db: Db; audit: AuditLog; email: EmailTransport; now: () => string; newId: () => string;
+  /** The website's public address, for the links in the emails (Phase 161m2). Absent: CAPREBATE_PUBLIC_ORIGIN. */
+  origin?: string;
+};
 
 /**
  * WHO MUST SIGN. The client logins staff recorded (engagement_required_signers), first signer first; none
@@ -574,22 +582,98 @@ function signAs(
     signer_seq: seq, link_id: who.link_id,
   }, { id: who.user_id, role: who.role }, { earlier, needed });
 
-  // Their copy, to the address that signed. Saved to the outbox; sent the day sending is on.
+  // Their copy, to the address that signed. Saved to the outbox; sent the day sending is on. (Phase 161m2: the approved
+  // words on the branded layout. The sentence that said it was not sent yet is gone: that is the outbox's to say.)
+  const origin = (d.origin ?? process.env.CAPREBATE_PUBLIC_ORIGIN ?? '').replace(/\/+$/, '');
   if (signer_email !== null) {
+    const e = brandedEmail(letterSignedEmail(b.name, ukDate(signed_at), complete, `${origin}/portal`), { publicOrigin: origin });
     d.email.send({
       to_email: signer_email,
-      subject: complete ? 'Your signed engagement letter' : 'You have signed our engagement letter',
-      body: `Thank you. You signed our engagement letter for ${b.name} on ${localWhen(signed_at)}.\n\n` +
-        (complete
-          ? 'Your signed copy is attached. It ends with your signature and a certificate of completion, which shows when the letter was sent, opened and signed.\n\n'
-          : 'It needs one more signature before it is signed. Your copy so far is attached; we will send the finished copy when it is signed.\n\n') +
-        'Not sent yet. Sending email is not switched on. This message and your copy are saved with the emails waiting to send.',
+      subject: e.subject, body: e.text, html: e.html,
       kind: 'SIGNED_LETTER',
       business_id: b.id,
       inline_files: [{ filename: complete ? 'engagement-letter-signed.pdf' : 'engagement-letter-signed-so-far.pdf', content_type: 'application/pdf', bytes: pdf }],
     });
   }
+  // And the claim's owner, once the letter is signed (staff-letter-signed): what to do next.
+  if (complete) tellOwnersSigned(d, b, ukDate(signed_at), origin);
   return { ok: true, signature_id: id, record_sha256, complete };
+}
+
+/**
+ * THE LETTER-SIGNED EMAIL (Phase 161m2, emails.py "letter-signed", the approved words), with the signed PDF attached by
+ * the caller. Where the letter still needs a second signature, the same layout with the words it had before: their copy
+ * so far, and the finished copy to follow.
+ */
+export function letterSignedEmail(organisation: string, signedDate: string, complete: boolean, portalLink: string): EmailContent {
+  if (!complete) {
+    return {
+      subject: 'You have signed our engagement letter',
+      preheader: 'Thank you. Your copy so far is attached.',
+      heading: 'Thank you for signing',
+      blocks: [
+        `You signed our engagement letter for ${organisation} on ${signedDate}.`,
+        'It needs one more signature before it is signed. Your copy so far is attached. We will send the finished copy when it is signed.',
+      ],
+      button: { label: 'Open your portal', href: portalLink },
+      sign: 'The Cap Rebate team',
+    };
+  }
+  return {
+    subject: 'Your signed engagement letter',
+    preheader: 'Thank you. Your signed copy is attached.',
+    heading: 'Thank you for signing',
+    blocks: [
+      `You signed our engagement letter for ${organisation} on ${signedDate}. Your signed copy is attached to this email, and it is also in your portal.`,
+      { kind: 'heading', text: 'What happens next' },
+      { kind: 'bullets', items: [
+        'We send you a short identity check, done by our provider Didit.',
+        'We let you know the documents we need, in your portal.',
+        'We book the chartered surveyor\'s visit with you.',
+      ] },
+      'Thank you for choosing Cap Rebate.',
+    ],
+    button: { label: 'Open your portal', href: portalLink },
+    sign: 'The Cap Rebate team',
+  };
+}
+
+/** THE STAFF-LETTER-SIGNED EMAIL (emails.py "staff-letter-signed", the approved words): to the claim's owner. */
+export function staffLetterSignedEmail(organisation: string, signedDate: string, backofficeLink: string): EmailContent {
+  return {
+    subject: `Engagement letter signed: ${organisation}`,
+    preheader: 'Next: the identity check and the document list.',
+    heading: `${organisation} has signed`,
+    blocks: [
+      `${organisation} signed the engagement letter on ${signedDate}.`,
+      { kind: 'heading', text: 'Next steps for you' },
+      { kind: 'bullets', items: ['Send the identity check to a director or owner.', 'Send the list of documents we need.', 'Book the surveyor.'] },
+    ],
+    button: { label: 'Open the claim', href: backofficeLink },
+    sign: 'Cap Rebate back office',
+    staff: true,
+  };
+}
+
+/**
+ * WHO IS TOLD A CLIENT HAS SIGNED: each owner of the business's claims (an active Admin or Sales login), once each, with
+ * a link to their own claim; where no claim has an owner, the business's owner, with a link to the client's page.
+ * Nobody, where there is neither. Queued like every email (the outbox refuses what it must).
+ */
+function tellOwnersSigned(d: Deps, b: { id: string; name: string }, signedDate: string, origin: string): void {
+  const firstClaim = new Map<string, string>();
+  for (const c of listClaimsIdOwnerIdByBusinessId<{ id: string; owner_id: string }>(d.db, [b.id])) if (!firstClaim.has(c.owner_id)) firstClaim.set(c.owner_id, c.id);
+  const owners: { user_id: string; link: string }[] = [...firstClaim].map(([user_id, claim]) => ({ user_id, link: `${origin}/staff/claims/${claim}` }));
+  if (owners.length === 0) {
+    const o = getBusinessesIdOwnerIdById<{ owner_id: string | null }>(d.db, [b.id])?.owner_id ?? null;
+    if (o !== null) owners.push({ user_id: o, link: `${origin}/staff/clients/${b.id}` });
+  }
+  for (const o of owners) {
+    const u = getUsersIdEmailByIdDisabledAt<{ id: string; email: string }>(d.db, [o.user_id]);
+    if (u === undefined) continue;
+    const e = brandedEmail(staffLetterSignedEmail(b.name, signedDate, o.link), { publicOrigin: origin });
+    d.email.send({ to_email: u.email, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id: b.id });
+  }
 }
 
 /**

@@ -66,6 +66,12 @@ import {
   type ReadingView, type VouchAnswer, type VouchView,
 } from './document-reading.ts';
 import { removeRegisterField } from '../../integrations/index.ts';
+import { brandedEmail, type EmailContent, type EmailTransport } from '../../integrations/index.ts';
+import { getAuditLogCountByKindObjectIdSince } from '../../core/index.ts';
+import { localClock, startOfLocalDayMs } from '../../shared/index.ts';
+import { getBusinessesEById, getBusinessesIdNameById, getContactsEByBusinessIdEmail } from '../clients/index.ts';
+import { listDocumentsUploadedSince, listPropertiesLabelByBusinessId } from './data.ts';
+import { loadClaimRow } from './claim-row.ts';
 import { approvedFieldsOf, lookAgainAfter, lookAgainJson, lookAgainSummary, takeBackReason, type LookAgain } from './take-back.ts';
 import type { FsObjectStore } from '../../shared/index.ts';
 import { getUsersRoleById } from '../../core/index.ts';
@@ -1276,7 +1282,7 @@ export const WORK_DOCUMENTS: readonly string[] = Object.freeze(['CONTRACTOR_COST
  * completion statement and the contract, asked as before.
  */
 export function requestWorkDocuments(d: DocDeps, actor: Actor, claim_id: string, event_id: string):
-  { readonly ok: true; readonly asked: number } | { readonly ok: false; readonly why: string } {
+  { readonly ok: true; readonly asked: number; readonly ids: readonly string[] } | { readonly ok: false; readonly why: string } {
   const c = getClaimsBusinessIdPropertyIdById<{ business_id: string; property_id: string | null }>(d.db, [claim_id]);
   if (c === undefined) throw new NotFoundAsRefusal();
   authorise(actor, 'document_request.create', { type: 'document_request', id: c.business_id, business_id: c.business_id });
@@ -1284,6 +1290,7 @@ export function requestWorkDocuments(d: DocDeps, actor: Actor, claim_id: string,
   if (ev === null || ev.property_id !== c.property_id) return { ok: false, why: 'that piece of work is not on this claim’s building.' };
   if (ev.kind === 'PURCHASE') return { ok: false, why: 'the purchase is not a piece of work. Ask for its completion statement and contract instead.' };
   let asked = 0;
+  const ids: string[] = [];
   for (const code of WORK_DOCUMENTS) {
     const open = getClientTasksCountByKindState<{ n: number }>(d.db, [code, ev.id])?.n ?? 0;
     const held = getLogicalDocumentsCountByBusinessIdTypeCode2<{ n: number }>(d.db, [c.business_id, code, ev.id])?.n ?? 0;
@@ -1295,8 +1302,132 @@ export function requestWorkDocuments(d: DocDeps, actor: Actor, claim_id: string,
     });
     if (!r.ok) return { ok: false, why: r.why };
     asked += 1;
+    ids.push(r.id);
   }
-  return { ok: true, asked };
+  return { ok: true, asked, ids };
+}
+
+/* ================================================================== *
+ * THE DOCUMENT EMAILS (Phase 161m2): what we asked for, and what the client sent today
+ * ================================================================== */
+
+export type DocEmailDeps = { db: Db; audit: AuditLog; now: () => string; email: EmailTransport };
+
+/** The address a client's news goes to: the company's own, else its first contact with one (as "Tell the client" does). */
+function clientAddress(db: Db, business_id: string): string | null {
+  return getBusinessesEById<{ e: string | null }>(db, [business_id])?.e
+    ?? getContactsEByBusinessIdEmail<{ e: string | null }>(db, [business_id])?.e
+    ?? null;
+}
+
+const countOf = (n: number, one: string): string => `${n} ${one}${n === 1 ? '' : 's'}`;
+
+/** THE DOCUMENTS-NEEDED EMAIL (emails.py "documents-needed", the approved words). No property known: "your claim". */
+export function documentsNeededEmail(property: string | null, items: readonly string[], portalLink: string): EmailContent {
+  return {
+    subject: 'Documents we need for your claim',
+    preheader: `${countOf(items.length, 'document')} to upload in your portal.`,
+    heading: 'Documents we need',
+    blocks: [
+      property === null ? 'To value your claim, we need the following:' : `To value your claim for ${property}, we need the following:`,
+      { kind: 'bullets', items },
+      // emails.py's last sentence, split at its colon and "directly" made "for it", for the plain-words check (grade 9)
+      'Please upload them in your portal. If you do not have one, tell us there and we will try to get it for you. Your engagement letter lets us ask your solicitor, accountant or the seller for it.',
+    ],
+    button: { label: 'Upload documents', href: portalLink },
+    sign: 'The Cap Rebate team',
+  };
+}
+
+/** THE DOCUMENTS-RECEIVED EMAIL (emails.py "documents-received", the approved words). */
+export function documentsReceivedEmail(items: readonly string[], portalLink: string): EmailContent {
+  return {
+    subject: 'Thank you, we have your documents',
+    preheader: `We have received ${countOf(items.length, 'document')}.`,
+    heading: 'Thank you, we have your documents',
+    blocks: [
+      'We have received the following today:',
+      { kind: 'bullets', items },
+      'We will check them and let you know if anything else is needed.',
+    ],
+    button: { label: 'See your documents', href: portalLink },
+    sign: 'The Cap Rebate team',
+  };
+}
+
+const originOf = (origin: string | null | undefined): string => (origin ?? process.env.CAPREBATE_PUBLIC_ORIGIN ?? '').trim().replace(/\/+$/, '');
+
+/**
+ * TELL THE CLIENT WHAT WE ASKED FOR (documents-needed): ONE email for the requests staff raised together, listing each
+ * document by its type (and the piece of work, where the request names one), to the company's address. A request that
+ * is not open any more is left out; none left, nothing is sent. The outbox refuses a do-not-contact client, as every
+ * email is. DOCUMENTS_NEEDED_EMAILED records it against the first request of the batch, with the count.
+ */
+export function emailDocumentsNeeded(
+  d: DocEmailDeps, actor: Actor, business_id: string, request_ids: readonly string[], origin?: string | null,
+): { readonly queued: boolean } {
+  if (request_ids.length === 0) return { queued: false };
+  const views = requestsFor(d.db, actor, { business_id }, d.now()).filter((r) => request_ids.includes(r.id) && r.state === 'REQUESTED');
+  const to = clientAddress(d.db, business_id);
+  if (views.length === 0 || to === null) return { queued: false };
+  const claim = views.find((v) => v.claim !== null)?.claim ?? null;
+  const property = claim === null
+    ? (listPropertiesLabelByBusinessId<{ label: string }>(d.db, [business_id])[0]?.label ?? null)
+    : loadClaimRow(d.db, claim.id).property_label;
+  const o = originOf(origin);
+  const e = brandedEmail(documentsNeededEmail(property, views.map((v) => v.type.label.replace(' — for ', ', for ')), `${o}/portal/documents`), { publicOrigin: o });
+  const r = d.email.send({ to_email: to, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id, claim_id: claim?.id ?? null });
+  d.audit.append({
+    at: d.now(), kind: 'DOCUMENTS_NEEDED_EMAILED', outcome: r.refused === null ? 'ALLOWED' : 'REFUSED', actor_id: actor.id, actor_role: actor.role,
+    object_type: 'client_task', object_id: views[0]?.id ?? request_ids[0] ?? '', detail: { business: business_id, requests: views.length, outcome: r.refused ?? 'QUEUED' },
+  });
+  return { queued: r.refused === null };
+}
+
+/** The day's digest goes from this hour (UK time), so it can say "today" and list the day's uploads. */
+export const DOCUMENTS_DIGEST_FROM_HOUR = 18;
+
+/**
+ * THE DAY'S DIGEST OF WHAT A CLIENT SENT (documents-received), for a timer. From DOCUMENTS_DIGEST_FROM_HOUR, UK time:
+ * for each client that uploaded documents on the UK day of `now`, ONE email listing them, to the company's address; at
+ * most one a day per client (DOCUMENTS_RECEIVED_EMAILED, since the start of that UK day). Only what a CLIENT login
+ * uploaded counts, never a member of staff's upload, and never a file the upload refused. A do-not-contact client is
+ * refused by the outbox, and recorded, so it is not tried again that day. Before the hour it does nothing.
+ */
+export function documentsReceivedDigest(
+  app: { readonly db: Db; readonly audit: AuditLog; readonly email: EmailTransport }, now: string, origin?: string | null,
+): { readonly state: 'NOT_YET' | 'RAN'; readonly clients: number; readonly queued: number } {
+  if (Number(localClock(now).slice(0, 2)) < DOCUMENTS_DIGEST_FROM_HOUR) return { state: 'NOT_YET', clients: 0, queued: 0 };
+  const day = localDate(now);
+  const dayStart = new Date(startOfLocalDayMs(Date.parse(now))).toISOString();
+  type Up = { id: string; business_id: string; uploaded_by: string; created_at: string; failure_code: string | null; version_no: number | null; type_label: string; seq: number };
+  const roles = new Map<string, string | undefined>();
+  const roleOf = (u: string): string | undefined => {
+    if (!roles.has(u)) roles.set(u, getUsersRoleById<{ role: string }>(app.db, [u])?.role);
+    return roles.get(u);
+  };
+  const byClient = new Map<string, Up[]>();
+  for (const r of listDocumentsUploadedSince<Up>(app.db, [dayStart, now])) {
+    if (localDate(r.created_at) !== day || r.failure_code !== null || roleOf(r.uploaded_by) !== 'CLIENT') continue;
+    byClient.set(r.business_id, [...(byClient.get(r.business_id) ?? []), r]);
+  }
+  const o = originOf(origin);
+  let clients = 0, queued = 0;
+  for (const [business_id, ups] of byClient) {
+    if ((getAuditLogCountByKindObjectIdSince<{ n: number }>(app.db, ['DOCUMENTS_RECEIVED_EMAILED', business_id, dayStart])?.n ?? 0) > 0) continue;
+    const to = clientAddress(app.db, business_id);
+    if (to === null || getBusinessesIdNameById<{ id: string }>(app.db, [business_id]) === undefined) continue;
+    const items = ups.map((u) => `${documentLabel(u.type_label, u.seq)}${(u.version_no ?? 1) > 1 ? ' (a new version)' : ''}`);
+    const e = brandedEmail(documentsReceivedEmail(items, `${o}/portal/documents`), { publicOrigin: o });
+    const r = app.email.send({ to_email: to, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id });
+    app.audit.append({
+      at: now, kind: 'DOCUMENTS_RECEIVED_EMAILED', outcome: r.refused === null ? 'ALLOWED' : 'REFUSED', actor_id: null, actor_role: null,
+      object_type: 'business', object_id: business_id, detail: { documents: ups.length, day, outcome: r.refused ?? 'QUEUED' },
+    });
+    clients++;
+    if (r.refused === null) queued++;
+  }
+  return { state: 'RAN', clients, queued };
 }
 
 /**

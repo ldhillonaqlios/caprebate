@@ -53,6 +53,8 @@ export type PipelinePageDeps = {
   nav: (actor: Actor) => Safe;
   stamp: (iso: string) => string;
   problem: (res: ServerResponse, actor: Actor, title: string, why: string, back: string, field?: string) => 'handled';
+  /** The site's own address, for the portal button in the email a closing move sends (Phase 161m2). */
+  publicOrigin?: string;
 };
 
 const JSON_HEADERS: Readonly<Record<string, string>> = Object.freeze({
@@ -243,7 +245,8 @@ export async function handlePipeline(
     const f = await form(req);
     // UI tidy phase 3: `back` is one fixed word, never a path — the table (`board`) or the board of columns (`columns`).
     const back = f.get('back') === 'board' ? '/staff/pipeline' : f.get('back') === 'columns' ? '/staff/pipeline?layout=board' : `/staff/claims/${id}`;
-    const r = P.moveClaim(deps, actor, id, {
+    // Phase 161m2: with the email, so closing a claim or ending it at a reasoned negative tells the client, once.
+    const r = P.moveClaim({ ...deps, email: d.app.email, origin: d.publicOrigin ?? null }, actor, id, {
       kind: f.get('kind') ?? '', to: nonBlank(f.get('to')), reason_code: nonBlank(f.get('reason_code')),
       reason: nonBlank(f.get('reason')),
       // CRM 3 of 10: a next action named on the move is written with it; the store checks it.

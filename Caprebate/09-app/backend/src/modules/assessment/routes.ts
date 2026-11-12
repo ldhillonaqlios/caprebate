@@ -6,8 +6,9 @@
 import type { ServerResponse } from 'node:http';
 import { JSON_HEADERS, clockOf, cookie, form, html, nav, redirect, setCookie, simple, type Actor, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
 import { BOOKING, FRONTDOOR, FUNNEL, HTML_HEADERS, formatPence, formatShownRange, h, localWhen, noticeAtAddress, page, raw, registryGate, toPence, why, zoneNotice, type Safe } from '../../shared/index.ts';
+import { brandedEmail, type EmailContent } from '../../integrations/index.ts';
 import { ADDRESS_LOOKUP, COMPANY_SEARCH, EMAIL_SENDING, POSTCODE_CHECK, addressLookupMissing, checkPostcode, companySearchOffered, findAddresses, mailWhere, normalisePostcode, postcodeCheckMissing, searchCompanies, searchesToday, sendingOn, smtpLoginFromKeyFile } from '../../integrations/index.ts';
-import { SLOT_MINUTES, activeMeeting, bookingInviteFile, fireAutomation, getBusinessesEById, insertBookings2, insertContacts4, isBookable, linkBookingToLead, publicSlots, reconcileVideoMeeting, sendVideoInvite } from '../clients/index.ts';
+import { SLOT_MINUTES, activeMeeting, bookingInviteFile, callBookedPhoneEmail, callsLink, drawCallEmail, fireAutomation, getBusinessesEById, insertBookings2, insertContacts4, isBookable, linkBookingToLead, publicSlots, reconcileVideoMeeting, sendVideoInvite } from '../clients/index.ts';
 import { SITE_JS_HEADERS } from '../../shared/index.ts';
 import { freeGate, recordLookupsDeclined } from './address-check.ts';
 import { ADDRESS_LOOKUP_JS } from './address-lookup-script.ts';
@@ -50,7 +51,7 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
     return 'handled';
   }
   if (path === '/account/verify' && method === 'POST') {
-    const r = confirmSignup(d.app, (await form(req)).get('token') ?? '', newId);
+    const r = confirmSignup(d.app, (await form(req)).get('token') ?? '', newId, d.publicOrigin);
     if (!r.ok) { html(res, 400, simple('Your login was not created', r.why)); return 'handled'; }
     html(res, 200, page({ title: 'Your login is ready', nav: nav(actor),
       body: h`<h1>Your login is ready.</h1><p>Sign in with the address and password you chose to follow your claim.</p>
@@ -215,6 +216,8 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
       const offer = first !== undefined ? offerSignup(d.app, newId, first.business_id as string, first.assessment_id) : undefined;
       const totals = { business_id: first?.business_id ?? '', assessment_id: first?.assessment_id ?? out.enquiry_id,
         low_pence: out.parts.reduce((a, p) => a + (p.low_pence ?? 0), 0) || null, high_pence: out.parts.reduce((a, p) => a + (p.high_pence ?? 0), 0) || null };
+      // assessment-complete (Phase 161m2): the figure they were shown, by email, to the address they gave (email or video).
+      sendAssessmentComplete(d, s, totals, booked.booked_at !== null);
       html(res, 200, submittedPage(totals, booked, actor, actor === undefined ? offer : undefined, true, video, sendingOn(EMAIL_SENDING, smtpLoginFromKeyFile(d.app.secrets), mailWhere(d.app)), legalServed)); return 'handled';
     }
     if (method === 'POST') {
@@ -264,6 +267,56 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
     }
   }
   return undefined;
+}
+
+/* ------------------------------------------------------------------ *
+ * the email after the assessment (emails.py, assessment-complete)
+ * ------------------------------------------------------------------ */
+
+/**
+ * assessment-complete. The four-stage funnel shows "up to" a figure, not a range, so the email says what was shown,
+ * in the same words: "up to" and the figure. The button books a call in the portal, and is left off when a call is held.
+ */
+export function assessmentCompleteEmail(a: { property: string; high_pence: number; booked: boolean; bookingLink: string }): EmailContent {
+  return {
+    subject: 'Your Cap Rebate assessment: what happens next',
+    preheader: 'Thank you for completing our assessment. Here is your indicative figure.',
+    heading: 'Thank you for completing our assessment',
+    blocks: [
+      `Based on your answers about ${a.property}, the capital allowances you may be able to claim are:`,
+      { kind: 'figure', value: `Up to ${formatPence(a.high_pence)}`, label: 'Indicative figure of capital allowances' },
+      'This figure is an estimate from your answers only. The figure you can claim is set by a chartered surveyor\'s survey of the building.',
+      { kind: 'heading', text: 'What happens next' },
+      { kind: 'bullets', items: ['We review your answers.', 'If you booked a call, you will get a separate email with the time.', 'If not, we will email you to arrange one.'] },
+      // emails.py's first sentence, in two: it read above the plain-words grade (03-app/caprebate-plain-words-check.cjs).
+      'Our fee is 3% of the capital allowances identified. We charge it only once we deliver our report. There is nothing to pay before then.',
+    ],
+    button: a.booked ? null : { label: 'Book a call', href: a.bookingLink },
+    sign: 'The Cap Rebate team',
+  };
+}
+
+/** What the email calls the property: one building's address, else "your property", or "your N buildings". */
+function propertyWords(s: Record<string, unknown>): string {
+  const bs = buildings(s);
+  if (bs.length > 1) return `your ${bs.length} buildings`;
+  const addr = bs[0]?.['address'];
+  return typeof addr === 'string' && addr.trim() !== '' ? addr.trim() : 'your property';
+}
+
+/**
+ * Sent once, at the funnel close, when the person gave an email address (the email and video channels) and a figure
+ * was shown. Through the outbox, so do not contact and the sending switch apply as to every email.
+ */
+function sendAssessmentComplete(d: WebDeps, s: Record<string, unknown>, totals: { business_id: string; high_pence: number | null }, booked: boolean): void {
+  const c = (s['contact'] ?? {}) as Record<string, unknown>;
+  const to = c['channel'] === 'email' || c['channel'] === 'video' ? String(c['contact_value'] ?? '').trim() : '';
+  if (to === '' || totals.high_pence === null) return;
+  const site = (d.publicOrigin ?? 'http://localhost:8103').replace(/\/+$/, '');
+  const e = brandedEmail(assessmentCompleteEmail({ property: propertyWords(s), high_pence: totals.high_pence, booked, bookingLink: `${site}/portal#appointment` }),
+    { publicOrigin: d.publicOrigin ?? null });
+  d.app.email.send({ to_email: to, kind: 'NOTIFICATION', business_id: totals.business_id === '' ? null : totals.business_id,
+    subject: e.subject, body: e.text, html: e.html });
 }
 
 /* ------------------------------------------------------------------ *
@@ -391,12 +444,12 @@ function writeBookingAndContact(
       : null;
     const invite = bookingInviteFile(d.app.db, d.app.now, { booking_id, method: 'REQUEST', starts_at: starts, ends_at: ends, to });
     if (invite !== null && to !== null) {
+      // call-booked-phone (emails.py): when, how long, and the number we will ring.
+      const site = d.publicOrigin ?? 'http://localhost:8103';
+      const e = drawCallEmail(callBookedPhoneEmail({ starts_at: starts, phone: c.channel === 'phone' ? typed : null, invite: true, manageLink: callsLink(site) }),
+        d.publicOrigin ?? null);
       d.app.email.send({
-        to_email: to,
-        subject: `Your call with Cap Rebate — ${localWhen(starts)}`,
-        body: `A telephone call has been arranged for ${localWhen(starts)}, lasting ${SLOT_MINUTES} minutes.\n\n` +
-          'Not sent yet. Emails and calendar invites are not switched on yet. ' +
-          'This message and its invite are saved with the emails waiting to send.',
+        to_email: to, subject: e.subject, body: e.text, html: e.html,
         kind: 'CALENDAR_INVITE',
         business_id,
         inline_files: [invite],

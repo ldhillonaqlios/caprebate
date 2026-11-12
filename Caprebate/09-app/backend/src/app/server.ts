@@ -313,7 +313,7 @@ export async function createApp(
       const r = which === 'new-password' ? await SI.submitNewPassword(app, token, str('password'), typeof body.again === 'string' ? body.again : str('password'))
         : which === 'method' ? SI.chooseMethod(app, token, str('method'))
         : which === 'code' ? SI.submitCode(app, token, str('code'))
-        : which === 'recovery' ? SI.submitRecoveryCode(app, token, str('code'))
+        : which === 'recovery' ? SI.submitRecoveryCode(app, token, str('code'), opts.publicOrigin ?? process.env.CAPREBATE_PUBLIC_ORIGIN)
         : SI.resendCode(app, token);
       if (r.kind === 'SESSION') {
         res.setHeader('set-cookie', sessionCookie(r.login));

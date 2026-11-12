@@ -64,7 +64,8 @@ async function post(base: string, path: string, body: Record<string, unknown>): 
 /** The last sign-in code the demo printed for this address, in its own console line. */
 export function codeFromDemoLog(log: string, email: string): string | null {
   const esc = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const all = [...log.matchAll(new RegExp(`--- outbox \\(not sent\\) to ${esc}: Your Cap Rebate sign-in code\\s+Your Cap Rebate sign-in code is (\\d{6})`, 'g'))];
+  // The branded email (Phase 161m2): its heading "Your sign-in code", then the code on a line of its own.
+  const all = [...log.matchAll(new RegExp(`--- outbox \\(not sent\\) to ${esc}: Your Cap Rebate sign-in code\\s+Your sign-in code\\s+(\\d{6})\\s`, 'g'))];
   return all.length === 0 ? null : all[all.length - 1]?.[1] ?? null;
 }
 

@@ -64,6 +64,10 @@ import {
   sentUnderTestingWaiver, startIdentityCheck, type IdentityCheckConfig, type IdentityOutcome, type IdentitySignature,
 } from '../../integrations/index.ts';
 import { getBusinessesIdById, getContactsIdEmailByIdBusinessId, listContactsIdByBusinessId } from '../clients/index.ts';
+import { getBusinessesIdNameById, getContactsIdBusinessIdById4 } from '../clients/index.ts';
+import { brandedEmail, type EmailContent } from '../../integrations/index.ts';
+import { getAuditLogCountByKindObjectIdOnce } from '../../core/index.ts';
+import { getIdentityChecksContactIdById } from './data.ts';
 import { getCddChecksStateByIdBusinessId, getCddChecksStateVerificationMethodById, getIdentityCheckResultsOutcomeReceivedAtByIdentityCheckId, getIdentityChecksIdBusinessIdBySessionId, getIdentityChecksIdBySessionId, insertIdentityCheckResults, insertIdentityChecks, updateCddChecksVerificationMethodUpdatedAtById } from './data.ts';
 import { listIdentityChecksIdContactByBusinessId, listIdentityChecksIdContactByCddCheckId } from './data.ts';
 
@@ -74,7 +78,11 @@ export const IDENTITY_SIGNATURE_HEADERS = Object.freeze({ v2: 'x-signature-v2', 
 /** A result is a small JSON body. Anything larger is refused before it is read. */
 export const IDENTITY_HOOK_MAX_BYTES = 64 * 1024;
 
-export type IdentityDeps = { readonly app: App; readonly newId: () => string };
+export type IdentityDeps = {
+  readonly app: App; readonly newId: () => string;
+  /** The website's public address, for the emails' links and logo (Phase 161m2). Absent: CAPREBATE_PUBLIC_ORIGIN. */
+  readonly origin?: string;
+};
 
 export const OUTCOME_WORDS: Readonly<Record<IdentityOutcome, string>> = Object.freeze({
   PASS: 'Passed',
@@ -97,8 +105,14 @@ export type SendInput = {
   readonly last_name: string;
   /** An Admin sending it to someone who is not a director or an owner: for this check only, with the reason. */
   readonly bypass?: { readonly reason: string } | null;
+  /** Phase 161m2: also email the link to the person (id-check), when they are a director or an owner the rule allows. */
+  readonly email_link?: boolean;
 };
-export type SendResult = { readonly ok: true; readonly id: string; readonly link: string } | { readonly ok: false; readonly why: string };
+export type SendResult =
+  | { readonly ok: true; readonly id: string; readonly link: string; readonly email?: IdEmailOutcome }
+  | { readonly ok: false; readonly why: string };
+/** Whether the link was emailed to the person, and, where it was not, why, in words staff read. */
+export type IdEmailOutcome = { readonly queued: boolean; readonly why: string | null };
 
 /**
  * Send one identity check. compliance.write only. OFF AS SHIPPED: the connector refuses before any call, and the person
@@ -162,7 +176,99 @@ export async function sendIdentityCheck(
     // And one an Admin sent to someone who is not a director or an owner, with the reason in the row before it
     ...(bypassed === null ? {} : { rule_bypassed: bypassed.rule }),
   });
-  return { ok: true, id, link: out.link };
+  if (input.email_link !== true) return { ok: true, id, link: out.link };
+  return { ok: true, id, link: out.link, email: emailIdentityCheck(d, actor, id, bypassed !== null) };
+}
+
+/** Said when the link was not emailed, so staff pass it on themselves. */
+export const ID_EMAIL_WORDS = Object.freeze({
+  bypassed: 'The link was not emailed: it goes by email only to a director or an owner our rule allows. Give them the link yourself.',
+  no_email: 'The link was not emailed: we have no email address for them. Give them the link yourself.',
+  refused: 'The link was not emailed: this client asked us not to contact them.',
+});
+
+/** THE ID-CHECK EMAIL (Phase 161m2, emails.py "id-check", the approved words), carrying the service's own link. */
+export function idCheckEmail(organisation: string, checkLink: string): EmailContent {
+  return {
+    subject: 'Your identity check for Cap Rebate',
+    preheader: 'A quick check on your phone, done by our provider Didit.',
+    heading: 'Please complete your identity check',
+    blocks: [
+      `Before we start work for ${organisation}, we need to confirm who we are working with. The law expects us to do this.`,
+      `The check is done by **${IDENTITY_PROVIDER_NAME}**, our identity-check provider. It takes about three minutes on your phone:`,
+      { kind: 'bullets', items: ['a photo of your passport or driving licence;', `a short selfie video, so ${IDENTITY_PROVIDER_NAME} can match it to the photo.`] },
+      `The link below is just for you. Our privacy policy explains what ${IDENTITY_PROVIDER_NAME} receives and how long it is kept.`,
+    ],
+    button: { label: 'Start the check', href: checkLink },
+    sign: 'The Cap Rebate team',
+    security: true,
+  };
+}
+
+/** THE ID-CHECK-DONE EMAIL (emails.py "id-check-done", the approved words). */
+export function idCheckDoneEmail(firstName: string, portalLink: string): EmailContent {
+  return {
+    subject: 'Your identity check is complete',
+    preheader: 'Thank you. There is nothing more you need to do for this step.',
+    heading: 'Your identity check is complete',
+    blocks: [
+      `Thank you, ${firstName}. Your identity check is complete and there is nothing more you need to do for this step.`,
+      'Next, we will ask for the documents we need. You will see the list in your portal.',
+    ],
+    button: { label: 'Open your portal', href: portalLink },
+    sign: 'The Cap Rebate team',
+  };
+}
+
+/** A contact's first name, from the name we hold ("Ivy Inventedperson", or "Inventedperson, Ivy"). */
+export function firstNameOf(full_name: string): string {
+  const t = full_name.replace(/\s+/g, ' ').trim();
+  const given = t.includes(',') ? (t.split(',')[1] ?? '').trim() : t;
+  return given.split(' ')[0] || t;
+}
+
+const publicOrigin = (given?: string | null): string => (given ?? process.env.CAPREBATE_PUBLIC_ORIGIN ?? '').trim().replace(/\/+$/, '');
+
+/**
+ * EMAIL ONE CHECK'S LINK TO THE PERSON BEING CHECKED (id-check): only where they meet the rule (a director or an
+ * owner, identity-who.ts); a check an Admin sent anyway is not emailed, and staff are told to pass the link on. To the
+ * contact's own email address; the outbox refuses a do-not-contact client as everywhere. IDENTITY_CHECK_EMAILED records
+ * it, with the outcome.
+ */
+function emailIdentityCheck(d: IdentityDeps, actor: Actor, check_id: string, bypassed: boolean): IdEmailOutcome {
+  const db = d.app.db;
+  const cd: ComplianceDeps = { db, audit: d.app.audit, now: d.app.now, newId: d.newId };
+  const c = getIdentityChecksContactIdById<{ id: string; business_id: string; contact_id: string; link: string }>(db, [check_id]);
+  const person = c === undefined ? undefined : getContactsIdBusinessIdById4<{ email: string | null }>(db, [c.contact_id]);
+  const b = c === undefined ? undefined : getBusinessesIdNameById<{ id: string; name: string }>(db, [c.business_id]);
+  const to = (person?.email ?? '').trim();
+  const say = (queued: boolean, why: string | null, code: string): IdEmailOutcome => {
+    record(cd, actor, 'IDENTITY_CHECK_EMAILED', queued ? 'ALLOWED' : 'REFUSED', 'identity_check', check_id, { business: c?.business_id ?? null, contact: c?.contact_id ?? null, outcome: code });
+    return { queued, why };
+  };
+  if (bypassed) return say(false, ID_EMAIL_WORDS.bypassed, 'RULE_BYPASSED');
+  if (c === undefined || b === undefined || to === '') return say(false, ID_EMAIL_WORDS.no_email, 'NO_EMAIL');
+  const e = brandedEmail(idCheckEmail(b.name, c.link), { publicOrigin: publicOrigin(d.origin) });
+  const r = d.app.email.send({ to_email: to, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id: b.id, contact_id: c.contact_id });
+  return r.refused === null ? say(true, null, 'QUEUED') : say(false, ID_EMAIL_WORDS.refused, r.refused);
+}
+
+/**
+ * A PASS IS TOLD TO THE PERSON, ONCE (id-check-done): the first PASS on a check emails the contact it was sent to,
+ * and IDENTITY_CHECK_DONE_EMAILED records it, so a second pass on the same check never emails again. A contact with no
+ * email address is not emailed. The outbox refuses a do-not-contact client as everywhere.
+ */
+function tellPassed(app: App, cd: ComplianceDeps, check_id: string, origin: string | null): void {
+  if ((getAuditLogCountByKindObjectIdOnce<{ n: number }>(app.db, ['IDENTITY_CHECK_DONE_EMAILED', check_id])?.n ?? 0) > 0) return;
+  const c = getIdentityChecksContactIdById<{ id: string; business_id: string; contact_id: string }>(app.db, [check_id]);
+  if (c === undefined) return;
+  const person = getContactsIdBusinessIdById4<{ email: string | null; full_name: string }>(app.db, [c.contact_id]);
+  const to = (person?.email ?? '').trim();
+  if (person === undefined || to === '') return;
+  const o = publicOrigin(origin);
+  const e = brandedEmail(idCheckDoneEmail(firstNameOf(person.full_name), `${o}/portal`), { publicOrigin: o });
+  const r = app.email.send({ to_email: to, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id: c.business_id, contact_id: c.contact_id });
+  record(cd, null, 'IDENTITY_CHECK_DONE_EMAILED', r.refused === null ? 'ALLOWED' : 'REFUSED', 'identity_check', check_id, { business: c.business_id, contact: c.contact_id, outcome: r.refused ?? 'QUEUED' });
 }
 
 /** Said to an Admin when the person is not a director or an owner. */
@@ -221,7 +327,7 @@ export type ReceiveResult = { readonly status: 200 | 401 | 404; readonly outcome
  * with nothing written. A signed result for a session we never sent is refused the same way. A signed word that the
  * check is still under way, or about something else, is acknowledged and not kept. The row it writes is our copy.
  */
-export function receiveIdentityResult(app: App, newId: () => string, rawBody: string, sig: IdentitySignature): ReceiveResult {
+export function receiveIdentityResult(app: App, newId: () => string, rawBody: string, sig: IdentitySignature, origin: string | null = null): ReceiveResult {
   const cd: ComplianceDeps = { db: app.db, audit: app.audit, now: app.now, newId };
   const read = readIdentityDecision(rawBody, sig, app.secrets, Date.parse(app.now()));
   if (read.state === 'REFUSED') {
@@ -245,6 +351,7 @@ export function receiveIdentityResult(app: App, newId: () => string, rawBody: st
       createHash('sha256').update(rawBody, 'utf8').digest('hex'), JSON.stringify(identityResultCopy(rawBody))]);
   record(cd, null, 'IDENTITY_RESULT_RECEIVED', 'ALLOWED', 'identity_check', check.id, { business: check.business_id, outcome: read.outcome, status: read.status });
   if (read.outcome === 'PASS' && check.cdd_check_id !== null) recordPassAsEvidence(cd, check.cdd_check_id, (read.decided_at ?? at).slice(0, 10));
+  if (read.outcome === 'PASS') tellPassed(app, cd, check.id, origin);
   return { status: 200, outcome: read.outcome };
 }
 
@@ -355,6 +462,7 @@ export function identityPanel(app: App, actor: Actor, where: { readonly business
       <label class="fl" for="idc-last">Last name, as on their ID</label><input class="fi" id="idc-last" name="last_name" required>
       ${isAdmin ? h`<label class="fl" for="idc-bypass"><input type="checkbox" id="idc-bypass" name="bypass" value="yes"> Send it anyway, even though our rule refuses it. Admin only, for this one check.</label>
       <label class="fl" for="idc-bypass-reason">Why, if you send it anyway. This is kept in the audit log.</label><textarea class="fi" id="idc-bypass-reason" name="bypass_reason" maxlength="2000"></textarea>` : raw('')}
+      <label class="fl" for="idc-email"><input type="checkbox" id="idc-email" name="email_link" value="yes" checked> Email the link to them. Only to a director or an owner our rule allows.</label>
       <button class="cta" type="submit">Send an identity check</button></form>`}
   </div>`;
 }

@@ -16,6 +16,8 @@ export { handleFinance } from './finance-pages.ts';
 export { financeBilling, financePages } from './routes.ts';
 export { INVOICE_WORDS, PAYMENT_WORDS } from './finance.ts';
 export { allocateNumber, claimMoneyLines, CREDIT_BASES, financeDashboard, formatInvoiceNumber, INVOICE_KINDS } from './invoices.ts';
+// Phase 161m2: the invoice-fraud procedure's block, read by the CRM's rules (src/modules/crm/automation.ts) as before.
+export { INVOICE_FRAUD_PROCEDURE, moneyEmailRefusal } from './invoices.ts';
 export type { ClaimMoneyLine, FinanceDashboard } from './invoices.ts';
 // The VAT monitoring (moved up from the assessment, Phase 161l2: it reads finance's invoices and dated settings).
 export { expectedFeeFor, settingsView } from './vat.ts';

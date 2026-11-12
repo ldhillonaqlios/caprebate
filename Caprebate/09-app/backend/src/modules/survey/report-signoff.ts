@@ -27,7 +27,9 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import { authorise, type Actor } from '../../core/index.ts';
-import type { EmailTransport } from '../../integrations/index.ts';
+import type { BrandedEmail, EmailTransport } from '../../integrations/index.ts';
+import { brandedEmail } from '../../integrations/index.ts';
+import { propertyLine } from './survey-pack.ts';
 import { packJob } from './surveyor.ts';
 import { approvedVersion, type ApprovalRow, type Snapshot } from './pack-approve.ts';
 import { reportModel, reportPdf, longDate, REPORT_TITLE } from './survey-report.ts';
@@ -37,6 +39,7 @@ import { postClientMessage } from '../clients/index.ts';
 import { localDate } from '../../shared/index.ts';
 import { poundsWords } from './pack-sums.ts';
 import { getOutboxRById } from '../../integrations/index.ts';
+import { getSurveyorJobsIdSurveyorIdByClaimId } from './data.ts';
 import { getPackClientNoticesToldAtToldByNameByApprovalId, getPackSignoffRequestsIdApprovalIdByTokenSha256, insertPackClientNotices, insertPackSignoffAnswers, insertPackSignoffRecorded, insertPackSignoffRequests, listPackSignoffRequestsIdApprovalIdByJobId, listSurveyPackApprovalsIdVersionByBusinessIdClaimId } from './data.ts';
 import { getTaxAdviserSignoffsCountByApprovalIdRecordedAt } from '../claims/index.ts';
 import { listContactsIdNameByBusinessIdContactType2 } from '../clients/index.ts';
@@ -78,21 +81,28 @@ export function requestsOf(db: Db, job_id: string): RequestRow[] {
   }));
 }
 
-function emailBody(name: string, company: string, s: Snapshot, link: string, expires: string): string {
-  return [
-    `Dear ${name},`,
-    '',
-    `${company} has asked us to send you their ${REPORT_TITLE.toLowerCase()}. It is version ${String(s.version)}, approved on ${longDate(s.approved_at)} by ${s.surveyor.name} (RICS no. ${s.surveyor.rics_number}). The PDF is attached.`,
-    '',
-    `It finds ${poundsWords(s.sums.qualifying_pence)} of spend that qualifies: ${poundsWords(s.sums.main_pool_pence)} in the main pool and ${poundsWords(s.sums.special_pool_pence)} in the special rate pool.`,
-    '',
-    'Please read it, then sign off the figures, or send it back with your reason, here:',
-    link,
-    '',
-    `The link is for you alone. It works once, until ${longDate(expires)}. Nothing is shown to the client as claimable until a tax adviser has signed off.`,
-    '',
-    'Cap Rebate',
-  ].join('\n');
+/**
+ * THE EMAIL (Phase 161m2, accountant-signoff in 05-reports-and-templates/emails/emails.py, the approved wording): on the
+ * branded layout. The property is the approved version's; a version with none says "their capital allowances report"
+ * alone. The figure is the version's spend that qualifies, as the report states it.
+ */
+export function signoffEmail(
+  name: string, company: string, s: Snapshot, link: string, expires: string, publicOrigin: string | null,
+): BrandedEmail {
+  const property = s.property === null || s.property === undefined ? null : propertyLine(s.property);
+  return brandedEmail({
+    subject: `Capital allowances report to sign off: ${company}`,
+    preheader: `${company} has asked us to send you their report.`,
+    heading: 'A capital allowances report for you',
+    blocks: [
+      `Dear ${name},`,
+      `${company} has asked us to send you their capital allowances report${property === null ? '' : ` for ${property}`}. It is attached, with the figures as a spreadsheet.`,
+      { kind: 'figure', value: poundsWords(s.sums.qualifying_pence), label: 'Capital allowances identified' },
+      `Please use the link to sign off the figures, or send the report back to us with your comments. The link works once, until ${longDate(expires)}.`,
+    ],
+    button: { label: 'Review and sign off', href: link },
+    sign: 'The Cap Rebate team',
+  }, { publicOrigin });
 }
 
 /** Email an approved version to the company's accountant, with the PDF and a private sign-off link. */
@@ -117,9 +127,9 @@ export function sendForSignoff(
     // The return entries for each year, as a spreadsheet, beside the PDF.
     // (C29): the facts it is made from are kept with the version the first time it is sent, and read from then on.
     const csv = returnEntriesCsv(kept.snapshot, freezeReturnContext(d.db, kept.row.id, returnContext(d.db, job.claim_id, job.business_id), 'SENT_FOR_SIGNOFF', at), kept.row.fingerprint);
+    const e = signoffEmail(who.name, job.business_name, kept.snapshot, `${f.origin}/signoff/${token}`, expires, f.origin);
     const sent = d.email.send({
-      to_email: who.email.trim(), subject: `Survey report to sign off: ${job.business_name}`,
-      body: emailBody(who.name, job.business_name, kept.snapshot, `${f.origin}/signoff/${token}`, expires),
+      to_email: who.email.trim(), subject: e.subject, body: e.text, html: e.html,
       kind: 'REPORT_FOR_SIGNOFF', business_id: job.business_id, contact_id: who.id, written_by: actor.id, claim_id: job.claim_id,
       inline_files: [{ filename: `survey-report-version-${String(version)}.pdf`, content_type: 'application/pdf', bytes: pdf.bytes },
         { filename: `return-entries-version-${String(version)}.csv`, content_type: 'text/csv; charset=utf-8', bytes: new TextEncoder().encode(csv) }],
@@ -132,6 +142,18 @@ export function sendForSignoff(
       object_type: 'surveyor_job', object_id: job_id, detail: { request: id, version, contact: who.id, sending: requested } });
     return { ok: true as const, id, requested };
   });
+}
+
+/**
+ * WHETHER THIS ADDRESS SIGNED OFF THE CLAIM'S SURVEY REPORT through its own private link (Phase 161m2): asked by the
+ * accountant-confirm email (src/modules/portal/accountant-confirm.ts), which thanks the accountant for signing off only
+ * when they did. The claim's newest survey job, as the report pages read it.
+ */
+export function signedOffByAddress(db: Db, claim_id: string, email: string): boolean {
+  const job = getSurveyorJobsIdSurveyorIdByClaimId<{ id: string }>(db, [claim_id]);
+  if (job === undefined) return false;
+  const to = email.trim().toLowerCase();
+  return requestsOf(db, job.id).some((r) => r.to_email.trim().toLowerCase() === to && r.answer?.outcome === 'SIGNED');
 }
 
 /* ================================================================== *

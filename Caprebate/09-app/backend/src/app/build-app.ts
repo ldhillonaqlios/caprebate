@@ -6,9 +6,9 @@
  * reads them.
  */
 
-import { AuditLog, Db, MIGRATIONS_DIR, defaultHasher, loadCustomRoles, migrate, newId, pendingMigrations, primeTimingDefence, processSecrets } from '../core/index.ts';
+import { AuditLog, Db, MIGRATIONS_DIR, defaultHasher, loadCustomRoles, migrate, newId, pendingMigrations, primeTimingDefence, processSecrets, setEmailLayout } from '../core/index.ts';
 import type { App, BuildOptions, Deps } from '../core/index.ts';
-import { EMAIL_SENDING, builtInSignatureProvider, liveTransport, mailWhere, outboxTransport, sendingOn, smtpLoginFromKeyFile } from '../integrations/index.ts';
+import { EMAIL_SENDING, brandedEmail, builtInSignatureProvider, liveTransport, mailWhere, outboxTransport, sendingOn, smtpLoginFromKeyFile } from '../integrations/index.ts';
 /* EVERY AREA'S FRONT DOOR, wherever an application is built (the server, the command line, the tests): each door
    registers its area's permissions and fills the ports the areas below it own (src/modules/claims/above-ports.ts, the
    outside services' test lookups, the survey's jobs). Phase 161l2: until then the outside services' Claude client
@@ -23,6 +23,10 @@ import '../modules/admin/index.ts';
 import '../modules/crm/index.ts';
 import '../modules/portal/index.ts';
 import '../modules/public-site/index.ts';
+
+/* The core's one port onto the outside services (Phase 161m2): the branded email layout, for the sign-in code and the
+   recovery-code email (src/core/sign-in.ts). The core sits below the outside services, so it is handed in here. */
+setEmailLayout(brandedEmail);
 
 export async function buildApp(opts: BuildOptions = {}): Promise<App> {
   const db = new Db(opts.location ?? ':memory:', {

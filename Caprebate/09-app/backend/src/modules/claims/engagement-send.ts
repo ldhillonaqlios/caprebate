@@ -18,10 +18,13 @@
 import type { Db } from '../../core/index.ts';
 import type { AuditLog } from '../../core/audit.ts';
 import type { EmailTransport } from '../../integrations/index.ts';
+import { brandedEmail, type EmailContent } from '../../integrations/index.ts';
 import { authorise, can, type Actor } from '../../core/index.ts';
-import { localWhen } from '../../shared/index.ts';
+import { getAuditLogCountByKindObjectIdOnce } from '../../core/index.ts';
+import { localWhen, ukDate, workingDaysSince } from '../../shared/index.ts';
 import { checkSignature, createSignLink, requiredSigners, ENGAGEMENT_SIGNING, SIGN_LINK_DAYS, type EngagementSigning } from './signing.ts';
 import { getUsersCountByBusinessIdRole, listUsersIdEmailByBusinessIdRole } from '../../core/index.ts';
+import { listEngagementsIdBusinessIdSentAtUnsigned } from './data.ts';
 import { getEngagementSignaturesPdfSignedAtByEngagementId, getEngagementsIdByBusinessId, getEngagementsIdLetterStateByBusinessId, getEngagementsIdLetterStateByBusinessId2, insertEngagements, listEngagementSignaturesUserIdNameByEngagementId, updateEngagementsLetterStateSentAtByBusinessIdLetterState } from './data.ts';
 import { getBusinessesIdNameById } from '../clients/index.ts';
 
@@ -97,18 +100,88 @@ export function sendEngagementLetter(d: SendDeps, actor: Actor, business_id: str
   for (const u of logins) {
     const signLink = cfg.links === true && eng !== undefined && (named.length === 0 || named.includes(u.id))
       ? `${d.origin ?? ''}/sign/${createSignLink(d, eng.id, u, actor.id)}` : null;
-    d.email.send({
-      to_email: u.email,
-      subject: 'Your engagement letter from Cap Rebate',
-      body: `Our engagement letter for ${b.name} is ready for you to read${resent ? ' (we are sending the link again)' : ''}.\n\n` +
-        (signLink === null ? '' : `Read and sign it here, without signing in: ${signLink}\nThis link is for you only. It works once, for ${String(SIGN_LINK_DAYS)} days.\n\n`) +
-        `Or read it, and sign it when you are ready, in your portal: ${link}\nYou will be asked to sign in.\n\n` +
-        'It says what we will do, what it costs and what we need from you. Nothing is charged by signing it.',
-      kind: 'NOTIFICATION',
-      business_id,
-    });
+    const e = brandedEmail(letterReadyEmail(b.name, link, signLink), { publicOrigin: d.origin ?? null });
+    d.email.send({ to_email: u.email, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id });
   }
   return { ok: true, resent, emailed: logins.length };
+}
+
+/**
+ * THE LETTER-READY EMAIL (Phase 161m2, emails.py "letter-ready", the approved words). Its button opens the letter: the
+ * login's own signing link where signing links are on (single use, SIGN_LINK_DAYS), otherwise the letter in the portal.
+ * With a signing link, one sentence more says it is theirs alone and when it stops working, and where else to read it.
+ */
+export function letterReadyEmail(organisation: string, letterLink: string, signLink: string | null): EmailContent {
+  return {
+    subject: 'Your engagement letter from Cap Rebate',
+    preheader: 'Please read and sign it in your portal.',
+    heading: 'Your engagement letter is ready',
+    blocks: [
+      `Our engagement letter for ${organisation} is ready for you to read and sign.`,
+      'It sets out what we will do, our fee and what we need from you. In short:',
+      { kind: 'bullets', items: [
+        'our fee is 3% of the capital allowances identified;',
+        'it is invoiced only when we deliver our report, and nothing is charged up front;',
+        // Split in two from emails.py's one sentence, for the plain-words check (grade 9)
+        'the letter lets us request the documents we need on your behalf, such as purchase and lease papers. We can ask your advisers and others for them.',
+      ] },
+      `Only a director, partner, member or owner of ${organisation} should sign it. Signing takes about two minutes: you type your name and confirm you may sign for the business.`,
+      ...(signLink === null ? [] : [`The button below is just for you. It works once, for ${String(SIGN_LINK_DAYS)} days. You can also read and sign the letter in your portal: ${letterLink}`]),
+      'If anything is unclear, reply to this email before you sign.',
+    ],
+    button: { label: 'Read and sign the letter', href: signLink ?? letterLink },
+    sign: 'The Cap Rebate team',
+  };
+}
+
+/** THE LETTER-REMINDER EMAIL (emails.py "letter-reminder", the approved words). */
+export function letterReminderEmail(organisation: string, sentDate: string, letterLink: string): EmailContent {
+  return {
+    subject: 'Your engagement letter is waiting for you',
+    preheader: 'When you are ready, you can read and sign it in your portal.',
+    heading: 'Your engagement letter is waiting for you',
+    blocks: [
+      `We sent our engagement letter for ${organisation} on ${sentDate}. It has not been signed yet.`,
+      'There is no rush. When you are ready, you can read and sign it in your portal. If you have a question first, or would rather not go ahead, just reply and let us know.',
+    ],
+    button: { label: 'Read the letter', href: letterLink },
+    sign: 'The Cap Rebate team',
+  };
+}
+
+/** The reminder goes this many working days (England and Wales: weekdays, not bank holidays) after the letter was sent. */
+export const LETTER_REMINDER_WORKING_DAYS = 5;
+
+/**
+ * THE ONE REMINDER ABOUT AN UNSIGNED LETTER (Phase 161m2), for a timer. Every letter sent (or opened) and not signed,
+ * whose first sending was LETTER_REMINDER_WORKING_DAYS or more working days before `now`, and that has never been
+ * reminded: every client login of the business is emailed once, and an ENGAGEMENT_LETTER_REMINDED row records it, so it
+ * is never sent twice, whatever the outbox did (a do-not-contact client is refused there, as every email is). A letter
+ * with no client login is left: it could not have been sent. Returns how many letters were reminded and emails queued.
+ */
+export function letterRemindersDue(
+  app: { readonly db: Db; readonly audit: AuditLog; readonly email: EmailTransport }, now: string, origin: string | null = process.env.CAPREBATE_PUBLIC_ORIGIN ?? null,
+): { reminded: number; queued: number } {
+  const base = (origin ?? '').replace(/\/+$/, '');
+  let reminded = 0, queued = 0;
+  for (const r of listEngagementsIdBusinessIdSentAtUnsigned<{ id: string; business_id: string; sent_at: string }>(app.db)) {
+    if (workingDaysSince(r.sent_at, now) < LETTER_REMINDER_WORKING_DAYS) continue;
+    if ((getAuditLogCountByKindObjectIdOnce<{ n: number }>(app.db, ['ENGAGEMENT_LETTER_REMINDED', r.id])?.n ?? 0) > 0) continue;
+    const b = getBusinessesIdNameById<{ id: string; name: string }>(app.db, [r.business_id]);
+    const logins = listUsersIdEmailByBusinessIdRole<{ id: string; email: string }>(app.db, [r.business_id]);
+    if (b === undefined || logins.length === 0) continue;
+    const e = brandedEmail(letterReminderEmail(b.name, ukDate(r.sent_at), `${base}/portal/letter`), { publicOrigin: origin });
+    let n = 0;
+    for (const u of logins) {
+      if (app.email.send({ to_email: u.email, subject: e.subject, body: e.text, html: e.html, kind: 'NOTIFICATION', business_id: b.id }).refused === null) n++;
+    }
+    app.audit.append({
+      at: now, kind: 'ENGAGEMENT_LETTER_REMINDED', outcome: n > 0 ? 'ALLOWED' : 'REFUSED', actor_id: null, actor_role: null,
+      object_type: 'engagement', object_id: r.id, detail: { business: b.id, logins: logins.length, queued: n },
+    });
+    reminded++; queued += n;
+  }
+  return { reminded, queued };
 }
 
 /** The signed copy, for a login that may read the letter: the PDF, checked against its fingerprint first. */

@@ -30,6 +30,7 @@ import { canonicalEmail, createUser, hashToken } from '../../core/index.ts';
 import { keepAgreement, type TermsVersions } from '../compliance/index.ts';
 import { getClientSignupsIdBusinessIdByOfferHash, getClientSignupsIdBusinessIdByVerifyHash, getClientSignupsTermsAgreedAtTermsVersionsById, getClientSignupsVerifyExpiresAtVerifiedAtByVerifyHash, insertClientSignups, updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt, updateClientSignupsVerifiedAtUserIdById } from './data.ts';
 import { getUsersCountByEmailCanonical } from '../../core/index.ts';
+import { brandedEmail, type EmailContent } from '../../integrations/index.ts';
 
 export const OFFER_TTL_MS = 24 * 60 * 60 * 1000;
 export const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
@@ -42,6 +43,64 @@ type Row = {
   id: string; business_id: string; offer_expires_at: string; email_canonical: string | null; display_name: string | null;
   password_hash: string | null; verify_expires_at: string | null; verified_at: string | null;
 };
+
+/* THE THREE EMAILS (emails.py, Phase 161m2): confirm-login, login-exists and welcome, in the branded layout. */
+
+/** confirm-login: the single-use link that finishes a client's own sign-up. */
+export function confirmLoginEmail(confirmLink: string): EmailContent {
+  return {
+    subject: 'Confirm your Cap Rebate login',
+    preheader: 'One click to finish setting up your login. The link works for 24 hours.',
+    heading: 'Confirm your login',
+    blocks: [
+      'Please confirm this is your email address to finish setting up your Cap Rebate login.',
+      'The link works once, for 24 hours.',
+      'If you did not ask for a login, you can ignore this email. Nothing will be set up.',
+    ],
+    button: { label: 'Confirm my login', href: confirmLink },
+    sign: 'The Cap Rebate team',
+    security: true,
+  };
+}
+
+/** login-exists: somebody asked for a login for an address that has one. Nothing was created. */
+export function loginExistsEmail(signinLink: string): EmailContent {
+  return {
+    subject: 'You already have a Cap Rebate login',
+    preheader: 'Use the sign-in page, or reset your password.',
+    heading: 'You already have a login',
+    blocks: [
+      'Someone, probably you, tried to set up a new Cap Rebate login with this email address. It already has one.',
+      'You can sign in as normal. If you have forgotten your password, use "Forgotten your password?" on the sign-in page.',
+      'If this was not you, you do not need to do anything. Your login has not changed.',
+    ],
+    button: { label: 'Sign in', href: signinLink },
+    sign: 'The Cap Rebate team',
+    security: true,
+  };
+}
+
+/** welcome: once a client has confirmed their login, what the portal is for. */
+export function welcomeEmail(portalLink: string): EmailContent {
+  return {
+    subject: 'Welcome to your Cap Rebate portal',
+    preheader: 'Everything about your claim, in one place.',
+    heading: 'Welcome to your portal',
+    blocks: [
+      'Your login is ready. Your portal is where you can:',
+      { kind: 'bullets', items: [
+        'see where your claim is, step by step;',
+        'read and sign your engagement letter;',
+        'upload the documents we ask for;',
+        'send us a message and see our replies;',
+        'read and accept your report.',
+      ] },
+      'We will email you when there is something for you to do. We never put your documents or messages in an email: you read them in the portal.',
+    ],
+    button: { label: 'Open your portal', href: portalLink },
+    sign: 'The Cap Rebate team',
+  };
+}
 
 function token(): string { return randomBytes(32).toString('hex'); }
 function later(now: string, ms: number): string { return new Date(Date.parse(now) + ms).toISOString(); }
@@ -89,12 +148,8 @@ export async function requestSignup(app: App, origin: string, f: URLSearchParams
   const taken = getUsersCountByEmailCanonical<{ n: number }>(app.db, [canonical]);
   if ((taken?.n ?? 0) > 0) {
     // The screen says what it always says; the address is told, and nothing is created.
-    app.email.send({
-      to_email: email, kind: 'NOTIFICATION', business_id: row.business_id,
-      subject: 'You already have a Cap Rebate login',
-      body: `Somebody asked for a new Cap Rebate login for this address. You already have one, so nothing was created.\n\n` +
-        `Sign in at ${origin}/login. If this was not you, you need do nothing.`,
-    });
+    const e = brandedEmail(loginExistsEmail(`${origin}/login`), { publicOrigin: origin });
+    app.email.send({ to_email: email, kind: 'NOTIFICATION', business_id: row.business_id, subject: e.subject, body: e.text, html: e.html });
     app.audit.append({ at: now, kind: 'CLIENT_SIGNUP_REQUESTED', outcome: 'REFUSED', object_type: 'client_signup', object_id: row.id,
       detail: { reason: 'address_in_use' } });
     return { ok: true };
@@ -103,12 +158,8 @@ export async function requestSignup(app: App, origin: string, f: URLSearchParams
   const hash = await app.hasher.hash(password);
   const raw = token();
   updateClientSignupsEmailCanonicalDisplayNameByIdVerifiedAt(app.db, [canonical, name, hash, hashToken(raw), later(now, VERIFY_TTL_MS), now, terms === null ? null : now, terms === null ? null : JSON.stringify(terms), row.id]);
-  const sent = app.email.send({
-    to_email: email, kind: 'ACCOUNT_VERIFY', business_id: row.business_id,
-    subject: 'Confirm your Cap Rebate login',
-    body: `Open the link below to finish your login.\n\n${origin}/account/verify?token=${raw}\n\n` +
-      'The link works once, for 24 hours. If you did not ask for a login, you need do nothing.',
-  });
+  const e = brandedEmail(confirmLoginEmail(`${origin}/account/verify?token=${raw}`), { publicOrigin: origin });
+  const sent = app.email.send({ to_email: email, kind: 'ACCOUNT_VERIFY', business_id: row.business_id, subject: e.subject, body: e.text, html: e.html });
   app.audit.append({ at: now, kind: 'CLIENT_SIGNUP_REQUESTED', outcome: sent.refused === null ? 'ALLOWED' : 'REFUSED',
     object_type: 'client_signup', object_id: row.id,
     detail: { business: row.business_id, ...(sent.refused === null ? {} : { reason: sent.refused }) } });
@@ -122,8 +173,13 @@ export function verifyOpen(app: App, raw: string): boolean {
   return row !== undefined && row.verified_at === null && live(row.verify_expires_at, app.now());
 }
 
-/** Step 3. Creates the CLIENT login for the organisation the offer named, and keeps the tick, if one was given, for it. */
-export function confirmSignup(app: App, raw: string, newId?: () => string): { ok: true } | { ok: false; why: string } {
+/**
+ * Step 3. Creates the CLIENT login for the organisation the offer named, and keeps the tick, if one was given, for it.
+ * THEN THE WELCOME EMAIL (Phase 161m2), once: a link works once, so a login is confirmed once. It goes to the login's
+ * own address, through the outbox like every other (do not contact and the sending switch apply there); `origin` is the
+ * site's address for its link, and absent it is CAPREBATE_PUBLIC_ORIGIN, then http://localhost:8103, as the routes do.
+ */
+export function confirmSignup(app: App, raw: string, newId?: () => string, origin?: string): { ok: true } | { ok: false; why: string } {
   const now = app.now();
   const row = raw === '' ? undefined : getClientSignupsIdBusinessIdByVerifyHash<Row>(app.db, [hashToken(raw)]);
   if (row === undefined || row.verified_at !== null || !live(row.verify_expires_at, now)
@@ -147,5 +203,8 @@ export function confirmSignup(app: App, raw: string, newId?: () => string): { ok
   if (tick?.terms_agreed_at != null && tick.terms_versions !== null) {
     keepAgreement(app, made.id, 'CLIENT', tick.terms_agreed_at, JSON.parse(tick.terms_versions) as TermsVersions, newId ?? (() => randomBytes(16).toString('hex')), 'signup');
   }
+  const site = (origin ?? process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? 'http://localhost:8103').trim().replace(/\/+$/, '');
+  const e = brandedEmail(welcomeEmail(`${site}/portal`), { publicOrigin: site });
+  app.email.send({ to_email: made.email, kind: 'NOTIFICATION', business_id: row.business_id, subject: e.subject, body: e.text, html: e.html });
   return { ok: true };
 }

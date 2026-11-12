@@ -20,7 +20,7 @@ export async function complianceIdentityHook(w: WebRequest): Promise<WebResult |
     const one = (name: string): string | null => { const v = req.headers[name]; return typeof v === 'string' ? v : null; };
     const r = receiveIdentityResult(d.app, newId, raw0, {
       v2: one(IDENTITY_SIGNATURE_HEADERS.v2), raw: one(IDENTITY_SIGNATURE_HEADERS.raw), timestamp: one(IDENTITY_SIGNATURE_HEADERS.timestamp),
-    });
+    }, d.publicOrigin ?? null);
     res.writeHead(r.status, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
     res.end(r.status === 200 ? 'ok' : r.note === undefined ? 'refused' : `refused. ${r.note}`);
     return 'handled';
