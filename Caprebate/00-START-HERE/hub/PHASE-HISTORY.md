@@ -14440,3 +14440,5 @@ NOTHING LEFT  beyond those lines.
 
 **Claim cleared** in the commit that carries this record.
 
+- **Merged, 12 Nov 2026.** PR #104 is merged into main (merge commit aafea84), GitHub's checks green: the fresh-copy check and the Vercel preview. Lakhbir merged it himself ("its merged"), after PR #103 (161m1's record) went in first and this branch took main (the history and the tracker merged by hand, no row changed on both sides). The test website deployed it and serves the email logo. This record-only PR says so.
+
