@@ -3866,4 +3866,5 @@
 - Document: 05-reports-and-templates/emails/preview.html
 - Note 2026-11-11 (Phase 161m2): Claimed. Lakhbir asked for professional, on-brand emails including automatic ones such as thank you for your submission; 33 were drafted (16 new, 15 restyled, 2 fixes) in 05-reports-and-templates/emails/ (emails.py is the wording; preview.html, published privately), and he said "Yes, build them in".
 - Note 2026-11-11 (Phase 161m2): Done: every email on the branded layout with the approved words; the new automatic emails; money emails built and held; three faults fixed; ~2,400 files restored into OneDrive by a scratch folder's links archived and removed on Lakhbir's yes. 5,729 checks green. PR for Lakhbir to merge.
+- Note 2026-11-12 (Phase 161m2): Merged: PR 104 into main (aafea84), 12 Nov 2026, GitHub's checks green, on Lakhbir's word ("its merged"). The test website runs it: /email/cap-rebate-logo.png answers with the logo.
 
