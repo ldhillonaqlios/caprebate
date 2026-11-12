@@ -153,7 +153,8 @@ keeps all tests green, so behaviour never changes while the walls go up.
 | 161l2 | The tangle undone, part 3: the last joins through the clients door, the pairs that still point up; zero breaks (done 10 Nov 2026) | Before go-live, after 161l1 |
 | 161m | Rules as versioned data: the rules registers, the engine's version, versions on every sealed result (done 10 Nov 2026) | Before go-live, after 161l2 |
 | 162 | The sweep: every check, and the go-live gate checked | After 161m, out of order |
-| 161n | Go live: the gate (Vercel Pro, the ICO number, every legal page approved, the other sign-offs), then the live website switched on and proved | Once its gate is open |
+| 161n1 | The developer's live website pack: what the developer sets up on Vercel, Turso, S3 and IONOS, and why (hosting is the developer's, Lakhbir 12 Nov 2026) | After the sweep |
+| 161n2 | Go live: the gate (the developer's set-up proved, Vercel Pro, the ICO number, every legal page approved, the other sign-offs), then the live website switched on and proved | Once its gate is open |
 | 162 | The sweep again, against the live website | Before the first client |
 
 **Why this order (decided 6 Nov 2026).** Going live waits on people: the solicitor's and the data protection

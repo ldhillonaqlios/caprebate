@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 373 |
-| Working on it | 1 |
+| Done | 374 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1233,7 +1233,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-41 items.
+40 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1502,12 +1502,6 @@
 - Note 2026-11-06 (Developer question pack, 6 Nov 2026): Written at Lakhbir's request after Phase 161g: where each audit finding stands (with its pull request), twenty questions for the developer (D1-D4 checking the fixes, D5-D12 the live server for Phase 161h, D13-D14 going live, D15-D20 the code after go-live) and what is still to do. D8, D9 and D18 are Word questions 155, 157 and 286. Lakhbir sends it; the answers go into Phase 161h. OneDrive only (the repository is public).
 - Note 2026-11-07 (Phase 161h): No answers back, so 161h built our recommendations for D2 and D5-D12; new finding for D6: Turso's nearest place to London is Ireland. Runbook: 09-app/deploy/LIVE-RUNBOOK.md.
 
-### Phase 161n1 - The developer's live website pack: what the developer sets up for the live website on Vercel, and why (Lakhbir, 12 Nov 2026)
-
-`13533159534` · **Working on it** · owner Claude · **CLAIMED BY Lakhbirs-MacBook-Pro**
-
-- Note 2026-11-12 (Phase 161n1): made on the board first (13533159534); claimed on Lakhbirs-MacBook-Pro.
-
 ### Phase 161n2 - Go live: once the developer has set up the live website from the pack and the gate is open, switch it on and prove it (Lakhbir, 6 and 12 Nov 2026)
 
 `13488910486` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1522,7 +1516,7 @@
 
 ## Z · Complete / Not Applicable
 
-373 items.
+374 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3828,6 +3822,13 @@
 - Note 2026-11-10 (Phase 161m): Done: rules registers in each area (72 rules), the lock, the engine's version with the calculator, versions on every sealed estimate, pack, invoice and case stamp (migration 122), Admin's Rules page; back end 4,072; PR on GitHub, Lakhbir merges. Nine one-way rules carried to the sweep (Phase 162).
 - Note 2026-11-10 (Phase 161m): Merged: PR 98 into main (4b43661), GitHub's checks green. The run sheet's 161m block waits for Lakhbir's yes. Next: the sweep (Phase 162).
 - Note 2026-11-10 (Phase 161m): The run sheet's 161m block deleted on Lakhbir's yes in the chat ("Yes, both"), and the record-only PR 99 merged.
+
+### Phase 161n1 - The developer's live website pack: what the developer sets up for the live website on Vercel, and why (Lakhbir, 12 Nov 2026)
+
+`13533159534` · **Done** · owner Claude
+
+- Note 2026-11-12 (Phase 161n1): made on the board first (13533159534); claimed on Lakhbirs-MacBook-Pro.
+- Note 2026-11-12 (Phase 161n1): Done: the developer pack written (OneDrive 06-commercial-and-governance), 161n split, docs in line; 5,729 checks green.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
