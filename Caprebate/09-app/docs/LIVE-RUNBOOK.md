@@ -2,7 +2,9 @@
 
 _Phase 161h, 7 November 2026. For the developer (ITRoadway) and anyone who looks after the live website. Lakhbir decided on 6 November 2026 to host it on Vercel, for security: nobody runs a server, every change is built from GitHub, and a bad release is rolled back in one click._
 
-The go-live checklist, the list of what must be true before the first client, is [GO-LIVE-CHECKLIST.md](GO-LIVE-CHECKLIST.md). Phase 161n works through it.
+The go-live checklist, the list of what must be true before the first client, is [GO-LIVE-CHECKLIST.md](GO-LIVE-CHECKLIST.md). Phase 161n2 works through it.
+
+**Hosting is the developer's (Lakhbir, 12 November 2026).** The developer buys Pro and sets up everything in sections 2 to 4, 7 and 8, including every live key, from the pack Phase 161n1 wrote for them: `Caprebate/06-commercial-and-governance/Cap Rebate - live website pack for the developer (12 Nov 2026).docx`, which gives each step its reason and ends with a sheet to send back. Claude makes no hosting; Phase 161n2 checks the developer's work and switches the website on.
 
 ## 1. What runs where
 
@@ -24,11 +26,11 @@ The test website (project `caprebate-test`) is unchanged: it still builds every 
 
 You need a Vercel login in the `ldhillonaqlios` team with two-step sign-in on (section 8), and the Turso and Vercel command-line tools.
 
-1. **Buy Pro** for the team (Lakhbir's decision and card: board item "Buy Vercel Pro").
+1. **Buy Pro** for the team `ldhillonaqlios` (the developer buys it, Lakhbir 11 Nov 2026: board item "Buy Vercel Pro"). Buying needs billing rights; the developer goes back to Member afterwards (section 8).
 2. **New project** from GitHub `ldhillonaqlios/caprebate`. Framework: **Other**. Root directory: the top of the repository. Node: **24.x**. Leave the build and install commands empty: `vercel.ts` gives them.
 3. **Settings, Git: Production Branch = `live`.** A merge to `main` then never changes the live website. Previews of other branches still build, with the Preview settings (step 6).
 4. **Settings, Functions: Function Region = London (`lhr1`).** A region written in `vercel.ts` was not followed when we tried it (7 Nov 2026); the project's own setting is.
-5. **Storage: create a Blob store**, private, region London, and **connect it to this project only** (Production and Preview). Vercel adds `BLOB_STORE_ID` itself.
+5. **Storage: create a Blob store**, private, region London, and **connect it to this project only** (Production and Preview). Vercel adds `BLOB_STORE_ID` itself. Whether Preview should have a small store of its own instead is question E1 in the developer's pack (12 Nov 2026); until it is answered, never run a backup test on a preview once clients have uploaded anything.
 6. **The keys** (section 3), in Production. In **Preview** put example values and a **separate preview database** (its own Turso database, empty), so a preview never touches live records.
 7. **Settings, Deployment Protection:** keep Vercel Authentication on for previews.
 8. **Domains:** add `caprebate.co.uk` and `www.caprebate.co.uk` (the go-live checklist has the DNS records at IONOS).

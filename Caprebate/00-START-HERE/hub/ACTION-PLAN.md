@@ -527,14 +527,19 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     exactly what can be run before going live, restructure them"): 161h,
     161h1, 161i, 161i1 (added 7 Nov 2026 by Phase 161i), 161j, 161k, 161l, 161l1 (added 9 Nov 2026 by Phase 161l), 161l2 (added 10 Nov 2026 by Phase 161l1) and 161m all run before go-live; none
     waits on a person. Then the sweep out of order (it ran as Phase 162 on
-    11 Nov 2026; it is Phase 163 now), then 161n goes
-    live once its gate is open (Vercel Pro, the ICO number, every legal page
-    approved, the other sign-offs), then the sweep again before the first
-    client. If the gate opens early, the phases left run after go-live.
+    11 Nov 2026; it is Phase 163 now), then 161n1 (the developer's live
+    website pack, 12 Nov 2026), then 161n2 goes live once its gate is open
+    (the developer has set up hosting from the pack, including Vercel Pro and
+    the live keys; the ICO number; every legal page approved; the other
+    sign-offs), then the sweep again before the first client. If the gate
+    opens early, the phases left run after go-live.
 
   GO-LIVE PEOPLE AND THE LETTER (Lakhbir, 11 Nov 2026). Vercel Pro is bought
     by the developer ("vercel pro this will be the developer who does
-    this"). Lakhbir registers with the ICO himself. NO SOLICITOR for the
+    this"). HOSTING IS THE DEVELOPER'S (12 Nov 2026): the developer sets up
+    the live project, its stores, database, backup bucket, domain records
+    and every live key ("hosting will be done by developer"; keys: "The
+    developer"), from the pack Phase 161n1 wrote; Claude makes none of it. Lakhbir registers with the ICO himself. NO SOLICITOR for the
     legal pages ("no solicitor, its a DPO pack"): the DPO's approval of a
     page's current version alone puts it in force (Phase 161m1). EMAIL ONLY,
     no telephone on the website ("go with email only for now"). The
@@ -1192,9 +1197,9 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161n — Go live: the gate (people's approvals and purchases), then the live website switched on and proved
+## PHASE 161n2 — Go live: once the developer has set up hosting from the pack and the gate is open, the live website switched on and proved
 
- **Model: Opus.** Board item 13488910486. **Written 6 November 2026.** **Why:** Lakhbir, 6 Nov 2026: "review all the phases see exactly what can be run before going live, restructure them". Everything Claude can build runs before this one (161h to 161m, then the sweep). This phase is the switch: it waits for its gate, which is people's work, then turns the live website on. **Order (6 Nov 2026):** after 161m and the sweep; the sweep runs again after it, before the first client.
+ **Model: Opus.** Board item 13488910486. **Written 6 November 2026; split 12 November 2026** (Lakhbir: "Yes, split and build"; "hosting will be done by developer - you will create a developer pack that tells them whats needed and why"). Phase 161n1 (board 13533159534) wrote the pack: `Caprebate/06-commercial-and-governance/Cap Rebate - live website pack for the developer (12 Nov 2026).docx`. The developer, not Claude, makes the live Vercel project, the stores, the database, the backup bucket, the domain records and the keys; this phase checks their work and switches the website on. **Why:** Lakhbir, 6 Nov 2026: "review all the phases see exactly what can be run before going live, restructure them". Everything Claude can build runs before this one (161h to 161m, then the sweep). This phase is the switch: it waits for its gate, which is people's work, then turns the live website on. **Order (6 Nov 2026):** after 161m and the sweep; the sweep runs again after it, before the first client.
 
 ```text
 ═══ FIRST, BEFORE ANYTHING ELSE ═══
@@ -1254,7 +1259,9 @@ THE GATE: check every line and write it in the record as open or not, with
 its board item. If any line is not open, change nothing live: tell Lakhbir
 which lines are left, set this item to its true status, and stop.
  1. Vercel Pro bought for the live project (board 13486923814; the
-    developer buys it, Lakhbir 11 Nov 2026).
+    developer buys it, Lakhbir 11 Nov 2026), and the developer has done
+    Parts 2 to 9 of the developer's live website pack (Phase 161n1) and
+    sent back its Part 11 sheet.
  2. The ICO registration number, on the privacy policy (Lakhbir registers).
  3. A data protection officer chosen, who has approved the current version
     of every legal page in the back office (Legal pages; board 13475983553),
@@ -1272,8 +1279,9 @@ which lines are left, set this item to its true status, and stop.
  8. Every register entry marked as needed before go-live signed, or its
     feature left switched off and said so (FOR-THE-ACCOUNTANT.md,
     FOR-THE-SURVEYOR.md, FOR-THE-SOLICITOR-DPO-DEVELOPER.md).
- 9. The live keys set by Lakhbir in the live project's settings (the names
-    from LIVE-RUNBOOK.md section 3; check them by name, never read a value).
+ 9. The live keys set by the developer in the live project's settings
+    (Lakhbir, 12 Nov 2026: "The developer"; the names in Part 5 of the pack
+    and LIVE-RUNBOOK.md section 3; check them by name, never read a value).
 10. The developer's answers to D1 to D20 recorded (board 13486597256), or
     Lakhbir's word to go without them.
 11. The sweep (the last phase on the run sheet) has run since the last
@@ -1283,9 +1291,10 @@ which lines are left, set this item to its true status, and stop.
     backups are kept) answered.
 
 BUILD (only once every gate line is open)
-1. The live project on Pro, made by LIVE-RUNBOOK.md sections 2 to 4 (161h
-   made none): the functions and the Blob store in London, the database in
-   Ireland or London. FIRST PROVE IT ON A PREVIEW of the live project (its
+1. The live project on Pro, made BY THE DEVELOPER from the pack (Phase
+   161n1) and LIVE-RUNBOOK.md sections 2 to 4: the functions and the Blob
+   store in London, the database in Ireland or London. Claude checks it and
+   makes nothing. FIRST PROVE IT ON A PREVIEW of the live project (its
    Preview settings: example keys, the empty preview database): 161h's
    ACCEPT list on Vercel itself (/api/health {"ok":true}, a staff password
    alone answers 202, the legal pages follow CAPREBATE_LEGAL_PAGES, a timer
@@ -1296,9 +1305,9 @@ BUILD (only once every gate line is open)
    (vercelBlobClient's list), and the reference database read over libsql
    (referencePostcodeStore, referenceOstn15Grid). A fault found is fixed
    before item 4.
-2. The domain: caprebate.co.uk at IONOS pointed at Vercel by Lakhbir or the
-   developer (the runbook's steps), and the email sending records (SPF,
-   DKIM, DMARC) checked.
+2. The domain: caprebate.co.uk at IONOS pointed at Vercel by the developer
+   (Part 8 of the pack), and the email sending records (SPF, DKIM, DMARC)
+   checked.
 3. CAPREBATE_LEGAL_PAGES=on; every Draft line gone, because every page is
    approved.
 4. The first release, by the release workflow (LIVE-RUNBOOK.md section 5),
@@ -1330,7 +1339,7 @@ ACCEPT
 
  **Why this exists.** Every sweep so far has found something, and several found things that had survived multiple earlier passes. Re-run it after a meaningful batch of phases has landed, and **always before anything external goes out** — the adviser pack, the solicitor brief, the Valuation Office letter, the insurance broker brief.
 
- **DONE 11 NOVEMBER 2026 BY THE PHASE 162 SWEEP: the run out of order, after 161m and before 161n (THE NUMBER line in the block below), and the six jobs Phases 161e, 161f, 161g, 161j, 161l2 and 161m carried here.** The next sweep runs in order, after 161n and before the first client. The leftovers in the back end are zipped into `Caprebate/_archive/09-app-leftovers-removed-by-phase162.zip` and deleted, on Lakhbir's yes (seven of them had been committed by Phase 161i, so "git does not hold them" was no longer true). The 26 invented cases give the same pages and figures on the test website as before 161f. The cookie banner, the network after each answer, the Draft lines and /privacy are as 161g built them; the cookie policy page's two buttons lost their style once a visitor had answered, now fixed. The four connectors already loaded alone (since 161l1); the test now holds them to it. The nine rules are tested both ways. Finance and admin answer from their own `routes.ts`, the route list unchanged. The Rules page and the moved staff pages open as before on the test website. What could not be checked there, because the test website is keeping its records in memory, now lives on that item (13522119174). The record is in PHASE HISTORY.
+ **DONE 11 NOVEMBER 2026 BY THE PHASE 162 SWEEP: the run out of order, after 161m and before 161n (THE NUMBER line in the block below), and the six jobs Phases 161e, 161f, 161g, 161j, 161l2 and 161m carried here.** The next sweep runs in order, after 161n2 (161n split on 12 Nov 2026) and before the first client. The leftovers in the back end are zipped into `Caprebate/_archive/09-app-leftovers-removed-by-phase162.zip` and deleted, on Lakhbir's yes (seven of them had been committed by Phase 161i, so "git does not hold them" was no longer true). The 26 invented cases give the same pages and figures on the test website as before 161f. The cookie banner, the network after each answer, the Draft lines and /privacy are as 161g built them; the cookie policy page's two buttons lost their style once a visitor had answered, now fixed. The four connectors already loaded alone (since 161l1); the test now holds them to it. The nine rules are tested both ways. Finance and admin answer from their own `routes.ts`, the route list unchanged. The Rules page and the moved staff pages open as before on the test website. What could not be checked there, because the test website is keeping its records in memory, now lives on that item (13522119174). The record is in PHASE HISTORY.
 
  **ADDED 11 NOVEMBER 2026 BY THE PHASE 162 SWEEP, FOR THE NEXT ONE.** A note rather than an edit to the block below, for the reason Phase 110 gives. **(1) A ROW IN THE TRACKER ALONE.** Nine finished phases (160e to 160g, 160k to 160p) were added with the tracker tool and never made on the board, so they carried ids the board never gave. Compare the board with the tracker in BOTH directions, by id, every time; a new phase item is made on the board first and its row takes the board's id. The board also holds items that are not ours to track: the Client list group (Sadique's GP surgeries, 16 Oct 2026) and Abdul's "code review - cap rebate" (20 Oct 2026) stay board-only (Lakhbir, 11 Nov 2026). **(2) THE TEST WEBSITE CAN FORGET.** It fell back to keeping its records in memory without anyone noticing: a sign-in dropped at the next page, and the invented clients had new ids twenty minutes later. Before a signed-in check, sign in, note one client's id, and read it again a few pages later; once this sweep's pull request is merged, Admin's home says so in so many words. **(3) A CARRIED JOB CAN BE DONE ALREADY.** The four connectors that "do not load alone" had loaded alone since Phase 161l1 moved the backup out of the core. Re-derive a carried job's premise before building it, as point 8 of the standing instruction says.
 
@@ -1418,7 +1427,8 @@ THE NUMBER: phases 153f, 154a1, 155 and 156 were added above this one on 3 Oct, 
   on 6 Nov 2026 planning added 161h1, 161l, 161m and 161n, still lettered, so it
   stays PHASE 162. RUN IT OUT OF ORDER once, straight after 161m and before 161n
   goes live (161m says so; order changed 6 Nov 2026), and check 161n's gate list
-  as part of it; then again in order after 161n, before the first client.
+  as part of it; then again in order after 161n2 (161n was split into 161n1
+  and 161n2 on 12 Nov 2026), before the first client.
 ADDED 10 OCT 2026 BY THE PHASE 160 SWEEP:
   A CLOSED QUESTION LEAVES ITS OLD WORDS BEHIND. Word question 218 (BCIS) closed
     on 10 Oct, but the source register's licence still refused BCIS in every
@@ -1996,7 +2006,7 @@ Then do WHEN THE PHASE IS DONE, at the top of this block.
 |  Claude |  Phases 159a to 159l — the fixes from the 9 October 2026 stress test and the two Lockwood runs (159a to 159d on 9 Oct 2026, 159e to 159l on 10 Oct 2026) — **all done**, see PHASE HISTORY; 159l, the last, carried INSPIRE end to end and the staff route's filing per return to the sweep |  The Lockwood Surgery live runs and three stress tests, 9 and 10 Oct 2026 (evidence in 04-phase-work/stress-2026-10-09/ and sim-2026-10-10-lockwood/, OneDrive); Lakhbir: "fixes need to be phases" |
 |  Lakhbir |  The BCIS data export or API access from the subscription (13247762330) — BCIS confirmed our use is fine (relayed 9 Oct 2026) |  Phase 159f drafts every rate from it |
 |  Claude |  Phases 161a to 161k — production readiness, written 4 Nov 2026 from the ITRoadway technical audit (2 Nov 2026) and the legal pages: 161a packages (**done 4 Nov 2026**, see PHASE HISTORY), 161b form tokens (**done 4 Nov 2026**), 161c status page and key file (**done 4 Nov 2026**), 161d off the draft folders (**done 4 Nov 2026**; its five file reads still outside the app are the new 161d1), 161e a fresh copy passes every check, 161f the calculator as code (**done 5 Nov 2026**: edit it in engine/src, `npm run page` builds the page from it), 161g the legal pages (**done 5 Nov 2026**: built ready for the live website and switched off; the review pack is with the solicitor and the DPO), 161h production on Vercel (**done 7 Nov 2026**: the live start, timers, backup and restore, release workflow, runbook and go-live checklist, built and proved on a database file; no live project made until Pro is bought), then, before go-live (order changed 6 Nov 2026), 161h1 the boundary check (**done 7 Nov 2026**: 2,162 breaks counted, any new one refused), 161i to 161k the regroup by business area (**161k done 9 Nov 2026**: every business area a module behind its front door, src/web/ gone, tests by feature, the specs in 09-app/docs/), 161l the tangle undone (**part 1 done 9 Nov 2026**: the one-way order written and checked, events, permissions per module, the start-up wiring in src/app/, the lower layers off the modules; 350 breaks to 148), 161l1 the tangle, part 2 (**done 10 Nov 2026**: the joins split by owner where the owner is below, the CRM split into a lower clients area and its screens; 148 breaks to 67), 161l2 the last of it (**done 10 Nov 2026**: every borrowed statement split by owner, files moved to their owners, named ports in place of the router's lent parts; 67 breaks to 0), and 161m versioned rules (**done 10 Nov 2026**: a rules register in each area, 72 rules each with its version, date and approver, the lock that refuses a value changed without a new version, the engine's version moving with the calculator, versions on every sealed estimate, pack, report and invoice, and Admin's read-only Rules page); then the sweep, and 161n goes live once its gate is open |  Lakhbir, 4 Nov 2026: "we fix each thing that needs to be fixed on the audit report, as this needs to get to a point of production" |
-|  Claude |  Phase 163 — the sweep, always last; it ran out of order after 161m as Phase 162 (11 Nov 2026; see PHASE HISTORY), and runs again after 161n, before the first client |  The standing rule |
+|  Claude |  Phase 163 — the sweep, always last; it ran out of order after 161m as Phase 162 (11 Nov 2026; see PHASE HISTORY), and runs again after 161n2, before the first client |  The standing rule |
 
  **"Ready" means nothing is in the way. It has never meant unstarted, and it has never meant Claude specifically types it** — the owner column is the truth about who acts. Test it as hard as "Blocked".
 

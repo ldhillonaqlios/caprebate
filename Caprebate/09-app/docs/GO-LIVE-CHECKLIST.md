@@ -1,6 +1,6 @@
 # Going live: the checklist
 
-_Phase 161h, 7 November 2026. This is the gate of Phase 161n ("Go live"). Tick a line only with its evidence (a date, a screenshot, an answer recorded in the Word questions document). The live website opens to clients only when every line is ticked. How to do each step is in [LIVE-RUNBOOK.md](LIVE-RUNBOOK.md)._
+_Phase 161h, 7 November 2026. This is the gate of Phase 161n2 ("Go live"; 161n was split on 12 November 2026). Lines 1 and 4 to 17 are the developer's, from the developer's live website pack (Phase 161n1, `Caprebate/06-commercial-and-governance/Cap Rebate - live website pack for the developer (12 Nov 2026).docx`); its Part 11 sheet is their evidence. Tick a line only with its evidence (a date, a screenshot, an answer recorded in the Word questions document). The live website opens to clients only when every line is ticked. How to do each step is in [LIVE-RUNBOOK.md](LIVE-RUNBOOK.md)._
 
 ## People and purchases (nobody can build these)
 
@@ -16,7 +16,7 @@ _Phase 161h, 7 November 2026. This is the gate of Phase 161n ("Go live"). Tick a
 7. [ ] The live project made from the repository, **Production Branch `live`**, **Function Region London (`lhr1`)**, Node 24.
 8. [ ] The **London Blob store** made, private, and connected to the live project only.
 9. [ ] The **live and preview Turso databases** made (Ireland, or London if offered), both empty to start.
-10. [ ] **Every required setting** in Production, each Sensitive (the runbook's table), and **none of the test-only settings**. `CAPREBATE_BACKUP_KEY` also in the password manager.
+10. [ ] **Every required setting** set by the developer (Lakhbir, 12 Nov 2026) in Production, each Sensitive (the runbook's table), and **none of the test-only settings**. `CAPREBATE_BACKUP_KEY` also in the password manager.
 11. [ ] The **reference database** built from the current ONS release and uploaded; its two settings set (runbook section 10).
 12. [ ] **The first release** run from GitHub ("Release to the live website"): the build log says the tables are up to date, and the function log says `live website: started`.
 
