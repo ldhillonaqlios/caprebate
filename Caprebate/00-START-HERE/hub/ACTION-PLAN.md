@@ -1365,6 +1365,14 @@ read their answer on review item 13533383676 first, theirs may change it): L-02 
 the portal keep working) and the code and documents are corrected to say
 Lax. Idle limits: 30 minutes staff, 2 hours clients (confirm in chat).
 
+CARRIED FROM PHASE 161n1a (16 Nov 2026): the paid gate in front of the test
+website (Vercel Deployment Protection, which needs Pro on the test project;
+review H-01 step 1) was not built. When ITRoadway's answer to Lakhbir's reply
+is on review item 13533383676, ask Lakhbir in chat whether they still want
+it; if yes and he buys Pro, he switches it on in caprebate-test > Settings >
+Deployment Protection, and this phase notes it in KEYS-AND-SWITCHES.md. If
+their answer is not there yet, carry this paragraph to Phase 161n1c.
+
 BUILD
 1. M-02: the limit is keyed by email plus source address; a looser per-email
    count (50 an hour) only writes an audit row and emails the admin; a
