@@ -146,6 +146,10 @@ export function insertMailboxWatermarkByUid(db: Db, params: readonly Param[] = [
 }
 
 // outbox
+// Phase 161n1a (L-06): the newest emails in the outbox, for Admin's outbox page on the demo and the test website only.
+export function listOutboxNewestForDevOutbox<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, created_at, kind, to_email, subject, body, sent_at FROM outbox ORDER BY created_at DESC, rowid DESC LIMIT ?', params);
+}
 // The retention list's count of the emails we send from rules, templates, notices and registers
 // (src/modules/compliance/compliance-identity.ts), text unchanged from it.
 export function getOutboxCountQueued<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {

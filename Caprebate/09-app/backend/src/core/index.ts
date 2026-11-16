@@ -42,7 +42,7 @@ export { MFA_KEY_NAME, mfaKeyFrom, resealSecrets, sealTextSecrets } from './mfa-
 export { defaultHasher } from './password.ts';
 export { RECOVERY_CODES_LOW } from './recovery-codes.ts';
 export { refillForm, typedValues } from './refill.ts';
-export { MIN_PASSWORD, STEP_COOKIE, STEP_GONE, STEP_TTL_MS, TEMPORARY_PASSWORD_DAYS, beginSignIn, chooseMethod, describeStep, issueTemporaryPassword, makeNewRecoveryCodes, ownRecoveryCodesLeft, ownTwoFactor, recoveryCodesPage, recoveryCodesWords, removeOwnTwoFactor, resendCode, recoveryCodeUsedEmail, resetTwoFactor, setEmailLayout, signInCodeEmail, startAccountSetup, stepPage, submitCode, submitNewPassword, submitRecoveryCode, temporaryPassword, temporaryUntil } from './sign-in.ts';
+export { FirstAdminError, makeFirstAdmin, MIN_PASSWORD, STEP_COOKIE, STEP_GONE, STEP_TTL_MS, TEMPORARY_PASSWORD_DAYS, beginSignIn, chooseMethod, describeStep, issueTemporaryPassword, makeNewRecoveryCodes, ownRecoveryCodesLeft, ownTwoFactor, recoveryCodesPage, recoveryCodesWords, removeOwnTwoFactor, resendCode, recoveryCodeUsedEmail, resetTwoFactor, setEmailLayout, signInCodeEmail, startAccountSetup, stepPage, submitCode, submitNewPassword, submitRecoveryCode, temporaryPassword, temporaryUntil } from './sign-in.ts';
 export type { Deps, LoginResult } from './auth.ts';
 export type { AuditEntry, AuditKind, Outcome } from './audit.ts';
 export type { Actor, DocumentFacts, Obj, ObjType, Rule, RuleTable } from './authz.ts';

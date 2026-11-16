@@ -1,6 +1,7 @@
 // UI tidy (2 October 2026): screenshots of chosen pages for each demo login, at the widths given (WIDTHS, default 1280,390).
 // Local demo only: it signs in through 09-app/backend/tools/demo-sign-in.ts, which refuses any login not @example.invalid
-// and any website not on this machine. Usage: CB_DEMO_LOG=demo.log node tools/ui-shots.mjs <outdir> <plan.json>. A plan entry is
+// and any website not on this machine. Usage: node tools/ui-shots.mjs <outdir> <plan.json> (an emailed code is read from the
+// demo's outbox page by the plan's admin, signed in first: Phase 161n1a). A plan entry is
 // {name, path} or {name, from, match, text?, nth?, suffix?}: open `from`, take the nth link whose address matches.
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, mkdtempSync, readFileSync } from 'node:fs';
@@ -27,8 +28,12 @@ const evaluate = async (expression) => (await send('Runtime.evaluate', { express
 await send('Page.enable'); await send('Network.enable');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const report = [];
-for (const [who, items] of Object.entries(plan)) {
-  const signed = await demoSignIn(BASE, `${who}@example.invalid`, 'change-this-seed-password', { appKeys, readDemoLog: () => { try { return readFileSync(process.env.CB_DEMO_LOG, 'utf8'); } catch { return ''; } } });
+let adminCookie = '';
+const readOutbox = async () => { if (adminCookie === '') return ''; try { return await (await fetch(`${BASE}/staff/dev-outbox`, { headers: { cookie: adminCookie } })).text(); } catch { return ''; } };
+const order = Object.entries(plan).sort(([a], [b]) => (a === 'admin' ? -1 : b === 'admin' ? 1 : 0));
+for (const [who, items] of order) {
+  const signed = await demoSignIn(BASE, `${who}@example.invalid`, 'change-this-seed-password', { appKeys, readOutbox });
+  if (signed.ok && who === 'admin') adminCookie = signed.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
   writeFileSync(KF, JSON.stringify([...appKeys]));
   if (!signed.ok) { console.log(`${who}: could not sign in - ${signed.why}`); continue; }
   await send('Network.clearBrowserCookies');

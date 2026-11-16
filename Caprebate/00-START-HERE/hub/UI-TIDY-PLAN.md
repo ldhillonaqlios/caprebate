@@ -98,6 +98,6 @@ every heading. 11. Phone: the header fills a quarter of the first screen.
 
 - Screenshots: `09-app/backend/tools/ui-shots.mjs` (local demo only, `@example.invalid` logins). Start the demo with
   `cd 09-app/backend && npm run start:demo > /tmp/demo.log`, then, from a scratch folder,
-  `CB_DEMO_LOG=/tmp/demo.log node <backend>/tools/ui-shots.mjs <outdir> <plan.json>`; `tools/ui-shots-tabs.json` lists
+  `node <backend>/tools/ui-shots.mjs <outdir> <plan.json>` (since Phase 161n1a an emailed code is read from the demo's `/staff/dev-outbox` by the plan's admin, not from a console log); `tools/ui-shots-tabs.json` lists
   every tab. It keeps the authenticator keys it made in `appkeys.json` in the folder it is run from; a fresh demo
   needs that file deleted.

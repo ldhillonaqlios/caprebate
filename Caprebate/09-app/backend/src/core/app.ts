@@ -49,6 +49,11 @@ export type App = {
    */
   storageWhy?: string;
   /**
+   * PHASE 161n1a (L-06): Admin's page of the emails saved, not sent (/staff/dev-outbox). Set by createApp's devOutbox,
+   * which only the demo (tools/demo-server.ts) and the test website (api/index.mjs) pass; refused on the live website.
+   */
+  devOutbox?: boolean;
+  /**
    * TESTS ONLY - the contact form security check's call policy with some values changed (the
    * transfer to Cloudflare approved), so a test can reach the recorded answers. Never set by a running server.
    */
@@ -82,9 +87,8 @@ export type BuildOptions = {
   dbEngine?: 'node:sqlite' | 'libsql';
   /** Faster clicks, part 2: a local file that keeps a copy of the remote database `location` names (src/core/db.ts localCopy). */
   dbLocalCopy?: string;
-  /** Who must give a second factor. Absent is 'staff', the rule. 'off' is for the older tests only.
-   *  'staff-except-invented' is for the test website only: see TwoFactorPolicy in src/core/auth.ts. */
-  twoFactor?: 'staff' | 'off' | 'staff-except-invented';
+  /** Who must give a second factor. Absent is 'staff', the rule, on every website. 'off' is for the older tests only. */
+  twoFactor?: 'staff' | 'off';
   hasher?: PasswordHasher;
   now?: () => string;
   migrationsDir?: string;

@@ -18,6 +18,8 @@
  *   node src/app/cli.ts smoke-switched-on <SOURCE> --who W --why Y   record a switch-on; the count of three starts again
  *   CAPREBATE_LIVE_SMOKE=1 node src/app/cli.ts smoke HMLR_INSPIRE --who W --why Y   one council's land boundary file, the same way
  *   CAPREBATE_LOCAL_ZOOM=1 node src/app/cli.ts zoom-call-length <meeting id>   ask Zoom how long one call lasted
+ *   node src/app/cli.ts first-admin --email E --name "N" [--again]   the first Admin login, its temporary password shown once
+ *                        (on the website's own database when CAPREBATE_DB_URL and CAPREBATE_DB_TOKEN are set; Phase 161n1a)
  *   npm start            the server
  *   npm run check        lint:sql, typecheck, tests
  */
@@ -73,6 +75,49 @@ async function main(): Promise<number> {
     for (const u of r.users) console.log(`  ${u.role.padEnd(11)} ${u.email}`);
     console.log(`\n  password: ${r.password}`);
     return 0;
+  }
+
+  if (cmd === 'first-admin') {
+    /* PHASE 161n1a (H-01): the first Admin login, for a website whose other logins cannot sign in (the test website's
+       invented ones are locked). Its temporary password is printed ONCE, here, on the screen of the person who ran it, as
+       Admin > Users shows one: never a log, never a file. The database is the website's own when its address and token
+       are set (CAPREBATE_DB_URL and CAPREBATE_DB_TOKEN, or Vercel's Turso names), else CAPREBATE_DB on this computer. */
+    const flag = (n: string): string | undefined => { const i = process.argv.indexOf(n); return i > 0 ? process.argv[i + 1] : undefined; };
+    const email = flag('--email');
+    const name = flag('--name') ?? '';
+    const again = process.argv.includes('--again');
+    if (email === undefined) {
+      console.error('Usage: node src/app/cli.ts first-admin --email <your address> --name "<your name>" [--again]');
+      return 1;
+    }
+    const pick = (a: string, b: string): string => (process.env[a] ?? '').trim() || (process.env[b] ?? '').trim();
+    const url = pick('CAPREBATE_DB_URL', 'TURSO_DATABASE_URL');
+    const token = pick('CAPREBATE_DB_TOKEN', 'TURSO_AUTH_TOKEN');
+    const remote = url !== '' && token !== '';
+    let app;
+    try {
+      app = await buildApp(remote ? { location: url, dbAuthToken: token, schema: 'require-built' } : { location: DEFAULT_DB });
+    } catch (e) {
+      console.error(`The database could not be opened (${e instanceof Error ? (e as { code?: string }).code ?? e.name : 'an error'}). Nothing was changed.`);
+      return 1;
+    }
+    try {
+      const { makeFirstAdmin, FirstAdminError } = await import('../core/index.ts');
+      try {
+        const r = await makeFirstAdmin(app, { email, display_name: name, again });
+        console.log(`${r.made ? 'Made the Admin login' : 'Gave a new temporary password to'} ${r.user.email} on ${remote ? 'the website\u2019s own database' : DEFAULT_DB}.`);
+        console.log('\nTemporary password (shown once, here only; it is not kept anywhere you can read it):\n');
+        console.log(`    ${r.password}\n`);
+        console.log(`It works until ${r.until}. Sign in at the website's /login with it, choose your own password, then set up`);
+        console.log('your authenticator app. Then make one login per tester in Admin > Users.');
+        return 0;
+      } catch (e) {
+        if (e instanceof FirstAdminError) { console.error(`Not done: ${e.message}.`); return 1; }
+        throw e;
+      }
+    } finally {
+      app.close();
+    }
   }
 
   if (cmd === 'verify-audit') {

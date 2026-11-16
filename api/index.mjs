@@ -18,6 +18,16 @@
  * CAPREBATE_BLOB_TOKEN, else BLOB_READ_WRITE_TOKEN), uploaded documents go to that store (sharedDocumentStore,
  * src/web/shared-objectstore.ts). Anything less keeps a folder on this copy's temporary disk, as before.
  *
+ * PHASE 161n1a, 16 November 2026 (ITRoadway's second review, H-01, M-07 and L-06): THE TEST WEBSITE LOCKED DOWN.
+ *   - every staff login gives the second step, the invented ones included (TEST_WEBSITE_TWO_FACTOR = 'staff');
+ *   - no shared password: the invented seed logins are locked at every start (lockSeedLogins) and cannot sign in;
+ *     Lakhbir's own Admin login is made once with `node src/app/cli.ts first-admin`, and he makes one login per tester
+ *     in Admin > Users. CAPREBATE_TEST_PASSWORD is read no more;
+ *   - no real outside service: TEST_DEPLOY_KEYS holds only keys that reach no real person (the free registers, the
+ *     authenticator seal, the contact form's check). Email, Didit, WhatsApp, Zoom, Homedata and the mailbox reader are
+ *     never read here (TEST_WEBSITE_REFUSED_KEYS); a start that finds one set says its NAME, so it can be deleted;
+ *   - every email stays in the outbox, never sent, and Admin reads it at /staff/dev-outbox (devOutbox), never a log.
+ *
  * The code runs as TypeScript directly, as it does everywhere else (Node 24 strips the types).
  */
 import { mkdtempSync } from 'node:fs';
@@ -41,9 +51,12 @@ async function build() {
   const docs = sharedDocumentStore(process.env, lasting);
   const opened = await openLasting(createApp, seed, lasting, {
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-vercel-')),
-    // 29 SEPTEMBER 2026 (Lakhbir): the invented @example.invalid logins ask for no second step on the test website;
-    // every other login still must give one (src/auth.ts, STAFF_EXCEPT_INVENTED). This file only - never the default.
+    // PHASE 161n1a (H-01): every staff login gives the second step here, as on the live website. The exemption the
+    // invented logins had from 29 Sep 2026 is gone from the code (src/core/auth.ts).
     twoFactor: TEST_WEBSITE_TWO_FACTOR,
+    // PHASE 161n1a (L-06): the emails the test website saves are read by Admin at /staff/dev-outbox, never in a log.
+    // This file and the demo only; the live website refuses it (src/app/server.ts, devOutbox).
+    devOutbox: true,
     // 4 OCTOBER 2026 (Phase 153c, Word question 219): uploads are kept on the test website only - invented files - for
     // 7 years, sealed with CAPREBATE_ORIGINALS_KEY from its settings; without the key nothing is kept. Never the default.
     keepOriginals: (await import('../Caprebate/09-app/backend/src/shared/originals.ts')).KEEP_ORIGINALS_TEST_WEBSITE,
@@ -65,9 +78,10 @@ async function build() {
   // 29 SEPTEMBER 2026: the same reason, on the page that says the records are in memory - so nobody has to read the log.
   if (!opened.lasting) made.app.storageWhy = opened.why;
   console.log(`test deployment: ${documentsWhy(docs, opened.lasting)}`);
-  // PHASE 151e (line 3): a password of its own, and then - only then - the Didit keys from the website's settings.
-  const t151e = await configureTestDeploy(made, process.env);
-  console.log(`test deployment: ${t151e.why}`);
+  // PHASE 161n1a: the invented logins locked, and only the keys that reach no real person read (names only in the log).
+  const t161 = await configureTestDeploy(made, process.env);
+  console.log(`test deployment: ${t161.why}`);
+  if (t161.refused_set.length > 0) console.log(`test deployment: set in this project's settings and NOT read (delete them): ${t161.refused_set.join(', ')}`);
   // 29 SEPTEMBER 2026: whether the contact form's security check is checked on the server, and if not why (names only).
   const { turnstileWhy } = await import('../Caprebate/09-app/backend/src/integrations/connectors/turnstile.ts');
   console.log(`test deployment: ${turnstileWhy(made.app.secrets)}`);
@@ -79,8 +93,8 @@ async function build() {
   // 4 OCTOBER 2026 (Phase 153c): whether uploaded files are kept, and if not why (the key's name only, never its value).
   const { sealKeyFromEnv } = await import('../Caprebate/09-app/backend/src/shared/originals.ts');
   console.log(`test deployment: uploaded files ${sealKeyFromEnv() === null ? 'are NOT kept - CAPREBATE_ORIGINALS_KEY is not set in the settings' : 'are kept for 7 years, sealed'}`);
-  // PHASE 154a1 (line 10), 4 October 2026: EMAIL IS SENT ON THE TEST WEBSITE (EMAIL_SENDING, on for testing since 30 Sep
-  // 2026), and the function log is no place for an email. This used to print every new outbox email - address, subject
+  // PHASE 154a1 (line 10), 4 October 2026: the function log is no place for an email. (Since Phase 161n1a no email is
+  // sent from here at all: the sending login is never read, so every email stays in the outbox.) This used to print every new outbox email - address, subject
   // and body, sign-up links included - against the spec's "no personal data in logs". It now says how many, of which
   // kinds, and how many were sent: never an address, a subject or a body.
   const shown = new Set();
@@ -103,21 +117,6 @@ async function build() {
   return made.server.listeners('request')[0];
 }
 
-/**
- * PHASE 151e (line 3), 25 September 2026 — DIDIT ON THE TEST WEBSITE, AND NEVER BEHIND THE PUBLIC PASSWORD.
- *
- * Every seeded login's password is SEED_PASSWORD, which sits in src/seed.ts, a file that was downloadable from this
- * website until line 2 closed that. Real keys behind that password would let anyone send identity checks on
- * Lakhbir's Didit account. So:
- *   CAPREBATE_TEST_PASSWORD set (twelve characters or more)
- *       every login still on the seed password moves to that password, and the seed password stops working; and then
- *       the Didit keys are read from the website's settings (TEST_DEPLOY_KEYS, those three and no other name) -
- *       and, since Phase 151k, CAPREBATE_MFA_KEY, which seals each person's authenticator app secret
- *       (Caprebate/09-app/backend/src/mfa-seal.ts). Unset, the secret is kept as text, as before.
- *   not set, or shorter
- *       nothing changes and NO key is read, whatever the settings hold. The identity panel says the keys are missing.
- * It prints what it did - never a password and never a key.
- */
 /** PHASE 154a1 (line 10): new outbox emails as one log line - counts and kinds only. Read by test/core/sweep-fixes.test.ts. */
 export function outboxLogLine(rows) {
   if (rows.length === 0) return null;
@@ -128,59 +127,82 @@ export function outboxLogLine(rows) {
   return `test deployment: ${rows.length} new email${rows.length === 1 ? '' : 's'} in the outbox - ${list}; ${sent} sent, ${rows.length - sent} not sent`;
 }
 
-/** 29 Sep 2026: who gives a second step on the test website. Read by test/core/invented-logins.test.ts. */
-export const TEST_WEBSITE_TWO_FACTOR = 'staff-except-invented';
+/** Who gives a second step on the test website: every staff login (Phase 161n1a, H-01). Read by test/core/invented-logins.test.ts. */
+export const TEST_WEBSITE_TWO_FACTOR = 'staff';
 
-// 30 Sep 2026: COMPANIES_HOUSE_API_KEY for "Find my company" (switched on for testing, src/connectors/company-search.ts),
-// and the six Zoom names for video calls (src/connectors/zoom.ts; Zoom's transfer approved for testing, 30 Sep 2026).
-export const TEST_DEPLOY_KEYS = Object.freeze(['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY',
-  'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL',
-  // 5 Oct 2026 (Phase 156d): which Zoom plan we are on; unset is the free plan (src/connectors/zoom.ts, zoomPlanIsFree).
-  'ZOOM_PLAN',
-  // 30 Sep 2026: email sending is on for testing; the IONOS login that sends from contact@caprebate.co.uk.
+/**
+ * PHASE 161n1a (H-01 and M-07): THE ONLY KEYS THE TEST WEBSITE READS, each one that reaches no real person. A key is read
+ * when it is set in the project's settings AND its name is here. Nothing else in the settings is read.
+ *   CAPREBATE_MFA_KEY                     seals each tester's authenticator app secret (src/core/mfa-seal.ts)
+ *   COMPANIES_HOUSE_API_KEY, EPC_API_TOKEN, CQC_SUBSCRIPTION_KEY, OS_DATA_HUB_API_KEY
+ *                                         the free public registers, looked up for the invented clients
+ *   TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY   the public contact form's check against robots (Cloudflare)
+ */
+export const TEST_DEPLOY_KEYS = Object.freeze(['CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY', 'EPC_API_TOKEN', 'CQC_SUBSCRIPTION_KEY',
+  'OS_DATA_HUB_API_KEY', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY']);
+
+/**
+ * PHASE 161n1a (H-01 and M-07): NEVER READ ON THE TEST WEBSITE, whatever its settings hold. Each one reaches a real
+ * person or spends money: email from contact@caprebate.co.uk and the mailbox it reads, Didit's identity checks, WhatsApp,
+ * Zoom, Homedata's paid lookups and the outside timer that wakes the mailbox reader. A start that finds one set prints
+ * its NAME (never its value) so it is deleted from the test project, and Lakhbir changes it at its provider.
+ */
+export const TEST_WEBSITE_REFUSED_KEYS = Object.freeze([
   'IONOS_SMTP_HOST', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'IONOS_SMTP_PASSWORD',
-  // 30 Sep 2026: WhatsApp with each client (src/connectors/whatsapp.ts; Meta's transfer approved for testing, 30 Sep 2026).
-  'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE',
-  // 2 Oct 2026: the free lookups switched on for the test website (src/connectors/registers.ts, TEST_WEBSITE_LOOKUPS),
-  // and Ordnance Survey's key for the report's site plan (src/connectors/os-buildings.ts).
-  'EPC_API_TOKEN', 'CQC_SUBSCRIPTION_KEY', 'OS_DATA_HUB_API_KEY',
-  // 1 Oct 2026: the outside timer's word, so it can wake the website to read email replies.
-  'REPLY_TIMER_TOKEN',
-  // 30 Sep 2026: reading replies to contact@ (src/stubs/email-inbound.ts), read-only.
   'IONOS_IMAP_HOST', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_IMAP_PASSWORD',
-  // 5 Oct 2026 (Phase 156a): the contact form's Cloudflare check (src/connectors/turnstile.ts). The site key goes in the
-  // page; the secret is used because Sadique approved the transfer to Cloudflare for testing (sources.ts, 5 Oct 2026).
-  'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY',
-  // 6 Oct 2026: the paid address lookup, on for the test website (src/connectors/registers.ts, TEST_WEBSITE_PAID_LOOKUPS).
-  // Phase 156f: the same key answers "Find my address" at the assessment, in place of GoAddress (removed).
-  'HOMEDATA_API_KEY']);
+  'DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID',
+  'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_APP_SECRET', 'WHATSAPP_VERIFY_TOKEN', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_TEMPLATE_LANGUAGE',
+  'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET', 'ZOOM_HOST_EMAIL', 'ZOOM_PLAN',
+  'HOMEDATA_API_KEY', 'REPLY_TIMER_TOKEN',
+  // Read no more since Phase 161n1a: it was the one password every invented login shared.
+  'CAPREBATE_TEST_PASSWORD']);
 
-export async function configureTestDeploy(made, env) {
-  const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();
-  if (pw.length < 12) {
-    return { password_changed: false, keys_loaded: [], why: 'no test password of twelve characters or more is set, so the seed logins stand and no key is read' };
+/**
+ * PHASE 161n1a (H-01): THE INVENTED SEED LOGINS CANNOT SIGN IN ON THE TEST WEBSITE. Every login at the reserved domain
+ * example.invalid that is not yet locked is locked (disabled_at), and its sessions end; a locked login is refused at the
+ * password, at a session and at a reset link (src/core/auth.ts). The invented clients and their claims stay, to test
+ * with. Run at every start and after the build's seed, so no copy ever serves an open one. Returns how many it locked.
+ */
+export function lockSeedLogins(db, now) {
+  const t = now();
+  const open = db.all("SELECT id FROM users WHERE disabled_at IS NULL AND email_canonical LIKE '%@example.invalid'");
+  for (const u of open) {
+    db.run('UPDATE users SET disabled_at = ?, updated_at = ? WHERE id = ?', [t, t, u.id]);
+    db.run('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL', [t, u.id]);
   }
-  const hash = await made.app.hasher.hash(pw);
-  // PHASE 151j: only the logins STILL ON THE PUBLIC SEED PASSWORD move. On a lasting database a person may have chosen
-  // their own password (or been given a temporary one); every cold start overwrote it until 28 Sep 2026.
-  const { SEED_PASSWORD } = await import('../Caprebate/09-app/backend/src/app/seed.ts');
-  for (const u of made.app.db.all('SELECT id, password_hash FROM users')) {
-    if (await made.app.hasher.verify(u.password_hash, SEED_PASSWORD)) {
-      made.app.db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, u.id]);
-    }
-  }
-  const { secretsFromEnvironment, useProcessSecrets } = await import('../Caprebate/09-app/backend/src/core/secrets.ts');
-  made.app.secrets = secretsFromEnvironment(env, TEST_DEPLOY_KEYS);
-  // 30 Sep 2026: every screen that asks the process for a key (the email login) reads these same settings.
-  useProcessSecrets(made.app.secrets);
-  const loaded = TEST_DEPLOY_KEYS.filter((k) => (env[k] ?? '').trim() !== '');
-  return { password_changed: true, keys_loaded: loaded, why: `every login now uses the test password; keys read: ${loaded.join(', ') || 'none'}` };
+  return open.length;
 }
 
 /**
- * PHASE 151e (line 4): the database this deployment uses. A lasting one only when its address, its token AND the test
- * password are all set: a database that outlives the instance must never sit behind the seed password, which was
- * public until line 2. Anything less is memory, as before. It says what it chose - never the address and never the token.
+ * PHASE 161n1a: THE TEST WEBSITE'S START. The invented logins locked (and written to the audit log when any were), and
+ * the keys in TEST_DEPLOY_KEYS read from the settings, those names and no other. It says what it did - never a key.
+ * `refused_set` names the settings found that are never read here, for Lakhbir to delete.
+ */
+export async function configureTestDeploy(made, env) {
+  const locked = lockSeedLogins(made.app.db, made.app.now);
+  if (locked > 0) {
+    made.app.audit.append({ at: made.app.now(), kind: 'SEED_LOGINS_LOCKED', outcome: 'ALLOWED', object_type: 'user', object_id: 'example.invalid',
+      detail: { locked, why: 'the test website: the invented logins cannot sign in (Phase 161n1a, H-01)' } });
+  }
+  const { secretsFromEnvironment, useProcessSecrets } = await import('../Caprebate/09-app/backend/src/core/secrets.ts');
+  made.app.secrets = secretsFromEnvironment(env, TEST_DEPLOY_KEYS);
+  // Every screen that asks the process for a key reads these same settings, and so finds no email login.
+  useProcessSecrets(made.app.secrets);
+  const set = (k) => (env[k] ?? '').trim() !== '';
+  const loaded = TEST_DEPLOY_KEYS.filter(set);
+  const refusedSet = TEST_WEBSITE_REFUSED_KEYS.filter(set);
+  const people = made.app.db.get("SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NULL")?.n ?? 0;
+  return {
+    seed_logins_locked: locked, keys_loaded: loaded, refused_set: refusedSet,
+    why: `the invented logins cannot sign in${locked > 0 ? ` (${locked} locked now)` : ''}; ${people} login${Number(people) === 1 ? '' : 's'} can; keys read: ${loaded.join(', ') || 'none'}; no email is sent, every one stays in the outbox (Admin: /staff/dev-outbox)`,
+  };
+}
+
+/**
+ * PHASE 151e (line 4): the database this deployment uses. A lasting one when its address and its token are both set;
+ * anything less is memory, as before. It says what it chose - never the address and never the token. (Until Phase
+ * 161n1a it also needed the test password, so a lasting database never sat behind the public seed password; since then
+ * the seed logins cannot sign in at all, lockSeedLogins, so the test password is read no more.)
  */
 export const LASTING_DATABASE_KEYS = Object.freeze(['CAPREBATE_DB_URL', 'CAPREBATE_DB_TOKEN']);
 /** The names Vercel's Turso integration gives the same two settings (docs.turso.tech/integrations/vercel, 27 Sep 2026). Ours win. */
@@ -190,10 +212,8 @@ export function lastingDatabase(env) {
   const pick = (ours, theirs) => ((env[ours] ?? '').trim() || (env[theirs] ?? '').trim());
   const url = pick('CAPREBATE_DB_URL', 'TURSO_DATABASE_URL');
   const token = pick('CAPREBATE_DB_TOKEN', 'TURSO_AUTH_TOKEN');
-  const pw = (env.CAPREBATE_TEST_PASSWORD ?? '').trim();
   if (url === '' && token === '') return { location: ':memory:', why: 'no lasting database is set, so the records are kept in memory' };
   if (url === '' || token === '') return { location: ':memory:', why: 'a lasting database needs both its address and its token, so the records are kept in memory' };
-  if (pw.length < 12) return { location: ':memory:', why: 'a lasting database is used only behind the test password, so the records are kept in memory' };
   if (!/^(libsql|https):\/\//.test(url)) return { location: ':memory:', why: 'the lasting database address must start libsql:// or https://, so the records are kept in memory' };
   // FASTER CLICKS, part 2 (3 October 2026): CAPREBATE_DB_LOCAL_COPY=on keeps a copy of it next to each copy of the website.
   const localCopy = (env.CAPREBATE_DB_LOCAL_COPY ?? '').trim().toLowerCase() === 'on';
@@ -364,6 +384,8 @@ export async function prepareLasting(createApp, seed, lasting, opts = {}, openDb
     let s;
     try {
       s = await seedOnce(made, seed);
+      // PHASE 161n1a: the invented logins are locked before any copy can serve them (every copy locks them again too).
+      if (s.complete) lockSeedLogins(made.app.db, made.app.now);
     } catch (e) {
       s = { seeded: false, complete: false, error: e };
     } finally {
@@ -413,6 +435,31 @@ export function emptyHalfBuilt(db) {
   const hasUsers = db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'") !== undefined;
   if (hasUsers && db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'") !== undefined) {
     return { emptied: false, why: 'its seed finished, so it may hold what people typed, and a finished database is never emptied' };
+  }
+  const q = (name) => `"${String(name).replace(/"/g, '""')}"`;
+  for (let pass = 0; pass < 3; pass++) {
+    const objs = db.all("SELECT type, name FROM sqlite_master WHERE type IN ('view', 'table') AND name NOT LIKE 'sqlite_%'");
+    if (objs.length === 0) break;
+    const drops = [...objs.filter((o) => o.type === 'view').map((o) => `DROP VIEW IF EXISTS ${q(o.name)};`),
+      ...objs.filter((o) => o.type === 'table').map((o) => `DROP TABLE IF EXISTS ${q(o.name)};`)];
+    db.execDdl(`PRAGMA foreign_keys = OFF;\n${drops.join('\n')}\nPRAGMA foreign_keys = ON;`);
+  }
+  const left = db.all("SELECT name FROM sqlite_master WHERE type IN ('view', 'table') AND name NOT LIKE 'sqlite_%'");
+  if (left.length > 0) return { emptied: false, why: `${left.length} tables could not be dropped` };
+  if (db.get("SELECT name FROM sqlite_master WHERE name = 'sqlite_sequence'") !== undefined) db.run('DELETE FROM sqlite_sequence');
+  return { emptied: true, why: 'emptied' };
+}
+
+/**
+ * PHASE 161n1a (M-07): EMPTY THE TEST WEBSITE'S DATABASE, for `node tools/test-website-people.ts --delete --yes` only,
+ * on Lakhbir's yes. Every view and table goes (and the triggers with them), as emptyHalfBuilt does, but only a database
+ * that holds the test website's FINISHED invented seed: that is the proof it is the test database, because the live
+ * website refuses to run on one (src/app/live-website.ts, holdsInventedSeed). Anything else is refused and left alone.
+ */
+export function emptyTestDatabase(db) {
+  const hasUsers = db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'") !== undefined;
+  if (!hasUsers || db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'") === undefined) {
+    return { emptied: false, why: 'it does not hold the test website\'s invented seed, so it is not the test database, and it was left alone' };
   }
   const q = (name) => `"${String(name).replace(/"/g, '""')}"`;
   for (let pass = 0; pass < 3; pass++) {

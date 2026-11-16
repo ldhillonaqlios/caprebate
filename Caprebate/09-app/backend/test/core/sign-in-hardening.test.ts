@@ -486,25 +486,27 @@ describe('151k · 4 · the screenshot tool signs the demo\'s invented logins in,
     } finally { w.close(); }
   });
 
-  test('an emailed code is read from what the demo prints to its console', async () => {
+  test('an emailed code is read from the demo\'s outbox page, as an Admin of the run sees it (Phase 161n1a, L-06)', async () => {
     const tool = await maybe<ToolModule>('../../tools/demo-sign-in.ts');
     assert.ok(tool !== undefined, 'tools/demo-sign-in.ts does not exist');
     const w = await world();
     try {
+      w.made.app.devOutbox = true; // as tools/demo-server.ts starts it
       // sales set up an emailed code earlier, on the website
       const first = await w.api('/api/login', { email: 'sales@example.invalid', password: SEED_PASSWORD });
       const token = String(first.body.step_token);
       await w.api('/api/login/step/method', { step_token: token, method: 'EMAIL' });
       await w.api('/api/login/step/code', { step_token: token, code: w.lastCode() });
-      // the demo's console, as tools/demo-server.ts prints the outbox
-      const log = () => w.db.all<{ to_email: string; subject: string; body: string }>('SELECT to_email, subject, body FROM outbox ORDER BY rowid')
-        .map((m) => `\n--- outbox (not sent) to ${m.to_email}: ${m.subject}\n${m.body}\n---`).join('\n');
-      const r = await tool.demoSignIn(w.base, 'sales@example.invalid', SEED_PASSWORD, { readDemoLog: log, nowMs: () => NOW_MS, waitMs: 500 });
+      // the Admin of this run, signed in with an app, opens the outbox page
+      const admin = await w.apiWithApp('admin@example.invalid');
+      const readOutbox = async () => (await fetch(`${w.base}/staff/dev-outbox`, { headers: { cookie: `cb_session=${admin.session}` } })).text();
+      assert.match(await readOutbox(), /Emails saved, not sent/);
+      const r = await tool.demoSignIn(w.base, 'sales@example.invalid', SEED_PASSWORD, { readOutbox, nowMs: () => NOW_MS, waitMs: 500 });
       assert.ok(r.ok, r.ok ? '' : r.why);
-      assert.equal(r.how, 'emailed code, read from the demo console');
+      assert.equal(r.how, 'emailed code, read from the demo outbox page');
       const without = await tool.demoSignIn(w.base, 'sales@example.invalid', SEED_PASSWORD, { nowMs: () => NOW_MS });
       assert.equal(without.ok, false);
-      assert.match(without.ok ? '' : without.why, /CB_DEMO_LOG/);
+      assert.match(without.ok ? '' : without.why, /outbox page/);
     } finally { w.close(); }
   });
 

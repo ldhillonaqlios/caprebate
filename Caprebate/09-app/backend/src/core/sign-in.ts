@@ -46,15 +46,15 @@ import type { App } from './app.ts';
 import type { Actor } from './authz.ts';
 import { authorise } from './authz.ts';
 import {
-  AuthError, nextSignInStep, revokeAllSessions, startSession, verifyPassword, type LoginResult, type SignInStep,
+  AuthError, isInventedLogin, nextSignInStep, revokeAllSessions, startSession, verifyPassword, type LoginResult, type SignInStep,
 } from './auth.ts';
-import { findById, hashToken, newId, type User } from './users.ts';
+import { canonicalEmail, createUser, findById, hashToken, newId, type User } from './users.ts';
 import { grouped, newSecret, otpauthUri, verifyCode } from './totp.ts';
 import { isSealed, mfaKeyFrom, openSecret, sealSecret } from './mfa-seal.ts';
 import { h, localWhen, page, raw, type Safe } from '../shared/index.ts';
 import type { BrandedEmail, EmailContent } from '../integrations/index.ts';
 import { clearRecoveryCodes, recoveryCodesLeft, replaceRecoveryCodes, useRecoveryCode, RECOVERY_CODES_LOW } from './recovery-codes.ts';
-import { getSignInStepsIdUserIdById, getSignInStepsIdUserIdByTokenHash, getUsersMfaMethodById, getUsersMfaMethodMfaSecretById, insertSignInSteps, updateSignInStepsAttemptsById, updateSignInStepsCodeHashCodeExpiresAtById, updateSignInStepsFinishedAtById, updateSignInStepsPendingMethodPendingSecretById, updateSignInStepsStepPendingMethodById, updateUsersMfaLastStepById, updateUsersMfaMethodMfaSecretById, updateUsersMfaMethodMfaSecretById2, updateUsersMfaSecretById, updateUsersPasswordHashPasswordTemporaryUntilById, updateUsersPasswordHashPasswordTemporaryUntilById2 } from './data.ts';
+import { getSignInStepsIdUserIdById, getSignInStepsIdUserIdByTokenHash, getUsersMfaMethodById, getUsersMfaMethodMfaSecretById, insertSignInSteps, updateSignInStepsAttemptsById, updateSignInStepsCodeHashCodeExpiresAtById, updateSignInStepsFinishedAtById, updateSignInStepsPendingMethodPendingSecretById, updateSignInStepsStepPendingMethodById, updateUsersMfaLastStepById, updateUsersMfaMethodMfaSecretById, updateUsersMfaMethodMfaSecretById2, updateUsersMfaSecretById, updateUsersPasswordHashPasswordTemporaryUntilById, updateUsersPasswordHashPasswordTemporaryUntilById2, listUsersIdEmailCanonicalByRoleAdminOpen, getUsersIdByEmailCanonical, updateUsersPasswordTemporaryUntilById, updateUsersDisabledAtUpdatedAtById } from './data.ts';
 
 export const STEP_COOKIE = 'cb_step';
 export const STEP_TTL_MS = 15 * 60 * 1000;
@@ -432,6 +432,52 @@ export async function issueTemporaryPassword(app: App, actor: Actor, user_id: st
   app.audit.append({ at: app.now(), kind: 'TEMPORARY_PASSWORD_ISSUED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,
     object_type: 'user', object_id: user.id, detail: { until } });
   return { password, until, user };
+}
+
+/**
+ * PHASE 161n1a (H-01): THE FIRST ADMIN LOGIN, made from the command line (`node src/app/cli.ts first-admin`), because
+ * a website with no login that can sign in has nobody to open Admin > Users. On the test website the invented logins are
+ * locked, so this is how Lakhbir gets in; it serves the live website's first login the same way.
+ *   - it makes an ADMIN with a TEMPORARY password, returned once to be shown once (as Admin > Users shows one), good for
+ *     the same days; at the first sign-in they choose their own and set up the second step;
+ *   - it refuses an invented address (example.invalid), and it refuses while any other Admin can sign in: from then on
+ *     an Admin makes every other login in Admin > Users;
+ *   - `again` gives that same Admin a new temporary password (a lost one) and ends their sessions; their second step is
+ *     cleared too, so a lost phone is not a dead end.
+ * Written to the audit log with no actor (the command line), never the password.
+ */
+export class FirstAdminError extends Error {}
+export async function makeFirstAdmin(app: App, args: { email: string; display_name: string; again?: boolean }): Promise<{ password: string; until: string; user: User; made: boolean }> {
+  const email = args.email.trim();
+  const name = args.display_name.trim();
+  if (email.length < 3 || !email.includes('@') || /\s/.test(email)) throw new FirstAdminError('that does not look like an email address');
+  if (isInventedLogin(email)) throw new FirstAdminError('an invented address (example.invalid) cannot be the Admin: give your own');
+  const canonical = canonicalEmail(email);
+  const others = listUsersIdEmailCanonicalByRoleAdminOpen<{ id: string; email_canonical: string }>(app.db)
+    .filter((u) => u.email_canonical !== canonical && !isInventedLogin(u.email_canonical));
+  if (others.length > 0) throw new FirstAdminError('an Admin who can sign in already exists: they make every other login in Admin > Users');
+  const password = temporaryPassword();
+  const until = temporaryUntil(app.now());
+  const existing = getUsersIdByEmailCanonical<{ id: string }>(app.db, [canonical]);
+  if (existing !== undefined) {
+    const user = findById(app.db, existing.id);
+    if (user === undefined || args.again !== true) throw new FirstAdminError('that address already has a login: add --again to give it a new temporary password');
+    if (user.role !== 'ADMIN') throw new FirstAdminError('that address has a login that is not an Admin: an Admin changes its role in Admin > Users');
+    updateUsersPasswordHashPasswordTemporaryUntilById(app.db, [await app.hasher.hash(password), until, app.now(), user.id]);
+    updateUsersMfaMethodMfaSecretById2(app.db, [app.now(), user.id]);
+    clearRecoveryCodes(app, user.id);
+    updateUsersDisabledAtUpdatedAtById(app.db, [null, app.now(), user.id]);
+    revokeAllSessions(app.deps, user.id, 'TEMPORARY_PASSWORD');
+    app.audit.append({ at: app.now(), kind: 'TEMPORARY_PASSWORD_ISSUED', outcome: 'ALLOWED', actor_id: null, actor_role: null,
+      object_type: 'user', object_id: user.id, detail: { until, by: 'the first-admin command, again' } });
+    return { password, until, user, made: false };
+  }
+  if (name.length < 2 || name.length > 80) throw new FirstAdminError('a display name is between 2 and 80 characters');
+  const user = createUser(app.db, app.now, { email, display_name: name, role: 'ADMIN', password_hash: await app.hasher.hash(password), business_id: null });
+  updateUsersPasswordTemporaryUntilById(app.db, [until, user.id]);
+  app.audit.append({ at: app.now(), kind: 'USER_CREATED', outcome: 'ALLOWED', actor_id: null, actor_role: null,
+    object_type: 'user', object_id: user.id, detail: { role: 'ADMIN', temporary_until: until, by: 'the first-admin command' } });
+  return { password, until, user, made: true };
 }
 
 /** Clear somebody's second factor, so they set it up again at their next sign-in (a lost phone). Their sessions end. */

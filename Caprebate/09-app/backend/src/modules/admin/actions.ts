@@ -30,4 +30,7 @@ export const ADMIN_ACTIONS = registerActions('admin', {
    */
   'configuration.read': { ADMIN: always, SALES: always },
   'configuration.write': { ADMIN: always },
+  /* PHASE 161n1a (L-06): the emails saved on the demo and the test website, sign-in codes and links included. Admin
+     alone: it holds what would let a person into another's account. Never on the live website (src/app/server.ts). */
+  'dev_outbox.read': { ADMIN: always },
 });

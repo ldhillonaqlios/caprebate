@@ -664,6 +664,7 @@ export const READ_ONLY_RULES: Readonly<Record<string, ReadOnlyDecision>> = Objec
   'saved_view.share': NO(WRITES),
   'configuration.read': YES('the admin settings screen, read'),
   'configuration.write': NO(WRITES),
+  'dev_outbox.read': NO('the saved emails carry sign-in codes and links into other people\'s accounts; Admin\'s alone'),
   'introducer.merge': NO(WRITES),
   'claim_team.write': NO(WRITES),
   'document_centre.enter': YES('the document centre; every row is still asked of document.read'),

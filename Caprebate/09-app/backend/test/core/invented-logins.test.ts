@@ -1,12 +1,13 @@
 /**
- * 29 SEPTEMBER 2026 — NO SECOND STEP FOR THE INVENTED LOGINS ON THE TEST WEBSITE, AND WHY A STEP IS LOST.
+ * 29 SEPTEMBER 2026, AND 16 NOVEMBER 2026 (PHASE 161n1a) — THE INVENTED LOGINS ON THE TEST WEBSITE, AND WHY A STEP IS LOST.
  *
- * Lakhbir: "check the 2FA and stop it for the @example.invalid emails - every time I go to click 2FA via authenticator
- * app the session times out." Two things, each proved here:
- *   1. the test website (api/index.mjs) sets STAFF_EXCEPT_INVENTED: a login at the reserved domain example.invalid asks
- *      for no second step; every other staff login still must give one; the default is unchanged;
- *   2. the time-out: a sign-in step lives in the database, so on a database kept in memory a step begun on one copy is
- *      not there when the next page reaches another copy. Reproduced with two copies; the page now says so.
+ * From 29 Sep 2026 the test website let a login at the reserved domain example.invalid skip the second step
+ * (STAFF_EXCEPT_INVENTED). ITRoadway's second review (H-01) found that, with one shared password, it gave Admin to anyone
+ * who learned the password. Phase 161n1a, proved here:
+ *   1. the test website's policy is STAFF: an invented staff login is asked for the second step there too, and the
+ *      exemption is gone from the code;
+ *   2. on the test website the invented logins cannot sign in at all (configureTestDeploy locks them);
+ *   3. (unchanged) a sign-in step lives in the database, so on memory a step begun on one copy is not there on the next.
  */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,7 +22,7 @@ import { STEP_LOST_ON_MEMORY } from '../../src/app/router.ts';
 
 type Made = Awaited<ReturnType<typeof createApp>>;
 
-async function boot(twoFactor?: 'staff' | 'off' | 'staff-except-invented'): Promise<{ made: Made; base: string }> {
+async function boot(twoFactor?: 'staff' | 'off'): Promise<{ made: Made; base: string }> {
   const made = await createApp(':memory:', {
     documentRoot: mkdtempSync(join(tmpdir(), 'cb-invented-')),
     ...(twoFactor === undefined ? {} : { twoFactor }),
@@ -67,29 +68,30 @@ describe('the invented logins on the test website', () => {
     assert.equal(isInventedLogin('example.invalid'), false);
   });
 
-  test('under the test website setting, an invented staff login signs straight in, with no second step', async () => {
-    const { made, base } = await boot('staff-except-invented');
+  test('under the test website setting, an invented staff login is asked for the second step', async () => {
+    const { TEST_WEBSITE_TWO_FACTOR } = (await import(new URL('../../../../../api/index.mjs', import.meta.url).href)) as { TEST_WEBSITE_TWO_FACTOR: 'staff' };
+    const { made, base } = await boot(TEST_WEBSITE_TWO_FACTOR);
     try {
-      const b = browser();
-      const r = await b.post(base, '/login', { email: 'sales@example.invalid', password: SEED_PASSWORD });
-      assert.equal(r.status, 303);
-      assert.notEqual(r.headers.get('location'), '/login/step', 'an invented login was sent to a second step');
-      assert.match(r.headers.getSetCookie().join(' '), /cb_session=[^;]+/);
+      for (const email of ['sales@example.invalid', 'admin@example.invalid']) {
+        const r = await browser().post(base, '/login', { email, password: SEED_PASSWORD });
+        assert.equal(r.status, 303);
+        assert.equal(r.headers.get('location'), '/login/step', `${email} skipped the second step`);
+        assert.doesNotMatch(r.headers.getSetCookie().join(' '), /cb_session=[^;]+/);
+      }
     } finally { made.close(); }
   });
 
-  test('an invented login that already set up an app still signs straight in', async () => {
-    const { made, base } = await boot('staff-except-invented');
+  test('an invented login that already set up an app is asked for its code', async () => {
+    const { made, base } = await boot('staff');
     try {
       made.app.db.run("UPDATE users SET mfa_method = 'APP' WHERE email = 'admin@example.invalid'");
       const r = await browser().post(base, '/login', { email: 'admin@example.invalid', password: SEED_PASSWORD });
-      assert.equal(r.status, 303);
-      assert.notEqual(r.headers.get('location'), '/login/step');
+      assert.equal(r.headers.get('location'), '/login/step');
     } finally { made.close(); }
   });
 
-  test('every other staff login still must give a second step on the test website', async () => {
-    const { made, base } = await boot('staff-except-invented');
+  test('every other staff login still must give a second step', async () => {
+    const { made, base } = await boot('staff');
     try {
       await addStaff(made, 'someone@caprebate.co.uk');
       const r = await browser().post(base, '/login', { email: 'someone@caprebate.co.uk', password: SEED_PASSWORD });
@@ -98,25 +100,42 @@ describe('the invented logins on the test website', () => {
     } finally { made.close(); }
   });
 
-  test('the default is unchanged: an invented staff login still gives a second step', async () => {
-    const { made, base } = await boot();
+  test('on the test website a seed login cannot sign in at all: configureTestDeploy locks every invented login', async () => {
+    const { made, base } = await boot('staff');
     try {
-      const r = await browser().post(base, '/login', { email: 'sales@example.invalid', password: SEED_PASSWORD });
-      assert.equal(r.headers.get('location'), '/login/step');
+      await addStaff(made, 'tester@caprebate.co.uk');
+      const { configureTestDeploy } = (await import(new URL('../../../../../api/index.mjs', import.meta.url).href)) as {
+        configureTestDeploy: (m: unknown, env: Record<string, string>) => Promise<{ seed_logins_locked: number; why: string }> };
+      const r = await configureTestDeploy(made, {});
+      assert.ok(r.seed_logins_locked >= 5, `only ${r.seed_logins_locked} locked`);
+      for (const email of ['admin@example.invalid', 'sales@example.invalid', 'client@example.invalid']) {
+        const page = await browser().post(base, '/login', { email, password: SEED_PASSWORD });
+        assert.notEqual(page.headers.get('location'), '/login/step', `${email} reached the second step`);
+        assert.doesNotMatch(page.headers.getSetCookie().join(' '), /cb_session=[^;]+/);
+        const api = await fetch(`${base}/api/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password: SEED_PASSWORD }) });
+        assert.equal(api.status, 401, `${email} was let past the password`);
+      }
+      // A real tester's own login is untouched (Admin made it in Admin > Users) and gives its second step.
+      const own = await browser().post(base, '/login', { email: 'tester@caprebate.co.uk', password: SEED_PASSWORD });
+      assert.equal(own.headers.get('location'), '/login/step');
+      // A second start locks nothing new, and says so in the audit log only once.
+      assert.equal((await configureTestDeploy(made, {})).seed_logins_locked, 0);
+      assert.equal(Number(made.app.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM audit_log WHERE kind = 'SEED_LOGINS_LOCKED'")?.n), 1);
     } finally { made.close(); }
   });
 
-  test('the test website sets it, and nothing in src/ does', async () => {
+  test('the test website sets STAFF, and the exemption is gone from the code', async () => {
     const { TEST_WEBSITE_TWO_FACTOR } = (await import(new URL('../../../../../api/index.mjs', import.meta.url).href)) as { TEST_WEBSITE_TWO_FACTOR: string };
-    assert.equal(TEST_WEBSITE_TWO_FACTOR, 'staff-except-invented');
+    assert.equal(TEST_WEBSITE_TWO_FACTOR, 'staff');
     const { readFileSync } = await import('node:fs');
     const api = readFileSync(new URL('../../../../../api/index.mjs', import.meta.url), 'utf8');
     assert.match(api, /twoFactor: TEST_WEBSITE_TWO_FACTOR/);
+    assert.doesNotMatch(api, /'staff-except-invented'/);
     const { readdirSync } = await import('node:fs');
     const walk = (dir: URL): string[] => readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
       e.isDirectory() ? walk(new URL(`${e.name}/`, dir)) : e.name.endsWith('.ts') ? [readFileSync(new URL(e.name, dir), 'utf8')] : []);
-    const setters = walk(new URL('../../src/', import.meta.url)).filter((t) => /twoFactor:\s*'staff-except-invented'/.test(t));
-    assert.equal(setters.length, 0, 'a file under src/ sets the invented-login exemption');
+    const left = walk(new URL('../../src/', import.meta.url)).filter((t) => /'staff-except-invented'|'STAFF_EXCEPT_INVENTED'/.test(t));
+    assert.equal(left.length, 0, 'a file under src/ still carries the invented-login exemption');
   });
 });
 

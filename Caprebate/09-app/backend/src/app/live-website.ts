@@ -8,7 +8,7 @@
  *
  * WHAT THE LIVE WEBSITE NEVER HAS (each is set in api/index.mjs for the test website only, and never here):
  *   no invented seed (and a database holding one is refused), no demo logins, no test password, no test letter, no test
- *   signing, no notices test banner, no STAFF_EXCEPT_INVENTED (every staff login gives a second step: the default), no
+ *   signing, no notices test banner, no outbox page (/staff/dev-outbox), every staff login gives a second step, no
  *   memory database (a database that cannot be opened stops the website, it never falls back), and form tokens on.
  * A test-only setting found in the live project's settings stops the start, so one copied across by mistake is seen.
  *

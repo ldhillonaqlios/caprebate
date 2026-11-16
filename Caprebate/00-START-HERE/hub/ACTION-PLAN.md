@@ -664,11 +664,21 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   while a step is left. createApp(..., { twoFactor: 'off' }) is for the older
   test files and tools/payload-proof.ts ONLY - never src/ or api/. On the
   test website emails are not sent, so use the authenticator app there.
-  SINCE 29 SEP 2026 (Lakhbir): on the test website ONLY, a login at the
-  reserved domain example.invalid (the invented seed logins) asks for no
-  second step - policy STAFF_EXCEPT_INVENTED, set by api/index.mjs
-  (TEST_WEBSITE_TWO_FACTOR), never by src/ and never the default; every other
-  login still must give one (test/core/invented-logins.test.ts). A sign-in step
+  SINCE 16 NOV 2026 (Phase 161n1a, ITRoadway's second review H-01): the
+  test website's policy is STAFF, like the live one - every staff login
+  gives the second step, the invented ones included (TEST_WEBSITE_TWO_FACTOR
+  in api/index.mjs; STAFF_EXCEPT_INVENTED, which let the example.invalid
+  logins skip it from 29 Sep 2026, is gone from the code). There, the
+  invented seed logins are LOCKED at every start (lockSeedLogins) and cannot
+  sign in; there is no shared password (CAPREBATE_TEST_PASSWORD is read no
+  more). Lakhbir's Admin login is made once with "node src/app/cli.ts
+  first-admin --email ... --name ..." (temporary password shown once on his
+  screen, against the test website's database with CAPREBATE_DB_URL and
+  CAPREBATE_DB_TOKEN set for the run); he makes one login per tester in
+  Admin > Users. Emails are never sent there: Admin reads them at
+  /staff/dev-outbox (demo and test website only; refused on the live start).
+  Proved in test/core/invented-logins.test.ts and
+  test/core/test-website-locked.test.ts. A sign-in step
   lives in the database, so ON MEMORY each copy of the website has its own
   and a step begun on one is "timed out" on the next - reproduced that day;
   the time-out page now says so (stepGoneWhy). Sessions live there too.

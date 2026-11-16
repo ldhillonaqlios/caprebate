@@ -3612,8 +3612,9 @@ The four things Phase 151j left, none waiting on anybody:
   minutes, a link 30). *(Phase 154a1, 4 October 2026: the function log no longer prints an outbox row at all — counts and kinds only — and sending is on for testing.)*
 - **The screenshot tool** (`04-phase-work/phase144/tools/crawl-shots.mjs`) signs in through
   `tools/demo-sign-in.ts` and the JSON API's steps: on a demo just started it sets up an authenticator app for each
-  staff login and makes the codes itself; an emailed code it reads from the demo's console (`npm run start:demo >
-  demo.log`, then `CB_DEMO_LOG=demo.log`). It refuses any login not `@example.invalid` and any website not on this
+  staff login and makes the codes itself; an emailed code it reads from the demo's outbox page, `/staff/dev-outbox`,
+  as the run's Admin sees it (since Phase 161n1a the demo prints no email to its console, only "email of kind X
+  queued"). It refuses any login not `@example.invalid` and any website not on this
   machine, so it never touches the test website's logins. **What it can no longer reach:** a login whose app was set up
   before the run (it never held the key) and a login with a temporary password to replace — it says which, and why, as
   "NOT REACHED", and a fresh demo reaches them all. Run on 28 September 2026: before, the staff logins reached only the

@@ -11,10 +11,11 @@
  *       (src/core/totp.ts). The key is kept only in this process, for this run.
  *   GIVE A CODE
  *       an app it set up in this run: the next code from the key it holds;
- *       an emailed code: read from what the demo prints to its console (`npm run start:demo > <file>`, named to the tool
- *       as CB_DEMO_LOG). The demo prints every email it would have sent, and a sign-in code is one of them.
+ *       an emailed code: read from the demo's outbox page, /staff/dev-outbox, which an Admin signed in by this run opens
+ *       (`readOutbox`). Since Phase 161n1a (ITRoadway's second review, L-06) the demo no longer prints emails to its
+ *       console: a code or a link in a terminal is one anybody sharing it can use.
  *   ANYTHING ELSE IT DOES NOT DO, AND SAYS WHICH LOGIN IT COULD NOT REACH AND WHY: a temporary password to replace; an
- *       app set up before this run, whose key it never held; an emailed code with no console to read.
+ *       app set up before this run, whose key it never held; an emailed code with no outbox page to read.
  *
  * NEVER A REAL PERSON'S ACCOUNT. It refuses any address not ending in @example.invalid (the seed's invented logins) and
  * any website not on this machine (localhost, 127.0.0.1 or ::1) - so it can never set up a second step on the test
@@ -29,8 +30,8 @@ export type SignedIn = { readonly ok: true; readonly cookies: readonly Cookie[];
 export type NotSignedIn = { readonly ok: false; readonly why: string };
 
 export type DemoSignInOptions = {
-  /** The demo's console output so far, for an emailed code. Absent: an emailed code cannot be read. */
-  readonly readDemoLog?: () => string;
+  /** The demo's outbox page (/staff/dev-outbox, as an Admin of this run sees it), for an emailed code. Absent: none is read. */
+  readonly readOutbox?: () => Promise<string>;
   /** App keys this run set up, by address. Filled in here; pass the same map for the whole run. */
   readonly appKeys?: Map<string, string>;
   /** The clock, in milliseconds. Tests pass the server's. */
@@ -61,12 +62,19 @@ async function post(base: string, path: string, body: Record<string, unknown>): 
   return { status: r.status, body: parsed, cookies };
 }
 
-/** The last sign-in code the demo printed for this address, in its own console line. */
-export function codeFromDemoLog(log: string, email: string): string | null {
-  const esc = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  // The branded email (Phase 161m2): its heading "Your sign-in code", then the code on a line of its own.
-  const all = [...log.matchAll(new RegExp(`--- outbox \\(not sent\\) to ${esc}: Your Cap Rebate sign-in code\\s+Your sign-in code\\s+(\\d{6})\\s`, 'g'))];
-  return all.length === 0 ? null : all[all.length - 1]?.[1] ?? null;
+/**
+ * The newest sign-in code on the outbox page for this address, with the email's id (newest first on the page), or null.
+ * The branded email (Phase 161m2): its heading "Your sign-in code", then the code on a line of its own.
+ */
+export function codeFromOutboxPage(page: string, email: string): { id: string; code: string } | null {
+  const to = `to ${email.toLowerCase()} ·`;
+  for (const part of page.split('<section class="card"').slice(1)) {
+    if (!part.includes('Your Cap Rebate sign-in code') || !part.toLowerCase().includes(to)) continue;
+    const id = /data-id="([^"]+)"/.exec(part)?.[1] ?? '';
+    const code = /Your sign-in code\s+(\d{6})\s/.exec(part)?.[1];
+    if (code !== undefined) return { id, code };
+  }
+  return null;
 }
 
 export async function demoSignIn(base: string, email: string, password: string, opts: DemoSignInOptions = {}): Promise<SignedIn | NotSignedIn> {
@@ -74,8 +82,8 @@ export async function demoSignIn(base: string, email: string, password: string, 
   if (!isOnThisMachine(base)) return { ok: false, why: `${base} is not on this machine, so no login there was signed in: this is for the demo only` };
   const now = opts.nowMs ?? (() => Date.now());
   const keys = opts.appKeys ?? new Map<string, string>();
-  // Only what the demo prints from here on: an older code for the same login must never be read as this one.
-  const logFrom = opts.readDemoLog === undefined ? 0 : opts.readDemoLog().length;
+  // Only an email saved from here on: an older code for the same login must never be read as this one.
+  const before = opts.readOutbox === undefined ? null : codeFromOutboxPage(await opts.readOutbox(), email)?.id ?? null;
 
   const first = await post(base, '/api/login', { email, password });
   if (first.status === 200) return { ok: true, cookies: first.cookies, how: 'password alone' };
@@ -110,20 +118,21 @@ export async function demoSignIn(base: string, email: string, password: string, 
     return { ok: false, why: `${email}: the app code was not taken` };
   }
   if (step.needs === 'GIVE_CODE' && step.method === 'EMAIL') {
-    if (opts.readDemoLog === undefined) {
-      return { ok: false, why: `${email} is asked for an emailed code, and the tool was not given the demo's console to read it from (CB_DEMO_LOG)` };
+    if (opts.readOutbox === undefined) {
+      return { ok: false, why: `${email} is asked for an emailed code, and the tool was not given the demo's outbox page to read it from (sign in the Admin first)` };
     }
     const until = Date.now() + (opts.waitMs ?? 3000);
     let code: string | null = null;
     for (;;) {
-      code = codeFromDemoLog(opts.readDemoLog().slice(logFrom), email);
+      const found = codeFromOutboxPage(await opts.readOutbox(), email);
+      if (found !== null && found.id !== before) code = found.code;
       if (code !== null || Date.now() > until) break;
       await new Promise((r) => setTimeout(r, 250));
     }
-    if (code === null) return { ok: false, why: `${email}: no sign-in code for it was found in the demo's console` };
+    if (code === null) return { ok: false, why: `${email}: no new sign-in code for it was found on the demo's outbox page` };
     const done = await giveCode(code);
     if (done.status !== 200) return { ok: false, why: `${email}: the emailed code was not taken (${String(done.body.error ?? done.status)})` };
-    return { ok: true, cookies: done.cookies, how: 'emailed code, read from the demo console' };
+    return { ok: true, cookies: done.cookies, how: 'emailed code, read from the demo outbox page' };
   }
   return { ok: false, why: `${email}: a step the tool does not know (${String(step.needs ?? step.error ?? 'none')})` };
 }

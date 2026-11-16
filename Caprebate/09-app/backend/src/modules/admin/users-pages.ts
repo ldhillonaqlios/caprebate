@@ -4,6 +4,7 @@
  * Phase 162); the header is the back office's own (`staffShell`, which is what the staff pages' `nav` drew).
  */
 import { APP_ROLES, TEMPORARY_PASSWORD_DAYS, customRoleOf, kpiRow, staffShell, type Actor } from '../../core/index.ts';
+import type { DevOutboxRow } from '../../integrations/index.ts';
 import { h, localStamp, localWhen, page, raw } from '../../shared/index.ts';
 import type * as S from './settings.ts';
 
@@ -40,6 +41,30 @@ export function stoppedAddressesPage(actor: Actor, rows: readonly S.StoppedAddre
               <button class="linkish" type="submit">This address works again</button></form></td>
           </tr>`)}</tbody></table>`}
       <p><a href="/staff/settings">Back to your account</a></p>`,
+  });
+}
+
+/**
+ * PHASE 161n1a (L-06): THE OUTBOX PAGE, on the demo and the test website only. Nothing is emailed there, so a person
+ * signing up or signing in reads their link or code here, from Admin, and no log ever holds one.
+ */
+export function devOutboxPage(actor: Actor, rows: readonly DevOutboxRow[], limit: number): string {
+  return page({
+    title: 'Emails saved, not sent', nav: nav(actor), wide: true,
+    body: h`
+      <h1>Emails saved, not sent</h1>
+      <p class="help">This website sends no email. Each email it would have sent is kept here, newest first. You see the
+      last ${String(limit)}. Sign-in codes and the links in sign-up and reset emails are here too. Only an Admin can
+      open this page. The live website does not have it.</p>
+      ${rows.length === 0
+        ? h`<p class="help" id="dev-outbox-empty">No emails have been saved yet.</p>`
+        : h`<div id="dev-outbox">${rows.map((r) => h`<section class="card" data-id="${r.id}" data-kind="${r.kind}">
+            <h2>${r.subject}</h2>
+            <p class="help">To ${r.to_email} · ${r.kind} · saved ${stamp(r.created_at)}${r.sent_at === null ? '' : h` · marked sent ${stamp(r.sent_at)}`}</p>
+            ${r.links.length === 0 ? raw('') : h`<ul>${r.links.map((l) => h`<li><a href="${l}">${l}</a></li>`)}</ul>`}
+            <details><summary>The email</summary><pre style="white-space:pre-wrap">${r.body}</pre></details>
+          </section>`)}</div>`}
+      <p><a href="/staff/admin">Back to Settings</a></p>`,
   });
 }
 

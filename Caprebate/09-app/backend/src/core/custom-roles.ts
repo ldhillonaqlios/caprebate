@@ -53,6 +53,8 @@ export const CUSTOM_ROLE_PREFIX = 'ROLE_';
 /** Hard limit 2. Accounts and roles are the super admin's alone. */
 export const NEVER_GRANTED: readonly string[] = Object.freeze([
   'user.create', 'user.update', 'user.disable', 'user.assign_role', 'user.list', 'role.manage',
+  // PHASE 161n1a (L-06): the saved emails carry sign-in codes and links into other people's accounts. Admin's alone.
+  'dev_outbox.read',
 ]);
 
 /** Hard limit 1. What a role that can survey may never hold: the estimate, and every figure that reveals it. */
