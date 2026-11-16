@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 5 |
+| Ready - Claude can build | 4 |
 | Ready - Lakhbir action | 32 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 374 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1512,10 +1512,11 @@
 
 ### Phase 161n1a - Lock down the test website: a login per tester, the second step for every staff login, no real keys and no real people (ITRoadway second review, 16 Nov 2026)
 
-`13556703885` · **Ready - Claude can build** · owner Claude
+`13556703885` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: H-01 (code part), M-07, L-06. Lakhbir changes the keys that were on the test website and gives the testers' names; the DPO confirms no real people on the test website.
+- Note 2026-11-16 (Phase 161n1a): Claimed on the Mac; branch claude/phase-161n1a from main (the phase prompt from PR 108 cherry-picked so the branch carries it).
 
 ### Phase 161n1b - Sign-in and sessions: no lockout by strangers, sign out everywhere, idle time-out, reset links, key changes without an outage (ITRoadway second review, 16 Nov 2026)
 
