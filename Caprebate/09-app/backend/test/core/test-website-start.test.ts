@@ -94,10 +94,10 @@ import { secretsFromEnvironment } from '../../src/core/secrets.ts';
 import { IDENTITY_CHECK, identityCheckMissing } from '../../src/integrations/connectors/identity-check.ts';
 
 type Configure = (made: Awaited<ReturnType<typeof createApp>>, env: Record<string, string | undefined>) =>
-  Promise<{ readonly password_changed: boolean; readonly keys_loaded: readonly string[]; readonly why: string }>;
-async function entry(): Promise<{ configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[] }> {
+  Promise<{ readonly seed_logins_locked: number; readonly keys_loaded: readonly string[]; readonly refused_set: readonly string[]; readonly why: string }>;
+async function entry(): Promise<{ configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[]; TEST_WEBSITE_REFUSED_KEYS: readonly string[] }> {
   const url = new URL('../../../../../api/index.mjs', import.meta.url).href;
-  return (await import(url)) as { configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[] };
+  return (await import(url)) as { configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[]; TEST_WEBSITE_REFUSED_KEYS: readonly string[] };
 }
 const DIDIT_ENV = { DIDIT_API_KEY: 'test-didit-key-not-real-151e', DIDIT_WEBHOOK_SECRET: 'test-didit-secret-not-real-151e', DIDIT_WORKFLOW_ID: '11111111-2222-3333-4444-151e00000001' };
 async function made151e() {
@@ -117,7 +117,7 @@ describe('151e line 2 · the test website shows no file of ours (Word question 2
   });
 });
 
-describe('151e line 3 · Didit on the test website: keys from its settings, and only behind a password of its own', () => {
+describe('151e line 3, and 161n1a · the test website\'s keys: from its settings, and never one that reaches a real person', () => {
   test('secretsFromEnvironment reads the names it is given and nothing else, and ignores an empty one', () => {
     const s = secretsFromEnvironment({ ...DIDIT_ENV, ANTHROPIC_API_KEY: 'x', DIDIT_WORKFLOW_ID: '' }, ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
     const mine = s.forOwner('DIDIT_IDV');
@@ -127,47 +127,52 @@ describe('151e line 3 · Didit on the test website: keys from its settings, and 
     assert.ok(!String(s).includes(DIDIT_ENV.DIDIT_API_KEY), 'the store printed a key');
   });
 
-  test('with no password of its own, the Didit keys are NOT loaded even when they are in the settings, and the seed password stands', async () => {
+  /* PHASE 161n1a, 16 Nov 2026 (ITRoadway's second review, H-01 and M-07): until then the test password unlocked real keys
+     (Didit, email, WhatsApp, Zoom, Homedata, the timer). Now no setting unlocks them: the test website reads none. */
+  test('with every real-service key in the settings, the test website reads none of them, and names each one to delete', async () => {
+    const { configureTestDeploy, TEST_DEPLOY_KEYS, TEST_WEBSITE_REFUSED_KEYS } = await entry();
+    const made = await made151e();
+    try {
+      const all: Record<string, string> = { ANTHROPIC_API_KEY: 'must-not-load', CAPREBATE_TEST_PASSWORD: 'an-invented-test-password-161n1a' };
+      for (const k of [...TEST_DEPLOY_KEYS, ...TEST_WEBSITE_REFUSED_KEYS]) all[k] ??= `invented-value-161n1a-${k.toLowerCase()}`;
+      Object.assign(all, DIDIT_ENV, { CAPREBATE_MFA_KEY: rb151e(32).toString('base64') });
+      const r = await configureTestDeploy(made, all);
+      assert.deepEqual([...r.keys_loaded].sort(), [...TEST_DEPLOY_KEYS].sort());
+      assert.deepEqual([...r.refused_set].sort(), [...TEST_WEBSITE_REFUSED_KEYS].sort());
+      for (const k of TEST_WEBSITE_REFUSED_KEYS) {
+        assert.ok(!made.app.secrets.names().includes(k), `${k} was read on the test website`);
+        assert.ok(!r.why.includes(all[k] ?? '\u0000'), `${k}'s value reached the log line`);
+      }
+      assert.notDeepEqual(identityCheckMissing(IDENTITY_CHECK, made.app.secrets), [], 'Didit\'s keys were read');
+      const { smtpLoginFromKeyFile, imapLoginFromKeyFile } = await import('../../src/integrations/index.ts');
+      assert.equal(smtpLoginFromKeyFile(made.app.secrets), null, 'the sending login was read: email would go out');
+      assert.equal(imapLoginFromKeyFile(made.app.secrets), null, 'the mailbox login was read');
+      assert.equal(made.app.secrets.forOwner('CLAUDE_DOCUMENTS').has('ANTHROPIC_API_KEY'), false);
+    } finally { made.close(); }
+  });
+
+  test('the keys it does read reach no real person, and the two lists never overlap', async () => {
+    const { TEST_DEPLOY_KEYS, TEST_WEBSITE_REFUSED_KEYS } = await entry();
+    assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY', 'CQC_SUBSCRIPTION_KEY', 'EPC_API_TOKEN', 'OS_DATA_HUB_API_KEY', 'TURNSTILE_SECRET_KEY', 'TURNSTILE_SITE_KEY']);
+    assert.deepEqual(TEST_DEPLOY_KEYS.filter((k) => TEST_WEBSITE_REFUSED_KEYS.includes(k)), []);
+    for (const prefix of ['IONOS_', 'DIDIT_', 'WHATSAPP_', 'ZOOM_', 'HOMEDATA_', 'REPLY_TIMER']) {
+      assert.ok(!TEST_DEPLOY_KEYS.some((k) => k.startsWith(prefix)), `a ${prefix} key is read on the test website`);
+      assert.ok(TEST_WEBSITE_REFUSED_KEYS.some((k) => k.startsWith(prefix)), `no ${prefix} key is named for deletion`);
+    }
+  });
+
+  test('the test password is read no more: it moves no login, and the seed password still opens nothing', async () => {
     const { configureTestDeploy } = await entry();
     const made = await made151e();
     try {
       const before = hashes(made);
-      const r = await configureTestDeploy(made, { ...DIDIT_ENV });
-      assert.equal(r.password_changed, false);
-      assert.deepEqual(r.keys_loaded, []);
-      assert.match(r.why, /password/);
-      assert.deepEqual(hashes(made), before);
-      assert.notDeepEqual(identityCheckMissing(IDENTITY_CHECK, made.app.secrets), [], 'real keys behind the public password');
-    } finally { made.close(); }
-  });
-
-  test('a password shorter than twelve characters is refused the same way: nothing changes, no key is loaded', async () => {
-    const { configureTestDeploy } = await entry();
-    const made = await made151e();
-    try {
-      const r = await configureTestDeploy(made, { ...DIDIT_ENV, CAPREBATE_TEST_PASSWORD: 'short' });
-      assert.equal(r.password_changed, false);
-      assert.deepEqual(r.keys_loaded, []);
-    } finally { made.close(); }
-  });
-
-  test('with its own password: every login moves to it, the seed password stops working, and the three Didit keys — only those — are read', async () => {
-    const { configureTestDeploy, TEST_DEPLOY_KEYS } = await entry();
-    const made = await made151e();
-    try {
-      const pw = 'an-invented-test-password-151e';
-      // 6 Oct 2026: the specimen of a key the test website never reads moved from Homedata (now read) to Anthropic.
-      const r = await configureTestDeploy(made, { ...DIDIT_ENV, ANTHROPIC_API_KEY: 'must-not-load', CAPREBATE_TEST_PASSWORD: pw });
-      assert.equal(r.password_changed, true);
-      assert.deepEqual([...r.keys_loaded].sort(), ['DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID']);
-      // PHASE 151k added the fourth: the key that seals the authenticator app secret (src/core/mfa-seal.ts).
-      assert.deepEqual([...TEST_DEPLOY_KEYS].sort(), ['CAPREBATE_MFA_KEY', 'COMPANIES_HOUSE_API_KEY', 'CQC_SUBSCRIPTION_KEY', 'DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'DIDIT_WORKFLOW_ID', 'EPC_API_TOKEN', 'HOMEDATA_API_KEY', 'IONOS_IMAP_HOST', 'IONOS_IMAP_PASSWORD', 'IONOS_IMAP_PORT', 'IONOS_IMAP_USER', 'IONOS_SMTP_HOST', 'IONOS_SMTP_PASSWORD', 'IONOS_SMTP_PORT', 'IONOS_SMTP_USER', 'OS_DATA_HUB_API_KEY', 'REPLY_TIMER_TOKEN', 'TURNSTILE_SECRET_KEY', 'TURNSTILE_SITE_KEY', 'WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_APP_SECRET', 'WHATSAPP_OPENING_TEMPLATE', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_TEMPLATE_LANGUAGE', 'WHATSAPP_VERIFY_TOKEN', 'ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET', 'ZOOM_HOST_EMAIL', 'ZOOM_PLAN', 'ZOOM_SDK_CLIENT_ID', 'ZOOM_SDK_CLIENT_SECRET']);
-      for (const u of hashes(made)) {
-        assert.equal(await made.app.hasher.verify(u.password_hash, pw), true, `${u.email} did not move to the test password`);
-        assert.equal(await made.app.hasher.verify(u.password_hash, SEED_PASSWORD), false, `${u.email} still takes the public seed password`);
-      }
-      assert.deepEqual(identityCheckMissing(IDENTITY_CHECK, made.app.secrets), []);
-      assert.equal(made.app.secrets.forOwner('CLAUDE_DOCUMENTS').has('ANTHROPIC_API_KEY'), false);
+      const r = await configureTestDeploy(made, { CAPREBATE_TEST_PASSWORD: 'an-invented-test-password-161n1a' });
+      assert.deepEqual(hashes(made), before, 'a password changed');
+      assert.ok(r.seed_logins_locked >= 5);
+      assert.ok(r.refused_set.includes('CAPREBATE_TEST_PASSWORD'));
+      const open = made.app.db.all<{ email: string }>('SELECT email FROM users WHERE disabled_at IS NULL');
+      assert.deepEqual(open, [], 'an invented login can still sign in');
+      void SEED_PASSWORD;
     } finally { made.close(); }
   });
 });

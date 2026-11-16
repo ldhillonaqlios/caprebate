@@ -425,6 +425,10 @@ export function insertUsers(db: Db, params: readonly Param[] = []): { changes: n
   return db.run('INSERT INTO users (id, email, email_canonical, display_name, role, password_hash, disabled_at, created_at, updated_at, business_id) ' +
     'VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)', params);
 }
+// Phase 161n1a: every Admin login that can sign in (makeFirstAdmin, src/core/sign-in.ts).
+export function listUsersIdEmailCanonicalByRoleAdminOpen<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>("SELECT id, email_canonical FROM users WHERE role = 'ADMIN' AND disabled_at IS NULL", params);
+}
 export function listUsersIdByRole<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
   return db.all<T>('SELECT id FROM users WHERE role = ?', params);
 }

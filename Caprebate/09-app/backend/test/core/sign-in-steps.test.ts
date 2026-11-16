@@ -400,8 +400,8 @@ describe('151j · a forgotten password: an emailed link, the same answer for any
   });
 });
 
-describe('151j · the test website keeps a password a person chose', () => {
-  test('configureTestDeploy moves only the logins still on the public seed password', async () => {
+describe('151j, and 161n1a · the test website keeps a password a person chose, and no shared one', () => {
+  test('configureTestDeploy changes no password: a chosen one stands, and the test password is read no more', async () => {
     const w = await world();
     try {
       w.db.run('UPDATE users SET password_hash = ? WHERE email_canonical = ?', [await w.made.app.hasher.hash('my-own-invented-password'), 'sales@example.invalid']);
@@ -410,7 +410,7 @@ describe('151j · the test website keeps a password a person chose', () => {
       await configureTestDeploy(w.made, { CAPREBATE_TEST_PASSWORD: 'an-invented-test-password-151j' });
       const hash = (e: string) => w.db.get<{ h: string }>('SELECT password_hash AS h FROM users WHERE email_canonical = ?', [e])!.h;
       assert.equal(await w.made.app.hasher.verify(hash('sales@example.invalid'), 'my-own-invented-password'), true, 'a chosen password was overwritten');
-      assert.equal(await w.made.app.hasher.verify(hash('admin@example.invalid'), 'an-invented-test-password-151j'), true);
+      assert.equal(await w.made.app.hasher.verify(hash('admin@example.invalid'), 'an-invented-test-password-151j'), false, 'the shared test password was handed out');
     } finally { w.close(); }
   });
 });

@@ -29,7 +29,7 @@ import { handleWhatsAppImport } from '../modules/crm/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { AuthError, IMAGE_LIMITS, PHOTO_HEADERS, SESSION_COOKIE_NAME, WELCOME_JOBS, changeOwnPassword, clearPhoto, dismissWelcome, findById, getSessionsIdByTokenHashRevokedAt, getUsersNById, hashToken, keepSectionChoice, kpiRow, lateBadge, navContext, nobodyBadge, piecesPage, readPhoto, refillForm, setPhoto, setSubMenu, singleFile, staffHelp, typedValues, welcomeShown } from '../core/index.ts';
 import type { Actor, App, StaffRequest } from '../core/index.ts';
-import { adminConfiguration, adminConnections, adminPeopleAndKeys, adminRulesPage, adminSettingsTiles } from '../modules/admin/index.ts';
+import { adminConfiguration, adminConnections, adminDevOutbox, adminPeopleAndKeys, adminRulesPage, adminSettingsTiles } from '../modules/admin/index.ts';
 import { financeBilling, financePages } from '../modules/finance/index.ts';
 import type { FsObjectStore } from '../shared/index.ts';
 import { h, raw, page, HTML_HEADERS, type Safe } from '../shared/index.ts';
@@ -420,6 +420,9 @@ export async function handleStaff(
 
   /* ------------------ · every rule in force, its version and who approves it, read only (Admin; Phase 161m) */
   if ((mine = await adminRulesPage(w)) !== undefined) return mine;
+
+  /* ------------------ · the emails saved, not sent: the demo and the test website only (Admin; Phase 161n1a, L-06) */
+  if ((mine = await adminDevOutbox(w)) !== undefined) return mine;
 
   /* ------------------ SECTION 3 · writing to the client on the company's chat, and email replies to sort */
   const chat = await handleStaffMessages({ app: d.app, store: d.store, newId: d.newId, nav, problem, ...(d.publicOrigin === undefined ? {} : { publicOrigin: d.publicOrigin }) }, req, res, url, method, actor, form);

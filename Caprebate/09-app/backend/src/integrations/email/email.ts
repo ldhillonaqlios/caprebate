@@ -11,7 +11,7 @@
 import { createHash } from 'node:crypto';
 import type { Db } from '../../core/index.ts';
 import { plainDashLines, plainDashes } from '../../shared/index.ts';
-import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles } from '../data.ts';
+import { insertOutbox, insertOutboxAttachments, insertOutboxInlineFiles, listOutboxNewestForDevOutbox } from '../data.ts';
 
 /**
  * CALENDAR_INVITE IS THE SECOND STUBBED TRANSPORT AND IT IS NOT A SECOND STUB.
@@ -239,3 +239,19 @@ export const STUB_NOTICE =
 
 /** What a person reads after saving an email while sending is off. the owner's words. */
 export const SAVED_NOT_SENT = 'Saved — emails are not being sent yet.';
+
+/**
+ * PHASE 161n1a (L-06): THE OUTBOX PAGE'S ROWS. On the demo and the test website no email is sent, so a sign-in code or a
+ * confirmation link is read here by Admin (/staff/dev-outbox), never in a log. Each row with the links its body holds.
+ * The live website never has the page (src/app/server.ts refuses devOutbox there).
+ */
+export type DevOutboxRow = {
+  readonly id: string; readonly created_at: string; readonly kind: string; readonly to_email: string;
+  readonly subject: string; readonly body: string; readonly sent_at: string | null; readonly links: readonly string[];
+};
+export const DEV_OUTBOX_LIMIT = 100;
+export function devOutboxRows(db: Db, limit = DEV_OUTBOX_LIMIT): DevOutboxRow[] {
+  return listOutboxNewestForDevOutbox<Omit<DevOutboxRow, 'links'>>(db, [limit]).map((r) => ({
+    ...r, links: [...new Set(String(r.body).match(/https?:\/\/[^\s<>"')]+/g) ?? [])],
+  }));
+}

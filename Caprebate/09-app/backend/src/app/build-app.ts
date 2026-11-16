@@ -58,8 +58,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
 
   await primeTimingDefence(hasher);
 
-  const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF'
-    : opts.twoFactor === 'staff-except-invented' ? 'STAFF_EXCEPT_INVENTED' : 'STAFF' };
+  const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF' : 'STAFF' };
   made = { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
   return made;
 }

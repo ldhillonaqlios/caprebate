@@ -1107,3 +1107,5 @@ reasonably be established remotely should require a site inspection before a sur
 -  **And two drafts for you to change.** The tenure, and how the client holds the building (owner, landlord or tenant), are shown with where they came from. The BCIS location is now drafted from the property's council area, where the BCIS table names it; your choice of area, the UK mean included, always wins.
 
  **SV-S12 · Board item 13254543146, added 10 October 2026 by Phase 159g.** One entry, at Built - awaiting sign-off, owner the surveyor. **This register now has twelve entries covering twelve board items.**
+
+ **And the board's own total at the close of Phase 161n1a, 16 November 2026, counted in code: 145 items carry that status**: sixty-one in FOR THE ACCOUNTANT, twelve in FOR THE SURVEYOR, and seventy-two with the solicitor, the data protection officer and the developer. (Phase 161n1a: ITRoadway's second code review, SDP-V10, in FOR THE SOLICITOR, THE DPO AND THE DEVELOPER; it was 144. Nothing moved in or out of this register.)

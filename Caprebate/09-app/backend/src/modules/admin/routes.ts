@@ -7,8 +7,9 @@
  * which they still are: src/modules/admin/connections.ts, rules-page.ts, configuration-pages.ts, role-editor-pages.ts).
  * Each answers 'handled', or undefined for an address that is not its own.
  */
-import { clearPhoto, html, issueTemporaryPassword, opens, photoFor, redirect, resetTwoFactor, temporaryPassword, temporaryUntil, type StaffRequest, type WebResult } from '../../core/index.ts';
+import { authorise, clearPhoto, html, issueTemporaryPassword, opens, photoFor, redirect, resetTwoFactor, temporaryPassword, temporaryUntil, type StaffRequest, type WebResult } from '../../core/index.ts';
 import { page } from '../../shared/index.ts';
+import { DEV_OUTBOX_LIMIT, devOutboxRows } from '../../integrations/index.ts';
 import { settingsBody, settingsTiles } from './admin-tiles.ts';
 import { handleConfiguration } from './configuration-pages.ts';
 import { handleConnections } from './connections.ts';
@@ -16,7 +17,7 @@ import { handleRoleEditor, madeRoleChoices } from './role-editor-pages.ts';
 import { handleRulesPage } from './rules-page.ts';
 import { saveKey } from './saved-keys.ts';
 import * as S from './settings.ts';
-import { roleName, stoppedAddressesPage, temporaryPasswordPage, usersPage } from './users-pages.ts';
+import { devOutboxPage, roleName, stoppedAddressesPage, temporaryPasswordPage, usersPage } from './users-pages.ts';
 
 const mine = (r: WebResult): WebResult | undefined => (r === 'handled' ? 'handled' : undefined);
 
@@ -28,6 +29,17 @@ export async function adminSettingsTiles(w: StaffRequest): Promise<WebResult | u
     html(res, 200, page({ title: 'Settings', nav: nav(actor), wide: true, body: settingsBody(tiles) })); return 'handled';
   }
   return undefined;
+}
+
+/**
+ * PHASE 161n1a (L-06): the emails saved, not sent (Admin), ONLY where the website was started with devOutbox (the demo
+ * and the test website). Anywhere else the address is not ours, so it answers as any unknown address does.
+ */
+export async function adminDevOutbox(w: StaffRequest): Promise<WebResult | undefined> {
+  const { d, res, path, method, actor } = w;
+  if (path !== '/staff/dev-outbox' || method !== 'GET' || d.app.devOutbox !== true) return undefined;
+  authorise(actor, 'dev_outbox.read', { type: 'configuration', id: 'dev-outbox' });
+  html(res, 200, devOutboxPage(actor, devOutboxRows(d.app.db, DEV_OUTBOX_LIMIT), DEV_OUTBOX_LIMIT)); return 'handled';
 }
 
 /** Every outside service on one page, and the care regulators' lists (Admin). */

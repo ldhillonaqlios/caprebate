@@ -528,7 +528,8 @@ keeps meeting in older text. Do not rebuild, re-ask or re-list them.
     161h1, 161i, 161i1 (added 7 Nov 2026 by Phase 161i), 161j, 161k, 161l, 161l1 (added 9 Nov 2026 by Phase 161l), 161l2 (added 10 Nov 2026 by Phase 161l1) and 161m all run before go-live; none
     waits on a person. Then the sweep out of order (it ran as Phase 162 on
     11 Nov 2026; it is Phase 163 now), then 161n1 (the developer's live
-    website pack, 12 Nov 2026), then 161n2 goes live once its gate is open
+    website pack, 12 Nov 2026), then 161n1a to 161n1e (ITRoadway's second
+    code review, added 16 Nov 2026), then 161n2 goes live once its gate is open
     (the developer has set up hosting from the pack, including Vercel Pro and
     the live keys; the ICO number; every legal page approved; the other
     sign-offs), then the sweep again before the first client. If the gate
@@ -663,11 +664,21 @@ WHERE EVERYTHING LIVES - Caprebate/00-START-HERE/hub/, committed to git
   while a step is left. createApp(..., { twoFactor: 'off' }) is for the older
   test files and tools/payload-proof.ts ONLY - never src/ or api/. On the
   test website emails are not sent, so use the authenticator app there.
-  SINCE 29 SEP 2026 (Lakhbir): on the test website ONLY, a login at the
-  reserved domain example.invalid (the invented seed logins) asks for no
-  second step - policy STAFF_EXCEPT_INVENTED, set by api/index.mjs
-  (TEST_WEBSITE_TWO_FACTOR), never by src/ and never the default; every other
-  login still must give one (test/core/invented-logins.test.ts). A sign-in step
+  SINCE 16 NOV 2026 (Phase 161n1a, ITRoadway's second review H-01): the
+  test website's policy is STAFF, like the live one - every staff login
+  gives the second step, the invented ones included (TEST_WEBSITE_TWO_FACTOR
+  in api/index.mjs; STAFF_EXCEPT_INVENTED, which let the example.invalid
+  logins skip it from 29 Sep 2026, is gone from the code). There, the
+  invented seed logins are LOCKED at every start (lockSeedLogins) and cannot
+  sign in; there is no shared password (CAPREBATE_TEST_PASSWORD is read no
+  more). Lakhbir's Admin login is made once with "node src/app/cli.ts
+  first-admin --email ... --name ..." (temporary password shown once on his
+  screen, against the test website's database with CAPREBATE_DB_URL and
+  CAPREBATE_DB_TOKEN set for the run); he makes one login per tester in
+  Admin > Users. Emails are never sent there: Admin reads them at
+  /staff/dev-outbox (demo and test website only; refused on the live start).
+  Proved in test/core/invented-logins.test.ts and
+  test/core/test-website-locked.test.ts. A sign-in step
   lives in the database, so ON MEMORY each copy of the website has its own
   and a step begun on one is "timed out" on the next - reproduced that day;
   the time-out page now says so (stepGoneWhy). Sessions live there too.
@@ -1197,6 +1208,378 @@ command that counts it, never the number.
 ---
 
 
+## PHASE 161n1b — Sign-in and sessions: no lockout by strangers, sign out everywhere, idle time-out, reset links, key changes without an outage
+
+ **Model: Opus.** Board item 13556698259. **Written 16 November 2026** from ITRoadway's second code review (findings M-02, M-06, L-02, L-03, L-04, L-05, L-12, L-15), on Lakhbir's yes. **Why:** M-02 and M-06 are must-fix before real clients; the rest are small and in the same files. **Order:** after 161n1a, before 161n1c.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+WHAT IS THERE NOW: src/core/auth.ts: the login limit is keyed by email only
+(line 201, LOGIN_LIMIT 5 per 15 minutes) and blocks the right password too;
+changeOwnPassword (323-336) only rotates the current session; sessions last
+8 hours with no idle limit (line 51); requestPasswordReset and
+completePasswordReset (340-395) leave older links valid and check used_at
+outside the transaction. src/core/http.ts writes SameSite=Lax (line 59)
+while auth.ts:90 says Strict; clientIp (196-206) trusts X-Forwarded-For
+whenever CAPREBATE_TRUST_PROXY=1. src/core/mfa-seal.ts (103-118) has no old
+key during a change. live-website.ts:137 derives the upload-link secret
+from the database token. Read the review's steps for each first.
+
+AS PUT TO ITROADWAY in Lakhbir's reply (drafted 16 Nov 2026;
+read their answer on review item 13533383676 first, theirs may change it): L-02 keeps SameSite=Lax (email links into
+the portal keep working) and the code and documents are corrected to say
+Lax. Idle limits: 30 minutes staff, 2 hours clients (confirm in chat).
+
+CARRIED FROM PHASE 161n1a (16 Nov 2026): the paid gate in front of the test
+website (Vercel Deployment Protection, which needs Pro on the test project;
+review H-01 step 1) was not built. When ITRoadway's answer to Lakhbir's reply
+is on review item 13533383676, ask Lakhbir in chat whether they still want
+it; if yes and he buys Pro, he switches it on in caprebate-test > Settings >
+Deployment Protection, and this phase notes it in KEYS-AND-SWITCHES.md. If
+their answer is not there yet, carry this paragraph to Phase 161n1c.
+
+BUILD
+1. M-02: the limit is keyed by email plus source address; a looser per-email
+   count (50 an hour) only writes an audit row and emails the admin; a
+   correct password plus a correct second step is never blocked. Test: 10
+   wrong tries from address A, then the right password from B succeeds.
+2. M-06: a password change signs out every session (revokeAllSessions,
+   'PASSWORD_CHANGED') and issues a fresh one here; a "Sign out of all other
+   devices" button in Settings (staff and portal). Test: two sessions,
+   change the password in one, the other is refused.
+3. L-02: correct the SessionCookie type and the docs to Lax; a test that no
+   GET route changes data.
+4. L-03: authenticate() ends a session idle past the limit (reason IDLE);
+   the login page says why.
+5. L-04: a new reset link voids the older unused ones; the used_at check is
+   inside the UPDATE (changes = 0 refuses). Test: two parallel completions,
+   one success.
+6. L-05: CAPREBATE_TRUSTED_PROXIES; the header is used only from a listed
+   address, right-most untrusted entry. Vercel unchanged. LIVE-RUNBOOK.md.
+7. L-12: openSecret falls back to CAPREBATE_MFA_KEY_OLD and reseals; the
+   reseal command covers sign_in_steps.pending_secret; runbook section 8.
+8. L-15: CAPREBATE_UPLOAD_LINK_KEY in LIVE_REQUIRED and secrets.example.env,
+   used in place of uploadLinkSecret(db.authToken); a new line in Part 5 of
+   the developer's pack and KEYS-AND-SWITCHES.md (the developer sets it).
+
+ACCEPT
+- Each item's test passes; the second step still stops guessing.
+- The live start refuses a missing CAPREBATE_UPLOAD_LINK_KEY.
+- All four suites pass.
+- NEXT: Phase 161n1c.
+```
+
+
+## PHASE 161n1c — Uploads and public forms: the zip cap, the holding-place sweep, macro and script refusals, the scanner hook, flood limits, single-use tokens
+
+ **Model: Opus.** Board item 13556720755. **Written 16 November 2026** from ITRoadway's second code review (findings M-01, M-08, M-03, M-04, L-10), on Lakhbir's yes. **Why:** M-01 (proven: 299 KB expanded to 300 MB) and M-08 are must-fix before real clients. **Order:** after 161n1b, before 161n1d.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+WHAT IS THERE NOW: src/shared/zip.ts:69 readZipEntryFromBuffer inflates with
+no maxOutputLength (used by src/modules/crm/whatsapp-import.ts:117 and 263).
+src/modules/claims/documents/upload-handler.ts:856 runScheduledSweeps is
+exported and never called; nothing sweeps quarantine/. Uploads are checked
+by magic bytes, size and the PDF end marker, with no virus scan (214-243).
+src/modules/public-site/enquiries.ts:111 limits by email only; Turnstile is
+checked only when its keys and the DPO switch are set. src/core/form-
+token.ts:119-135 SENSITIVE misses the routes L-10 lists.
+
+AS PUT TO ITROADWAY in Lakhbir's reply (drafted 16 Nov 2026;
+read their answer on review item 13533383676 first, theirs may change it): the scanning service is the DEVELOPER's
+choice, as they host; this phase builds the hook and the refusals, off until
+a scanner is named. The Turnstile keys are the developer's to set.
+
+BUILD
+1. M-01: readZipEntryFromBuffer takes maxBytes; refuse on the declared size,
+   a ratio over 100, or past the cap (inflateRawSync maxOutputLength);
+   IMPORT_MAX_TEXT for the chat, IMPORT_MAX_FILE for attachments. A test
+   with a zip like the review's (built in the test, not committed as a file).
+2. M-08: the five-minute timer clears quarantine/ objects older than 60
+   minutes (sweepQuarantine, recordQuarantineDischarge, audit row
+   QUARANTINE_SWEPT), marks the run not ok if any were found; cli.ts
+   sweep-quarantine. Test with the clock moved 61 minutes.
+3. M-03: refuse macro-enabled Office files (vbaProject.bin, macroEnabled
+   types) and PDFs with /JavaScript, /JS, /Launch or /EmbeddedFile, each
+   refusal audit-logged with a plain message to the client. A scanner port
+   (src/integrations/connectors) called before a file is stored, switched
+   off with no service named; its row on Connections; a line in the pack.
+4. M-04: a per-address limit on the enquiry, the assessment submit and
+   sign-up ('enquiry-from:' + hashToken(clientIp)), a hidden honeypot field,
+   a cap on acknowledgement emails an hour; on the live start Turnstile is
+   required (refuse the form without a passing check, never "kept as
+   before"). Cloudflare on the outside services list for the DPO.
+5. L-10: add the break fee, introducer fee settled and disclosure, introducer
+   merge and terms-signed, engagement send and /portal/letter/sign to
+   SENSITIVE; the claims and leads CSV export becomes a POST with a
+   single-use token; test/phase161b.test.ts holds every route that raises an
+   invoice or records a payment to it.
+
+ACCEPT
+- The zip test is refused fast and small; the sweep test clears the object.
+- A macro DOCX and a scripted PDF are refused with a plain message.
+- All four suites pass.
+- NEXT: Phase 161n1d.
+```
+
+
+## PHASE 161n1d — Alerts, backups and headers: an email when a job fails, backups the website cannot delete, HSTS, the load test
+
+ **Model: Opus.** Board item 13556691306. **Written 16 November 2026** from ITRoadway's second code review (findings M-10, M-09, L-01, L-14), on Lakhbir's yes. **Why:** M-09 and M-10 are must-fix before real clients: a failed backup is seen by nobody, and the website can delete its own backups. **Order:** after 161n1c, before 161n1e.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+WHAT IS THERE NOW: a failed timer run answers 500 and writes one log line
+(src/app/router.ts:250-262, timers.ts:177-188); Vercel Cron does not alert.
+src/integrations/backup.ts:160-186 calls target.remove for deleted
+documents, and the bucket user may DeleteObject (LIVE-RUNBOOK.md section 7).
+No HSTS or Permissions-Policy (src/shared/html.ts:164). The backup copies
+the whole database into /tmp within 200 s, never tried at size.
+
+AS PUT TO ITROADWAY in Lakhbir's reply (drafted 16 Nov 2026;
+read their answer on review item 13533383676 first, theirs may change it): the bucket settings (Versioning, Object Lock
+35 days, no delete right, a restore user, AWS root two-step) are the
+DEVELOPER's; this phase writes them into the pack and the runbook.
+
+BUILD
+1. M-10: a timer_runs table (job, at, ok, line; a migration); a run not ok
+   queues an email to the admin and the developer with the job name and
+   counts only; the five-minute job alerts when no good backup ran in 26
+   hours; "audit chain BROKEN" emails at once; a last-good-run line per job
+   on Admin's Connections page. Ask Lakhbir for the two addresses; a
+   setting, never in the code.
+2. M-09: backup.ts stops deleting backups (the state file still marks them
+   so the restore skips them); LIVE-RUNBOOK.md section 7 and Part 7 of the
+   developer's pack: Versioning, Object Lock in Governance mode 35 days,
+   PutObject and GetObject only, lifecycle expiry at 35 days, a read-only
+   restore user kept out of Vercel, root two-step and no root keys.
+3. L-01: strict-transport-security max-age=31536000; includeSubDomains and
+   permissions-policy camera=(), microphone=(), geolocation=(), payment=()
+   on every response (camera and microphone allowed on the video-call page
+   only). Preload later, written in the runbook.
+4. L-14: a load test (tools/) that fills a copy with a year of invented
+   records, times the key staff pages and the backup, and writes the result
+   in the record; an alert when the database passes 200 MB. Ask the
+   developer through Lakhbir to check turso db locations for London.
+
+ACCEPT
+- A failing timer in a test queues the email and writes timer_runs.
+- A backup run in a test deletes nothing.
+- The headers are on HTML, JSON and file responses.
+- The load test's figures are in the record.
+- All four suites pass.
+- NEXT: Phase 161n1e.
+```
+
+
+## PHASE 161n1e — Repository, build and release: personal emails out, private once the developer has access, lock file, pinned Actions, protected live branch
+
+ **Model: Opus.** Board item 13556689508. **Written 16 November 2026** from ITRoadway's second code review (findings H-02, M-05, L-07, L-08, L-09, L-11, L-13; answers D12, D15), on Lakhbir's yes. **Why:** H-02 is must-fix: the repository is public, on purpose so ITRoadway can read it, and it carries personal email addresses and internal papers. **Order:** last of 161n1a to 161n1e, then 161n2.
+
+```text
+═══ FIRST, BEFORE ANYTHING ELSE ═══
+This is the Caprebate build. Lakhbir pasted this phase from the monday.com
+RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
+board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
+OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
+github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
+Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
+OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
+(quote it: it has spaces). git pull, then git log --oneline. Read THE
+STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
+and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
+(commit and push first; a claim already there stops you). Set this phase's
+board item to "Working on it" and fill "Claimed by (machine)". Work on a
+claude/... branch from main; never push to main; open the pull request
+against main (never stacked); Lakhbir merges. Retag what you touch and give
+every loose end a home.
+
+KEEP ONEDRIVE UP TO DATE, all the way through:
+- monday is where we run and track the work; OneDrive (the repository) is the
+  full copy. Every document you write or change goes in OneDrive, never only
+  on monday.
+- Every board change you make is written to hub/TRACKER.csv too
+  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
+  the tracker check and --self-test pass.
+- The board is shared: no client data and no keys on it.
+- Commit and push as you go.
+
+WHEN THE PHASE IS DONE, in this order:
+1. Write the full record at the end of hub/PHASE-HISTORY.md.
+2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
+   (update_doc, add_markdown_content, no after_block_id), and the same entry
+   at the top of your PHASE-HISTORY record.
+3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
+4. Set this phase's board item to its true status (Done goes to group Z) and
+   clear "Claimed by (machine)"; write both to the tracker.
+5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
+   plain lines what was done and what is next.
+═══════════════════════════════════
+
+WHAT IS THERE NOW: the repository is PUBLIC (checked 16 Nov 2026). .gitignore
+lines 711-716 commit 00-START-HERE/hub/. No root package-lock.json; vercel.ts
+installs with npm install --omit=dev; includeFiles carries Caprebate/**
+(vercel.ts:37). Actions pinned by tag; the devcontainer sshd feature is
+"latest"; the live branch has no rule. Caprebate site.html has 27 innerHTML
+uses. The postcode refresh tool still sits in 04-phase-work.
+
+AS PUT TO ITROADWAY in Lakhbir's reply (drafted 16 Nov 2026;
+read their answer on review item 13533383676 first, theirs may change it): the repository stays public until ITRoadway
+send their engineer's GitHub username, then it goes private the same day
+with them invited; NO history rewrite (their scan found no keys, and what
+was public cannot be recalled). L-07 last, as it carries no risk today.
+
+BUILD
+1. H-02: replace every personal email address in the tracked tree with a
+   role address (grep @icloud, @gmail, @aqlios; COMMENTS-ARCHIVE.md is a
+   record: ask Lakhbir before touching it). Whether the hub stops being
+   tracked is Lakhbir's call, because the tracker and the plan would leave
+   pull requests: put it to him in chat with what changes, and do it only on
+   his yes. Making the repository private and inviting the engineer: on his
+   yes, once the username is in.
+2. M-05: npm install --package-lock-only at the root; commit it (allow-list
+   in .gitignore); vercel.ts installCommand npm ci --omit=dev; checks.yml
+   audits the committed lock; .github/dependabot.yml for both package files
+   and github-actions.
+3. L-08: actions/checkout and actions/setup-node pinned to full SHAs with
+   the version in a comment; the sshd feature pinned or removed.
+4. L-11: a ruleset on refs/heads/live (no direct push, no force, no delete,
+   bypass for GitHub Actions only) and an environment "live" with Lakhbir
+   (and the engineer) as reviewers; environment: live on the release job;
+   the check step also requires app slug github-actions. GitHub settings on
+   Lakhbir's yes in chat; LIVE-RUNBOOK.md sections 5 and 8.
+5. L-13: includeFiles carries only what the app reads (Caprebate/09-app/**
+   and what lint:paths lists); a test-website deploy and the smoke test.
+6. L-09: npm update @vercel/blob @types/node; the Anthropic SDK 1.x move is
+   a tracker row for after go-live (D1, by mid-February 2027).
+7. D12 and D15: the postcode refresh tool into backend/tools (runbook
+   section 10); CODEOWNERS naming the engineer for architecture/*.json.
+8. L-07: textContent and createElement in place of innerHTML in engine/src
+   (npm run page), and verify-page.cjs fails on a new innerHTML use.
+
+ACCEPT
+- No personal address left in the tracked tree (the grep in the record).
+- Vercel builds the test website with npm ci from the committed lock.
+- A direct push to live is refused (once the ruleset is on).
+- All four suites pass.
+- NEXT: Phase 161n2 (its gate line 13 is these five phases).
+```
+
+
 ## PHASE 161n2 — Go live: once the developer has set up hosting from the pack and the gate is open, the live website switched on and proved
 
  **Model: Opus.** Board item 13488910486. **Written 6 November 2026; split 12 November 2026** (Lakhbir: "Yes, split and build"; "hosting will be done by developer - you will create a developer pack that tells them whats needed and why"). Phase 161n1 (board 13533159534) wrote the pack: `Caprebate/06-commercial-and-governance/Cap Rebate - live website pack for the developer (12 Nov 2026).docx`. The developer, not Claude, makes the live Vercel project, the stores, the database, the backup bucket, the domain records and the keys; this phase checks their work and switches the website on. **Why:** Lakhbir, 6 Nov 2026: "review all the phases see exactly what can be run before going live, restructure them". Everything Claude can build runs before this one (161h to 161m, then the sweep). This phase is the switch: it waits for its gate, which is people's work, then turns the live website on. **Order (6 Nov 2026):** after 161m and the sweep; the sweep runs again after it, before the first client.
@@ -1289,6 +1672,9 @@ which lines are left, set this item to its true status, and stop.
 12. GO-LIVE-CHECKLIST.md (Phase 161h): lines 1 to 11 ticked, each with its
     evidence; Word questions 291 (where the data is kept) and 292 (how long
     backups are kept) answered.
+13. Phases 161n1a to 161n1e (ITRoadway's second code review, 12 Nov 2026)
+    merged, and ITRoadway's re-check of the must-fix items back, or
+    Lakhbir's word to go without it (review item 13533383676).
 
 BUILD (only once every gate line is open)
 1. The live project on Pro, made BY THE DEVELOPER from the pack (Phase

@@ -47,6 +47,9 @@ export type AuditKind =
   | 'RECOVERY_CODES_MADE' | 'RECOVERY_CODE_USED'
   | 'RATE_LIMITED'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
+  /* PHASE 161n1a: the test website locked its invented logins (a count); the test database was emptied and seeded again
+     on Lakhbir's word (counts by kind, never a name), by `node tools/test-website-people.ts --delete --yes`. */
+  | 'SEED_LOGINS_LOCKED' | 'TEST_DATABASE_CLEARED'
   /** A role the super admin made, changed, or tried to make and was refused (src/modules/admin/role-editor.ts). */
   | 'ROLE_CREATED' | 'ROLE_CHANGED' | 'ROLE_REFUSED'
   | 'DOCUMENT_ACCESSED'

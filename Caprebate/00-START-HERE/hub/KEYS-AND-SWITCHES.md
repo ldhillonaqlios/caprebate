@@ -5,9 +5,21 @@ is what Lakhbir does, step by step, and its PART B is what Claude builds after e
 it here and date it.
 
 **How a key reaches the test website.** A key is read on Vercel only when (1) it is set in Vercel (project
-caprebate-test > Settings > Environment Variables), (2) its name is in `TEST_DEPLOY_KEYS` in `api/index.mjs`, and (3)
-`CAPREBATE_TEST_PASSWORD` is set (12+ characters). On the Mac, keys come from `~/.caprebate-secrets.env`. Admin can also
-save a key from the Admin tab. Never paste a key into a chat or a file in the repository.
+caprebate-test > Settings > Environment Variables) and (2) its name is in `TEST_DEPLOY_KEYS` in `api/index.mjs`. On the
+Mac, keys come from `~/.caprebate-secrets.env`. Admin can also save a key from the Admin tab. Never paste a key into a
+chat or a file in the repository.
+
+**16 November 2026 (Phase 161n1a, ITRoadway's second review H-01 and M-07): THE TEST WEBSITE REACHES NO REAL PERSON.**
+`TEST_DEPLOY_KEYS` now holds only `CAPREBATE_MFA_KEY`, the free registers (`COMPANIES_HOUSE_API_KEY`, `EPC_API_TOKEN`,
+`CQC_SUBSCRIPTION_KEY`, `OS_DATA_HUB_API_KEY`) and the contact form's two Turnstile keys. **Never read there, whatever
+Vercel holds** (`TEST_WEBSITE_REFUSED_KEYS`): every `IONOS_SMTP_*` and `IONOS_IMAP_*`, every `DIDIT_*`, `WHATSAPP_*` and
+`ZOOM_*`, `HOMEDATA_API_KEY`, `REPLY_TIMER_TOKEN` and `CAPREBATE_TEST_PASSWORD` (no longer a password at all: the
+invented logins are locked there and each tester has a login of their own). A start that finds one of them set prints
+its name in the function log, so it can be deleted. So on the test website: no email is sent (each is read by Admin at
+`/staff/dev-outbox`), no identity check, no WhatsApp, no Zoom meeting, no paid lookup, and the mailbox is not read.
+The rows below say what each service does where it is on; on the test website the ones named here are OFF since this
+date. Lakhbir deletes those settings from caprebate-test and changes each key at its provider (the list is in
+PHASE-HISTORY.md, Phase 161n1a).
 
 **Test mode, not production.** Everything below is the test website with invented data. Where data is kept (the Turso
 database is in AWS us-east-1, in the USA; the Blob store's region is not stated) is for the developers to move to the UK

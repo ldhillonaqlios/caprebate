@@ -57,15 +57,14 @@ const RESET_TTL_MS = 30 * 60 * 1000;
  *   OFF     no second step for anyone, and a temporary password is not asked to change - the setting the older
  *           test files pass, each saying so, because they test other things through a password sign-in. Never set
  *           in src/, api/ or a tool a person runs to use the system.
- *   STAFF_EXCEPT_INVENTED   STAFF for every
- *           login, except that one whose address is at the reserved domain example.invalid asks for no second step.
- *           That domain can never receive mail (RFC 2606), so only the invented seed logins carry it. Set by the test
- *           website ONLY (api/index.mjs), never by default and never for production. A temporary password is still
- *           asked to change.
+ * There was a third, STAFF_EXCEPT_INVENTED (29 Sep 2026 to 16 Nov 2026): the test website let the invented
+ * @example.invalid logins skip the second step. ITRoadway's second review (H-01) found that, with one shared password,
+ * it gave Admin to anyone who learned the password. Phase 161n1a took it out: the test website is STAFF, like the live.
  */
-export type TwoFactorPolicy = 'STAFF' | 'OFF' | 'STAFF_EXCEPT_INVENTED';
+export type TwoFactorPolicy = 'STAFF' | 'OFF';
 
-/** The reserved domain the invented seed logins use. Matched on the whole domain, in any case. */
+/** The reserved domain the invented seed logins use. Matched on the whole domain, in any case. Since Phase 161n1a
+ *  the test website uses it to lock those logins (api/index.mjs, lockSeedLogins): they cannot sign in there. */
 export const INVENTED_DOMAIN = 'example.invalid';
 export function isInventedLogin(email: string): boolean {
   const at = email.trim().toLowerCase().lastIndexOf('@');
@@ -181,7 +180,6 @@ export function nextSignInStep(d: Deps, user_id: string): SignInStep | null {
     }
     return 'NEW_PASSWORD';
   }
-  if (d.twoFactor === 'STAFF_EXCEPT_INVENTED' && isInventedLogin(r.email)) return null;
   if (r.mfa_method !== null) return 'VERIFY';
   return r.role === 'CLIENT' ? null : 'SETUP';
 }

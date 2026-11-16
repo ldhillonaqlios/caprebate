@@ -24,7 +24,7 @@ const SITE_FORCES_CHALLENGE = '3x00000000000000000000FF';
 const SECRET_ALWAYS_FAILS = '2x0000000000000000000000000000000AA';
 
 type Configure = (made: Awaited<ReturnType<typeof createApp>>, env: Record<string, string | undefined>) =>
-  Promise<{ readonly password_changed: boolean; readonly keys_loaded: readonly string[]; readonly why: string }>;
+  Promise<{ readonly keys_loaded: readonly string[]; readonly why: string }>;
 async function entry(): Promise<{ configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[] }> {
   const url = new URL('../../../../../api/index.mjs', import.meta.url).href;
   return (await import(url)) as { configureTestDeploy: Configure; TEST_DEPLOY_KEYS: readonly string[] };
@@ -43,12 +43,11 @@ describe('156a B2 · the Cloudflare keys reach the test website', () => {
     assert.ok(TEST_DEPLOY_KEYS.includes('TURNSTILE_SECRET_KEY'), 'TURNSTILE_SECRET_KEY is not read on the test website');
   });
 
-  test('with its password and both keys set, the keys are read and the page carries the configured site key', async () => {
+  test('with both keys set, the keys are read and the page carries the configured site key (no test password since Phase 161n1a)', async () => {
     const { configureTestDeploy } = await entry();
     const made = await made156a();
     try {
-      const r = await configureTestDeploy(made, { CAPREBATE_TEST_PASSWORD: 'an-invented-test-password-156a',
-        TURNSTILE_SITE_KEY: SITE_FORCES_CHALLENGE, TURNSTILE_SECRET_KEY: SECRET_ALWAYS_FAILS });
+      const r = await configureTestDeploy(made, { TURNSTILE_SITE_KEY: SITE_FORCES_CHALLENGE, TURNSTILE_SECRET_KEY: SECRET_ALWAYS_FAILS });
       assert.deepEqual([...r.keys_loaded].sort(), ['TURNSTILE_SECRET_KEY', 'TURNSTILE_SITE_KEY']);
       assert.equal(turnstileSiteKey(made.app.secrets), SITE_FORCES_CHALLENGE);
       assert.equal(withSiteKey(PAGE_JS, turnstileSiteKey(made.app.secrets)), `var SITEKEY='${SITE_FORCES_CHALLENGE}';`);
@@ -60,7 +59,7 @@ describe('156a B2 · the Cloudflare keys reach the test website', () => {
     const { configureTestDeploy } = await entry();
     const made = await made156a();
     try {
-      await configureTestDeploy(made, { CAPREBATE_TEST_PASSWORD: 'an-invented-test-password-156a', TURNSTILE_SECRET_KEY: SECRET_ALWAYS_FAILS });
+      await configureTestDeploy(made, { TURNSTILE_SECRET_KEY: SECRET_ALWAYS_FAILS });
       const why = turnstileWhy(made.app.secrets);
       assert.match(why, /checked on the server/);
       assert.doesNotMatch(why, /no TURNSTILE_SECRET_KEY|not approved/);

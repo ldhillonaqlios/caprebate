@@ -30,11 +30,13 @@ test('every module with permissions declares them in its own actions.ts, loaded 
   }
 });
 
-test('the table, put together, holds the 130 actions the one table did and the one added since, each declared by one area', () => {
-  // 130 when the table was split; Phase 161m1 added invoice.raise_by_hand (finance: a break fee, raised by an admin by hand).
-  assert.equal(REGISTERED_ACTIONS.length, 131);
-  assert.equal(new Set(REGISTERED_ACTIONS).size, 131);
+test('the table, put together, holds the 130 actions the one table did and the two added since, each declared by one area', () => {
+  // 130 when the table was split; Phase 161m1 added invoice.raise_by_hand (finance: a break fee, raised by an admin by hand);
+  // Phase 161n1a added dev_outbox.read (admin: the emails saved, not sent, on the demo and the test website).
+  assert.equal(REGISTERED_ACTIONS.length, 132);
+  assert.equal(new Set(REGISTERED_ACTIONS).size, 132);
   assert.equal(actionOwner('invoice.raise_by_hand'), 'finance');
+  assert.equal(actionOwner('dev_outbox.read'), 'admin');
   for (const a of REGISTERED_ACTIONS) assert.ok(actionOwner(a) !== undefined, a);
   const owners: Record<string, string> = { 'user.create': 'core', 'role.manage': 'core', 'lead.read': 'crm', 'claim.read': 'claims',
     'estimate.read': 'assessment', 'surveyor_job.commit': 'survey', 'invoice.raise': 'finance', 'compliance.read': 'compliance',

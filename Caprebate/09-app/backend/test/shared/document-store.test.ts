@@ -186,6 +186,9 @@ describe('151i · 1 · a document written through one copy is read through anoth
         return go;
       };
       const db = A.made.app.db;
+      // PHASE 161n1a: the build step locks the invented logins (they cannot sign in on the test website). This test is
+      // about the shared store, so its stand-in logins are opened again here, in its own copy of the database.
+      db.run("UPDATE users SET disabled_at = NULL WHERE email_canonical LIKE '%@example.invalid'");
       const biz = db.get<{ business_id: string }>("SELECT business_id FROM users WHERE role = 'CLIENT' LIMIT 1")?.business_id ?? '';
       const bytes = PDF();
       const b = `----cb151i${randomBytes(8).toString('hex')}`;

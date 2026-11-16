@@ -944,6 +944,12 @@
           "id": "13475983553",
           "how": "prose",
           "why": "Built by Phase 161g on 5 Nov 2026 and off: CAPREBATE_LEGAL_PAGES=on serves the legal pages on the live website, each a Draft until approved. Created on monday.com in group 05 at Built - awaiting sign-off with owner Developer."
+        },
+        {
+          "ref": "SDP-V10 ITRoadway's second code review of Cap Rebate, and the live website set-up from the developer's pack (Phase 161n1a, 16 Nov 2026; for the developer)",
+          "id": "13533383676",
+          "how": "prose",
+          "why": "Made on the board first by Lakhbir's request (PR 107, 16 Nov 2026) at Built - awaiting sign-off, owner Developer (ITRoadway). The review came back on 13 Nov 2026; our side is Phases 161n1a to 161n1e, and ITRoadway sign it off with their re-check. Prose entry in the Phase 161n1a note at the end of the register."
         }
       ],
       "mentions": [

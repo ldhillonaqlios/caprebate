@@ -28,7 +28,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { buildApp } from './build-app.ts';
-import { AuthError, GENERIC_AUTH_FAILURE, NotAuthorised, PayloadTooLarge, REGISTERED_ACTIONS, SESSION_COOKIE_NAME, addTokensToPages, authenticate, authorise, bindResponse, can, clientIp, formToken, formTokenRefusal, formTokensMode, keyFileStartCheck, logout, onceToken, readBody, refuseForm, toActor, withReadMemo } from '../core/index.ts';
+import { AuthError, isProduction, GENERIC_AUTH_FAILURE, NotAuthorised, PayloadTooLarge, REGISTERED_ACTIONS, SESSION_COOKIE_NAME, addTokensToPages, authenticate, authorise, bindResponse, can, clientIp, formToken, formTokenRefusal, formTokensMode, keyFileStartCheck, logout, onceToken, readBody, refuseForm, toActor, withReadMemo } from '../core/index.ts';
 import type { Actor, FormTokens, LoginResult, Obj } from '../core/index.ts';
 import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
 import { payloadFor, assertSurveySection } from '../modules/survey/index.ts';
@@ -85,7 +85,7 @@ export type ServerOptions = {
   /** Faster clicks, part 2: see BuildOptions.dbLocalCopy. */
   dbLocalCopy?: string;
   /** See BuildOptions.twoFactor. Absent is 'staff'. */
-  twoFactor?: 'staff' | 'off' | 'staff-except-invented';
+  twoFactor?: 'staff' | 'off';
   /** See BuildOptions.schema. Absent builds the tables, as always. */
   schema?: 'apply' | 'require-built';
   /**
@@ -124,6 +124,11 @@ export type ServerOptions = {
   testNotices?: boolean;
   /** The legal pages for the live website, each a Draft until approved (src/modules/compliance/legal-approvals.ts). Off unless CAPREBATE_LEGAL_PAGES=on. */
   legal?: boolean;
+  /**
+   * PHASE 161n1a (L-06): Admin's outbox page, /staff/dev-outbox, where the emails nobody sends are read (codes and
+   * links included) in place of a log. The demo and api/index.mjs pass it; with CAPREBATE_PRODUCTION=1 it STOPS the start.
+   */
+  devOutbox?: boolean;
   /** Signing on for testing — the test copy of the letter only (ENGAGEMENT_SIGNING_TEST). Needs testLetter. api/index.mjs passes it; locally CAPREBATE_SIGNING_TEST=1. */
   testSigning?: boolean;
   /** The key a kept original is encrypted with. Absent is CAPREBATE_ORIGINALS_KEY; with neither, nothing is kept. */
@@ -135,6 +140,9 @@ export type ServerOptions = {
   formTokens?: FormTokens;
 };
 
+/** Phase 161n1a: why a start with the outbox page and CAPREBATE_PRODUCTION=1 is refused. */
+export const DEV_OUTBOX_REFUSED = 'NOT STARTED: the outbox page (/staff/dev-outbox) is for the demo and the test website only, never the live website (CAPREBATE_PRODUCTION=1).';
+
 /** The `legal` setting, read from CAPREBATE_LEGAL_PAGES. Only the word "on" switches it on. */
 export function legalPagesSetting(env: NodeJS.ProcessEnv = process.env): boolean {
   return (env.CAPREBATE_LEGAL_PAGES ?? '').trim() === 'on';
@@ -144,12 +152,15 @@ export async function createApp(
   location = ':memory:',
   opts: ServerOptions = {},
 ): Promise<{ server: ReturnType<typeof createServer>; close: () => void; app: Awaited<ReturnType<typeof buildApp>>; store: FsObjectStore }> {
+  // PHASE 161n1a (L-06): the outbox page holds sign-in codes and links. It is never part of the live website.
+  if (opts.devOutbox === true && isProduction(process.env)) throw new Error(DEV_OUTBOX_REFUSED);
   const app = await buildApp({
     location, ...(opts.now === undefined ? {} : { now: opts.now }), ...(opts.dbAuthToken === undefined ? {} : { dbAuthToken: opts.dbAuthToken }), ...(opts.dbLocalCopy === undefined ? {} : { dbLocalCopy: opts.dbLocalCopy }),
     ...(opts.dbEngine === undefined ? {} : { dbEngine: opts.dbEngine }),
     ...(opts.twoFactor === undefined ? {} : { twoFactor: opts.twoFactor }),
     ...(opts.schema === undefined ? {} : { schema: opts.schema }),
   });
+  if (opts.devOutbox === true) app.devOutbox = true;
   const kept = {
     now: app.now,
     ...(opts.keepOriginals === undefined ? {} : { originals: opts.keepOriginals }),

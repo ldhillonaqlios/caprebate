@@ -216,16 +216,16 @@ async function entry() {
   };
 }
 
-describe('151e line 4a · the test website uses a lasting database only when it is given one, behind its own password', () => {
+describe('151e line 4a · the test website uses a lasting database only when it is given one', () => {
   const URL0 = 'libsql://caprebate-test-invented.turso.io';
   const TOKEN = 'invented-token-not-real-151e3';
   const PW = 'an-invented-test-password-151e3';
 
-  test('switched off as shipped: nothing set, half set, no test password, or plain http - memory, as before', async () => {
+  // PHASE 161n1a: the test password is read no more (the invented logins are locked instead), so it decides nothing here.
+  test('switched off as shipped: nothing set, half set, or plain http - memory, as before', async () => {
     const { lastingDatabase, LASTING_DATABASE_KEYS } = await entry();
     assert.deepEqual([...LASTING_DATABASE_KEYS], ['CAPREBATE_DB_URL', 'CAPREBATE_DB_TOKEN']);
     for (const env of [{}, { CAPREBATE_DB_URL: URL0 }, { CAPREBATE_DB_TOKEN: TOKEN, CAPREBATE_TEST_PASSWORD: PW },
-      { CAPREBATE_DB_URL: URL0, CAPREBATE_DB_TOKEN: TOKEN }, { CAPREBATE_DB_URL: URL0, CAPREBATE_DB_TOKEN: TOKEN, CAPREBATE_TEST_PASSWORD: 'short' },
       { CAPREBATE_DB_URL: 'http://caprebate-test-invented.turso.io', CAPREBATE_DB_TOKEN: TOKEN, CAPREBATE_TEST_PASSWORD: PW }]) {
       const l = lastingDatabase(env);
       assert.equal(l.location, ':memory:', JSON.stringify(Object.keys(env)));
@@ -245,8 +245,9 @@ describe('151e line 4a · the test website uses a lasting database only when it 
     assert.equal(lastingDatabase({ TURSO_DATABASE_URL: URL0, CAPREBATE_TEST_PASSWORD: PW }).location, ':memory:');
   });
 
-  test('all three set: the lasting database, and what it prints names neither the address nor the token', async () => {
+  test('both set: the lasting database, with or without the old test password, and what it prints names neither the address nor the token', async () => {
     const { lastingDatabase } = await entry();
+    assert.equal(lastingDatabase({ CAPREBATE_DB_URL: URL0, CAPREBATE_DB_TOKEN: TOKEN }).location, URL0);
     const l = lastingDatabase({ CAPREBATE_DB_URL: URL0, CAPREBATE_DB_TOKEN: TOKEN, CAPREBATE_TEST_PASSWORD: PW });
     assert.equal(l.location, URL0);
     assert.equal(l.authToken, TOKEN);
