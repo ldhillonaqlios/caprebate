@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 374 |
-| Working on it | 1 |
+| Done | 375 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1240,7 +1240,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-46 items.
+45 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1517,14 +1517,6 @@
 - Note 2026-11-12 (Lakhbir): made on the board first; the live website pack attached; update posted tagging Abdul (ITRoadway) with the GitHub link and the review scope (each audit finding and its fix, the module structure, the live start, keys, timers, backup and restore, security), plus D1-D20 and E1-E4. Email to Ayaanle Osman (cc Abdul Rahman) drafted in Outlook for Lakhbir to attach the pack and send. Hoped-for date 26 Nov 2026.
 - Note 2026-11-16 (Planning): The review came back on 13 Nov 2026 (Ayaanle, on ITRoadway's monday item): not ready to sign off, 9 must-fix items, 28 open findings (3 high, 10 medium, 15 low), D1-D20 answered, E2-E4 not answered (they did not see Part 13). Our side is Phases 161n1a to 161n1e; the developer's side (H-03, the backup bucket, the scanning service, the Turnstile keys, the database place, the upload-link key) is in Lakhbir's reply, drafted in Outlook 16 Nov 2026 for him to attach the pack and send.
 
-### Phase 161n1a - Lock down the test website: a login per tester, the second step for every staff login, no real keys and no real people (ITRoadway second review, 16 Nov 2026)
-
-`13556703885` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: H-01 (code part), M-07, L-06. Lakhbir changes the keys that were on the test website and gives the testers' names; the DPO confirms no real people on the test website.
-- Note 2026-11-16 (Phase 161n1a): Claimed on the Mac; branch claude/phase-161n1a from main (the phase prompt from PR 108 cherry-picked so the branch carries it).
-
 ### Phase 161n1b - Sign-in and sessions: no lockout by strangers, sign out everywhere, idle time-out, reset links, key changes without an outage (ITRoadway second review, 16 Nov 2026)
 
 `13556698259` · **Ready - Claude can build** · owner Claude
@@ -1568,7 +1560,7 @@
 
 ## Z · Complete / Not Applicable
 
-374 items.
+375 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3881,6 +3873,15 @@
 
 - Note 2026-11-12 (Phase 161n1): made on the board first (13533159534); claimed on Lakhbirs-MacBook-Pro.
 - Note 2026-11-12 (Phase 161n1): Done: the developer pack written (OneDrive 06-commercial-and-governance), 161n split, docs in line; 5,729 checks green.
+
+### Phase 161n1a - Lock down the test website: a login per tester, the second step for every staff login, no real keys and no real people (ITRoadway second review, 16 Nov 2026)
+
+`13556703885` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: H-01 (code part), M-07, L-06. Lakhbir changes the keys that were on the test website and gives the testers' names; the DPO confirms no real people on the test website.
+- Note 2026-11-16 (Phase 161n1a): Claimed on the Mac; branch claude/phase-161n1a from main (the phase prompt from PR 108 cherry-picked so the branch carries it).
+- Note 2026-11-16 (Phase 161n1a): Done: PR 109 (claude/phase-161n1a). Second step for every staff login, invented logins locked, first-admin command, only no-real-person keys read, /staff/dev-outbox, test-website-people command; 5,741 checks green. Lakhbir's steps are item 13557004853. Deployment Protection carried into 161n1b.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
