@@ -14,7 +14,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { ONEDRIVE_ONLY, PROJECT, inOneDriveCopy, oneDriveOnly, oneDrivePath, type OneDriveKey } from '../onedrive-only.ts';
@@ -124,8 +124,14 @@ describe('4 · the GitHub workflow', () => {
     assert.ok(existsSync(WORKFLOW), '.github/workflows/checks.yml is missing');
     const w = readFileSync(WORKFLOW, 'utf8');
     assert.match(w, /^on:\n {2}pull_request:/m);
-    // Pinned to a commit since Phase 161n1e (ITRoadway L-08), the version in a comment.
-    assert.match(w, /uses: actions\/checkout@[0-9a-f]{40} # v4\./);
+    // Pinned to a commit since Phase 161n1e (ITRoadway L-08), the version in a comment. Phase 163: the comment is the
+    // version and nothing else, in both workflows, or Dependabot moves the commit and leaves the old version beside it.
+    assert.match(w, /uses: actions\/checkout@[0-9a-f]{40} # v\d+\.\d+\.\d+$/m);
+    for (const f of [WORKFLOW, join(dirname(WORKFLOW), 'release-live.yml')]) {
+      for (const line of readFileSync(f, 'utf8').split('\n').filter((l) => /^\s*-?\s*uses: /.test(l))) {
+        assert.match(line, /uses: [\w.-]+\/[\w.-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/, `${f}: ${line.trim()}`);
+      }
+    }
     assert.match(w, /node-version: '24'/);
     const runs = [...w.matchAll(/^ {8}(?:working-directory: (.+)\n {8})?run: (.+)$/gm)].map((m) => `${m[1] ?? '.'} :: ${m[2]}`);
     for (const want of [

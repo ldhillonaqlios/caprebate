@@ -2,22 +2,32 @@
 # themselves. The root package (what Vercel installs, from its committed lock), the back end's, and the Actions the
 # workflows use (pinned to commits). Each pull request is checked by "A fresh copy passes every check" like any other,
 # and Lakhbir merges.
+#
+# Phase 163 (the sweep, 17 Nov 2026): the root pins each package the back end imports at the back end's own version
+# (test/public-site, "the test website installs everything the application imports"), so one package must move in
+# both places in ONE pull request. The first week's pull requests moved it in one place only and failed that check.
+# So the two folders are one entry, grouped by package. Two major versions wait on purpose, each with its tracker row:
+# the Anthropic SDK 1.x (after go-live) and TypeScript 7 (it has no programming interface yet, and lint-paths and the
+# boundary check read code through it: ts.ScriptTarget.Latest is undefined, so the check stops at its first step).
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-  - package-ecosystem: npm
-    directory: /Caprebate/09-app/backend
+    directories:
+      - "/"
+      - "/Caprebate/09-app/backend"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
     ignore:
-      # The Anthropic SDK's 1.x is a planned move after go-live (the tracker row "Move the Anthropic SDK to 1.x").
       - dependency-name: "@anthropic-ai/sdk"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    groups:
+      same-package-in-both-folders:
+        group-by: dependency-name
+        patterns:
+          - "*"
   - package-ecosystem: github-actions
     directory: /
     schedule:

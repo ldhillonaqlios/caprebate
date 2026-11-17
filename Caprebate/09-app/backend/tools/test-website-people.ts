@@ -35,10 +35,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-type Db = {
-  get<T = Record<string, unknown>>(sql: string, p?: readonly unknown[]): T | undefined;
-  all<T = Record<string, unknown>>(sql: string, p?: readonly unknown[]): T[];
-};
+// Phase 163: the application's own Db, not a copy of its shape (the copy stopped matching it when a package moved).
+import type { Db } from '../src/core/db.ts';
 
 /** An address nobody can receive at (src/integrations/email/email.ts, isInventedAddress): RFC 2606 and 6761 names. */
 export function invented(address: unknown): boolean {

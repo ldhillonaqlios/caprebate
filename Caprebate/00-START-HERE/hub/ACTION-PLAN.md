@@ -1294,15 +1294,20 @@ which lines are left, set this item to its true status, and stop.
     (Lakhbir, 12 Nov 2026: "The developer"; the names in Part 5 of the pack
     and LIVE-RUNBOOK.md section 3; check them by name, never read a value).
 10. The developer's answers to D1 to D20 recorded (board 13486597256), or
-    Lakhbir's word to go without them.
+    Lakhbir's word to go without them. OPEN since 13 Nov 2026: ITRoadway
+    answered D1 to D20 in their second code review (OneDrive
+    06-commercial-and-governance; the sweep, Phase 163, recorded it).
 11. The sweep (the last phase on the run sheet) has run since the last
-    code change, with nothing critical left open.
+    code change, with nothing critical left open. The Phase 163 sweep ran on
+    17 Nov 2026 after 161n1a to 161n1e; open once its pull request is merged
+    and no code has changed since.
 12. GO-LIVE-CHECKLIST.md (Phase 161h): lines 1 to 11 ticked, each with its
     evidence; Word questions 291 (where the data is kept) and 292 (how long
     backups are kept) answered.
 13. Phases 161n1a to 161n1e (ITRoadway's second code review, 12 Nov 2026)
     merged, and ITRoadway's re-check of the must-fix items back, or
-    Lakhbir's word to go without it (review item 13533383676).
+    Lakhbir's word to go without it (review item 13533383676). The first
+    half is met: all five merged by 17 Nov 2026 (PRs 109, 112 to 115).
 14. CARRIED FROM PHASES 161n1a TO 161n1e (16 and 17 Nov 2026), each with
     Lakhbir in chat:
     (a) The migration proof on Turso: run tools/turso-migration-proof.ts
@@ -1369,14 +1374,16 @@ ACCEPT
 ```
 
 
-## PHASE 163 — Sweep and stress-test (the recurring one, always last)
+## PHASE 164 — Sweep and stress-test (the recurring one, always last)
 
 
  **Model: Opus.** **This is the one section that is never deleted.** It renumbers itself forward each time it runs and stays at the bottom of this list.
 
  **Why this exists.** Every sweep so far has found something, and several found things that had survived multiple earlier passes. Re-run it after a meaningful batch of phases has landed, and **always before anything external goes out** — the adviser pack, the solicitor brief, the Valuation Office letter, the insurance broker brief.
 
- **DONE 11 NOVEMBER 2026 BY THE PHASE 162 SWEEP: the run out of order, after 161m and before 161n (THE NUMBER line in the block below), and the six jobs Phases 161e, 161f, 161g, 161j, 161l2 and 161m carried here.** The next sweep runs in order, after 161n2 (161n split on 12 Nov 2026) and before the first client. The leftovers in the back end are zipped into `Caprebate/_archive/09-app-leftovers-removed-by-phase162.zip` and deleted, on Lakhbir's yes (seven of them had been committed by Phase 161i, so "git does not hold them" was no longer true). The 26 invented cases give the same pages and figures on the test website as before 161f. The cookie banner, the network after each answer, the Draft lines and /privacy are as 161g built them; the cookie policy page's two buttons lost their style once a visitor had answered, now fixed. The four connectors already loaded alone (since 161l1); the test now holds them to it. The nine rules are tested both ways. Finance and admin answer from their own `routes.ts`, the route list unchanged. The Rules page and the moved staff pages open as before on the test website. What could not be checked there, because the test website is keeping its records in memory, now lives on that item (13522119174). The record is in PHASE HISTORY.
+ **DONE 17 NOVEMBER 2026 BY THE PHASE 163 SWEEP: after Phases 161n1a to 161n1e (ITRoadway's second review) and the Turso proof, before go-live.** Board and tracker agree both ways. Dependabot's first week (six pull requests) found two faults in 161n1e's set-up, both fixed: a package the root and the back end share was moved in one folder only, so the root-pin check failed every time (the two folders are now one Dependabot entry, grouped by package); and the Actions' version comments carried words after the version, so Dependabot moved the commit to v7 and left "# v4.4.0" beside it (the comment is now the version alone, and a test holds every `uses:` line to that). TypeScript 7 is held back with its parked row (its compiler has no programming interface yet). A test tool's copied database type now uses the application's own. Two items answered by building moved to Done (the root lock file, Word question 286, closed in the Word documents; the developer's D1 to D20, answered in ITRoadway's review), four names and owners brought up to date, the solicitor brief parked (no solicitor), and the alert addresses given an item of their own. 161n2's gate lines 10, 11 and 13 updated. The record is in PHASE HISTORY.
+
+ **ADDED 17 NOVEMBER 2026 BY THE PHASE 163 SWEEP, FOR THE NEXT ONE.** **(1) READ THE OPEN PULL REQUESTS, DEPENDABOT'S INCLUDED.** Since 161n1e Dependabot opens pull requests every week. Read each one's check and what it changed, not only whether it is green: a green one (117) had moved the commit and left an old version in the comment. A shared package must move in both folders at once. **(2) THE SWEEP BLOCK'S CORRECTIONS STILL SAY "THE VERCEL CONNECTOR now reaches the project".** It does not (Phase 162 found it); the browser pane, signed in to Vercel, does. Read the block's corrections with that in mind; retype the line when the block is next retyped. **(3) A QUESTION CAN BE ANSWERED BY BUILDING IT.** Word question 286 sat open for twelve days after a phase built its answer. When a phase builds what a question asks, close the question in the same phase.
 
  **ADDED 11 NOVEMBER 2026 BY THE PHASE 162 SWEEP, FOR THE NEXT ONE.** A note rather than an edit to the block below, for the reason Phase 110 gives. **(1) A ROW IN THE TRACKER ALONE.** Nine finished phases (160e to 160g, 160k to 160p) were added with the tracker tool and never made on the board, so they carried ids the board never gave. Compare the board with the tracker in BOTH directions, by id, every time; a new phase item is made on the board first and its row takes the board's id. The board also holds items that are not ours to track: the Client list group (Sadique's GP surgeries, 16 Oct 2026) and Abdul's "code review - cap rebate" (20 Oct 2026) stay board-only (Lakhbir, 11 Nov 2026). **(2) THE TEST WEBSITE CAN FORGET.** It fell back to keeping its records in memory without anyone noticing: a sign-in dropped at the next page, and the invented clients had new ids twenty minutes later. Before a signed-in check, sign in, note one client's id, and read it again a few pages later; once this sweep's pull request is merged, Admin's home says so in so many words. **(3) A CARRIED JOB CAN BE DONE ALREADY.** The four connectors that "do not load alone" had loaded alone since Phase 161l1 moved the backup out of the core. Re-derive a carried job's premise before building it, as point 8 of the standing instruction says.
 
