@@ -124,7 +124,8 @@ describe('4 · the GitHub workflow', () => {
     assert.ok(existsSync(WORKFLOW), '.github/workflows/checks.yml is missing');
     const w = readFileSync(WORKFLOW, 'utf8');
     assert.match(w, /^on:\n {2}pull_request:/m);
-    assert.match(w, /uses: actions\/checkout@v4/);
+    // Pinned to a commit since Phase 161n1e (ITRoadway L-08), the version in a comment.
+    assert.match(w, /uses: actions\/checkout@[0-9a-f]{40} # v4\./);
     assert.match(w, /node-version: '24'/);
     const runs = [...w.matchAll(/^ {8}(?:working-directory: (.+)\n {8})?run: (.+)$/gm)].map((m) => `${m[1] ?? '.'} :: ${m[2]}`);
     for (const want of [
@@ -135,7 +136,9 @@ describe('4 · the GitHub workflow', () => {
       'Caprebate/04-phase-work/phase3 :: node --test',
       'Caprebate/04-phase-work/phase9 :: node --test',
     ]) assert.ok(runs.includes(want), `the workflow does not run: ${want}\n${runs.join('\n')}`);
-    assert.match(w, /cp package\.json "\$scratch\/"[\s\S]*npm install --package-lock-only[\s\S]*npm audit --audit-level=high/);
+    // Since Phase 161n1e (M-05) the root lock is committed: the workflow installs and audits that very lock.
+    assert.match(w, /npm ci --omit=dev --no-fund --no-audit\n\s*npm audit --omit=dev --audit-level=high/);
+    assert.ok(existsSync(join(REPO, 'package-lock.json')), 'the root lock file is committed');
     assert.match(w, /permissions:\n {2}contents: read/);
   });
 

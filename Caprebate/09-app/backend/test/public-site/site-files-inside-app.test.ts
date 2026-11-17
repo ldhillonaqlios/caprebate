@@ -75,10 +75,12 @@ test('KNOWN in tools/lint-paths.cjs has no row carried to a later phase, and nam
   for (const [, , original] of LIVE) assert.equal(lint.KNOWN.some((k) => k.target === original), false, original);
 });
 
-test("the test website's bundle takes the copies (vercel.json includeFiles)", () => {
+test("the test website's bundle takes the copies (vercel.json includeFiles), and since Phase 161n1e only the app", () => {
   const v = VERCEL_CONFIG as { functions: Record<string, { includeFiles: string }> };
   const inc = v.functions['api/index.mjs']?.includeFiles ?? '';
-  assert.match(inc, /(^|[{,])Caprebate\/\*\*([,}]|$)/, `includeFiles is ${inc}`);
+  assert.match(inc, /(^|[{,])Caprebate\/09-app\/\*\*([,}]|$)/, `includeFiles is ${inc}`);
+  // ITRoadway L-13: never the whole tree (the hub, the drafts, the governance papers).
+  assert.doesNotMatch(inc, /(^|[{,])Caprebate\/\*\*([,}]|$)/, `includeFiles is ${inc}`);
   const ignore = existsSync(join(REPO, '.vercelignore')) ? readFileSync(join(REPO, '.vercelignore'), 'utf8') : '';
   assert.equal(/09-app|copies/.test(ignore.replace(/^#.*$/gm, '')), false, '.vercelignore leaves the copies out');
 });

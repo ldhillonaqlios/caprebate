@@ -1420,6 +1420,27 @@ which lines are left, set this item to its true status, and stop.
 13. Phases 161n1a to 161n1e (ITRoadway's second code review, 12 Nov 2026)
     merged, and ITRoadway's re-check of the must-fix items back, or
     Lakhbir's word to go without it (review item 13533383676).
+14. CARRIED FROM PHASES 161n1a TO 161n1e (16 and 17 Nov 2026), each with
+    Lakhbir in chat:
+    (a) The migration proof on Turso: run tools/turso-migration-proof.ts
+        (in Caprebate/09-app/backend) on the TEST website's database, in a
+        Terminal tab where Lakhbir pastes CAPREBATE_DB_URL and
+        CAPREBATE_DB_TOKEN (read -rs, never saved); it must print PASS.
+        Lakhbir chose "later" on 17 Nov 2026.
+    (b) The live branch protected (LIVE-RUNBOOK.md section 5): the ruleset
+        on refs/heads/live and the live environment's required reviewers.
+        Lakhbir chose to switch them on later (17 Nov 2026); then a direct
+        push to live must be refused (go-live checklist line 4a).
+    (c) The repository private, with the ITRoadway engineer invited, the day
+        they send their GitHub username; their name added to
+        .github/CODEOWNERS and to the live environment's reviewers.
+    (d) Vercel Deployment Protection on the test project (review H-01 step 1;
+        needs Pro). On 17 Nov 2026 review item 13533383676 still held only
+        Lakhbir's 12 Nov request. When ITRoadway's answer is there, ask Lakhbir
+        whether he still wants it; if yes and he buys Pro, he switches it on in
+        caprebate-test > Settings > Deployment Protection, noted in
+        KEYS-AND-SWITCHES.md. Unanswered at go-live: ask him whether to go
+        without it.
 
 BUILD (only once every gate line is open)
 1. The live project on Pro, made BY THE DEVELOPER from the pack (Phase
