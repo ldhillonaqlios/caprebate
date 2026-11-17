@@ -15,7 +15,7 @@ _Phase 161h, 7 November 2026. This is the gate of Phase 161n2 ("Go live"; 161n w
 ## The live project (the runbook, sections 2 to 4)
 
 7. [ ] The live project made from the repository, **Production Branch `live`**, **Function Region London (`lhr1`)**, Node 24.
-8. [ ] The **London Blob store** made, private, and connected to the live project only.
+8. [ ] The **London Blob store** made, private, and connected to the live project's **Production only**; every key ticked for Production only, Preview and Development empty; the **Ignored Build Step** set, so no branch builds a preview there (ITRoadway H-03; LIVE-RUNBOOK.md section 2, steps 5 to 7).
 9. [ ] The **live and preview Turso databases** made (Ireland, or London if offered), both empty to start.
 10. [ ] **Every required setting** set by the developer (Lakhbir, 12 Nov 2026) in Production, each Sensitive (the runbook's table), and **none of the test-only settings**. `CAPREBATE_BACKUP_KEY` also in the password manager. `CAPREBATE_UPLOAD_LINK_KEY` is one of them since Phase 161n1b (its own key for upload links); `CAPREBATE_MFA_KEY_OLD` is **not** set (it is only for a change of key). `CAPREBATE_ALERT_EMAILS` set to the Admin's and the developer's addresses (Phase 161n1d). `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` set, and the Cloudflare transfer approved by the data protection officer: since Phase 161n1c the live website refuses every enquiry without a passing security check. The virus scanning service chosen and wired, or the decision to go live without one recorded (runbook section 3).
 11. [ ] The **reference database** built from the current ONS release and uploaded; its two settings set (runbook section 10).
