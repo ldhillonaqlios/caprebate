@@ -65,6 +65,12 @@ export type App = {
   zoomPolicy?: Partial<CallPolicy>;
   /** 30 SEPTEMBER 2026: TESTS ONLY - WhatsApp's call policy with the transfer approved (src/integrations/connectors/whatsapp.ts). */
   whatsappPolicy?: Partial<CallPolicy>;
+  /**
+   * PHASE 161n1c (M-03): the virus scanner every upload is sent to before it is stored, when one is given: the adapter
+   * the developer writes for the service they choose, or a test's fake (src/integrations/connectors/upload-scanner.ts).
+   * Absent, as shipped: no scan, and UPLOAD_SCANNING is off.
+   */
+  scanner?: { readonly service: string; scan(bytes: Uint8Array): Promise<{ readonly result: 'CLEAN' | 'FOUND' | 'FAILED' }> };
   /** TESTS ONLY - a recorded inbox and the reading switch, for reading replies when staff look. */
   mailbox?: Mailbox;
   inboundEmail?: InboundEmail;

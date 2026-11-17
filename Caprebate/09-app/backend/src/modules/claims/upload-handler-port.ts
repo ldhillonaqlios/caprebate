@@ -30,6 +30,8 @@ export {
   UploadHandlerError,
   sniffAccepted,
   pdfLooksComplete,
+  activeContent,
+  ACTIVE_CONTENT_REFUSED,
   quarantineKeyFor,
   durableKeyFor,
   retainedTextKeyFor,

@@ -82,7 +82,7 @@ import {
   type IngestionSettings, type TransparencyRecord, type ClientDocDiscriminants,
   type IdentifiedPerson,
 } from './client-doc-ingestion.ts';
-import { setDocumentKeys } from '../../../shared/index.ts';
+import { listZipEntries, readZipEntryFromBuffer, setDocumentKeys } from '../../../shared/index.ts';
 import { setDocumentMaxBytes } from '../../../core/index.ts';
 
 /* ------------------------------------------------------------------ *
@@ -239,6 +239,49 @@ export function pdfLooksComplete(bytes: Uint8Array): boolean {
   const tail = Buffer.from(bytes.buffer, bytes.byteOffset + from, bytes.length - from).toString('latin1');
   return tail.includes('%%EOF');
 }
+
+/**
+ * WHAT A FILE CARRIES THAT WE DO NOT TAKE (Phase 161n1c, ITRoadway's second review, M-03). A Word or Excel file can carry
+ * macros, and a PDF can carry a script, a launch action or another file inside it; staff open these files. So:
+ *   MACRO       an Office zip holding vbaProject.bin, vbaData.xml or an Excel 4.0 macro sheet (macrosheets/), or whose
+ *               [Content_Types].xml names a macro-enabled type (docm, xlsm and the rest);
+ *   PDF_SCRIPT  a PDF naming /JavaScript, /JS, /Launch, /EmbeddedFile or /EmbeddedFiles, read with #xx name escapes
+ *               undone first (/J#61vaScript is /JavaScript).
+ * WHAT IT CANNOT SEE: a name inside a compressed object stream of a PDF. The virus scanner's hook (switched off until the
+ * developer names a service) is the second lock; this one is the cheap first one, and it refuses rather than strips.
+ * A zip whose directory cannot be read is not judged here: the extractor treats it as unreadable, as before.
+ */
+export type ActiveContent = 'MACRO' | 'PDF_SCRIPT';
+const MACRO_PARTS = /(^|[/\\])(vbaProject\.bin|vbaData\.xml|macrosheets[/\\])/i;
+const PDF_ACTIVE = /\/(JavaScript|JS|Launch|EmbeddedFiles?)(?![A-Za-z0-9])/;
+export function activeContent(bytes: Uint8Array): ActiveContent | null {
+  const kind = sniffAccepted(bytes);
+  if (kind === 'zip-or-ooxml') {
+    const buf = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.length);
+    let names: string[];
+    try { names = listZipEntries(buf); } catch { return null; }
+    if (names.some((n) => MACRO_PARTS.test(n))) return 'MACRO';
+    const types = names.find((n) => n === '[Content_Types].xml');
+    if (types !== undefined) {
+      try {
+        if (/macroEnabled/i.test(readZipEntryFromBuffer(buf, [types], 1024 * 1024).toString('utf8'))) return 'MACRO';
+      } catch { /* a part that will not read says nothing either way */ }
+    }
+    return null;
+  }
+  if (kind === 'pdf') {
+    const text = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.length).toString('latin1')
+      .replace(/#([0-9A-Fa-f]{2})/g, (_, h: string) => String.fromCharCode(parseInt(h, 16)));
+    return PDF_ACTIVE.test(text) ? 'PDF_SCRIPT' : null;
+  }
+  return null;
+}
+
+/** What a person reads when a file is refused for what it carries. */
+export const ACTIVE_CONTENT_REFUSED: Readonly<Record<ActiveContent, string>> = Object.freeze({
+  MACRO: 'That Word or Excel file has macros in it, and we do not take those. Save it as an ordinary .docx or .xlsx, or as a PDF, then send it again.',
+  PDF_SCRIPT: 'That PDF has a script or another file hidden inside it, and we do not take those. Print it to a new PDF, or save it again without them, then send it.',
+});
 
 export function sniffAccepted(bytes: Uint8Array): string | null {
   for (const m of UPLOAD_LIMITS.accepted_magic) {

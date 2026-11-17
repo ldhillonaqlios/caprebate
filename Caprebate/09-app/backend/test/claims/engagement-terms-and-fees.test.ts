@@ -116,9 +116,11 @@ describe('line 9 — a view-only login: assigned to nobody, it reads and writes 
       const cal = await ro.get('/staff/calendar');
       assert.equal(/give it a time/.test(cal.body) && /type="submit">Save/.test(cal.body), false);
 
-      for (const path of ['/staff/audit', '/staff/claims/export.csv', '/staff/finance/view.json', '/staff/compliance/view.json']) {
+      for (const path of ['/staff/audit', '/staff/finance/view.json', '/staff/compliance/view.json']) {
         assert.equal((await ro.get(path)).status, 403, `READ_ONLY was not refused ${path}`);
       }
+      // The export is a POST since Phase 161n1c (L-10).
+      assert.equal((await ro.post('/staff/claims/export.csv', { params: '' })).status, 403, 'READ_ONLY was not refused the export');
       const stage = h.made.app.db.get<{ stage: string }>('SELECT stage FROM claims WHERE id = ?', [claim.id])?.stage;
       const writes: [string, Record<string, string>][] = [
         [`/staff/claims/${claim.id}/team`, { contact_id: 'x' }],

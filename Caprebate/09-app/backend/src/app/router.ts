@@ -48,6 +48,7 @@ import { sweepVideos } from '../modules/survey/index.ts';
 import { receiveWhatsApp } from '../modules/crm/index.ts';
 import { webhookChallenge } from '../integrations/index.ts';
 import { ga4MeasurementId } from '../integrations/index.ts';
+import { uploadScannerFor } from '../integrations/index.ts';
 import { EMAIL_LOGO_HEADERS, brandedEmail, emailLogoPng, type EmailContent } from '../integrations/index.ts';
 import { localDate, ukDate } from '../shared/index.ts';
 import { SITE_JS_HEADERS } from '../modules/public-site/index.ts';
@@ -487,7 +488,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
        false — and with it off a finished upload behaves exactly as it did before. The document's own business is
        whose gates the reading's audit row records; `P.document` above has already authorised this actor on it. */
     const deps = { db: d.app.db, store: d.store, now, actor: actor.id, newId, audit: d.app.audit,
-      reading: readerFor(d.app, job.entity_id, actor.role) };
+      reading: readerFor(d.app, job.entity_id, actor.role), scanner: uploadScannerFor(d.app.scanner) };
     const r = await acceptClientBytes(deps, { doc_id, token, bytes: file });
     if (!r.ok) { html(res, r.status, simple('Not accepted', r.why)); return 'handled'; }
     // CRM 4 of 10: STEPS 3 TO 7, ON THIS REQUEST. Until today the running

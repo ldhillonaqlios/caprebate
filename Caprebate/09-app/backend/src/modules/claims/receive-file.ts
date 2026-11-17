@@ -17,6 +17,7 @@ import type { FsObjectStore } from '../../shared/index.ts';
 import * as D from './documents.ts';
 import { acceptClientBytes, DAMAGED_PDF, finishUpload, issuedJob, readerFor } from './uploads.ts';
 import { UPLOAD_LIMITS, pdfLooksComplete, sniffAccepted } from './upload-handler-port.ts';
+import { uploadScannerFor } from '../../integrations/index.ts';
 
 const MAX_BODY = UPLOAD_LIMITS.max_bytes + 64 * 1024;
 const TOO_BIG = `That file is too big. The most we take is ${Math.round(UPLOAD_LIMITS.max_bytes / 1024 / 1024)} MB.`;
@@ -47,9 +48,9 @@ export async function receiveFile(
      It switches nothing on — CLAUDE_SWITCHES.DOCUMENT_READING is false — and with it off a finished upload behaves
      exactly as it did before. args.business_id is the client whose gates are recorded on the reading's audit row. */
   const deps = { db, store: d.store, now, actor: actor.id, newId: d.newId, audit: d.app.audit,
-    reading: readerFor(d.app, args.business_id, actor.role) };
+    reading: readerFor(d.app, args.business_id, actor.role), scanner: uploadScannerFor(d.app.scanner) };
   const r = await acceptClientBytes(deps, { doc_id: b.doc_id, token, bytes });
-  if (!r.ok) return { ok: false, why: r.status === 413 ? TOO_BIG : r.status === 415 ? NOT_ACCEPTED : r.why === DAMAGED_PDF ? 'That PDF is damaged or incomplete: it stops part-way. Save or export it again, then send it.' : 'Something went wrong. Try again.' };
+  if (!r.ok) return { ok: false, why: r.status === 413 ? TOO_BIG : r.status === 415 ? NOT_ACCEPTED : r.status === 422 ? r.why : r.why === DAMAGED_PDF ? 'That PDF is damaged or incomplete: it stops part-way. Save or export it again, then send it.' : 'Something went wrong. Try again.' };
   const done = await finishUpload(deps, job, r.written_at);
   if (done.error !== undefined) {
     return { ok: false, why: done.error.code === 'E_UNRECOGNISED_DOC_TYPE'

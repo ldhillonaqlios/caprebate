@@ -378,6 +378,10 @@
    "area": "integrations",
    "kind": "logic"
   },
+  "src/integrations/connectors/upload-scanner.ts": {
+   "area": "integrations",
+   "kind": "logic"
+  },
   "src/integrations/connectors/whatsapp-export.ts": {
    "area": "integrations",
    "kind": "logic"

@@ -5,7 +5,8 @@
  *
  * THE JOBS, LISTED FROM THE CODE (src/app/cli.ts's scheduled commands, and what the reply timer's call already did):
  *   every-five-minutes  read email replies (at most once every two minutes, as the reply timer does); clear photo and
- *                       video uploads never finished within a day, and upload pieces never taken; try again any email
+ *                       video uploads never finished within a day, and upload pieces never taken; anything left in the documents' holding
+ *                       place (quarantine/) past its hour (Phase 161n1c, M-08); try again any email
  *                       that could not be sent at the moment it was saved (retryUnsent, below); and (Phase 161m2) the
  *                       engagement letter reminder and the evening documents-received email to clients.
  *   nightly             the clean-up jobs: kept originals past their time (sweep-originals), messages and closed
@@ -32,7 +33,7 @@ import type { FsObjectStore } from '../shared/index.ts';
 import { inboundEmailModule as IE } from '../modules/crm/index.ts';
 import { sweepUploads } from '../modules/survey/index.ts';
 import { sweepVideos } from '../modules/survey/index.ts';
-import { sweepOriginals, openKeptOriginal } from '../modules/claims/index.ts';
+import { sweepHoldingPlace, sweepOriginals, openKeptOriginal } from '../modules/claims/index.ts';
 import { documentsReceivedDigest, letterRemindersDue } from '../modules/claims/index.ts';
 import { MESSAGE_RETENTION } from '../modules/clients/index.ts';
 import { sweepMessages } from '../modules/crm/index.ts';
@@ -148,6 +149,13 @@ export async function runTimerJob(d: { app: App; store: FsObjectStore }, job: Ti
     await step('unfinished photos cleared:', async () => String(await sweepUploads({ db: app.db, now: app.now }, d.store)));
     await step('unfinished videos cleared:', async () => String(await sweepVideos({ db: app.db, now: app.now }, d.store)));
     await step('upload pieces cleared:', async () => String(await sweepPieces({ db: app.db, now: app.now }, d.store)));
+    // Phase 161n1c (M-08): the holding place. Anything found there past its hour means an upload went wrong, so the run
+    // is marked not ok as well as cleared.
+    await step('holding place cleared:', async () => {
+      const r = await sweepHoldingPlace({ store: d.store, now: app.now, audit: app.audit }, 'timer every-five-minutes');
+      if (r.found > 0) ok = false;
+      return r.left > 0 ? `${r.cleared} (${r.left} would not delete)` : String(r.cleared);
+    });
     // Phase 161m2: the two timed client emails. Each decides for itself whether anything is due (the reminder once,
     // five working days after a letter was sent and not signed; the documents digest once a UK day, from 18:00) and
     // only queues the email: the retry step below, and the outbox's own rules, decide whether it goes.

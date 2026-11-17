@@ -143,6 +143,16 @@ export const RESET_LIMIT = 3;
  */
 export const LOGIN_SOURCE_LIMIT = 30;
 export const RESET_SOURCE_LIMIT = 10;
+/**
+ * THE PUBLIC FORMS, FROM ONE NETWORK ADDRESS (Phase 161n1c, ITRoadway M-04): the website's enquiry form, the
+ * assessment's submit and a client's sign-up, in the same 15-minute window. Here, in the core, because three areas use
+ * them (public-site, assessment), and neither may import the other.
+ */
+export const ENQUIRY_SOURCE_LIMIT = 10;
+export const ASSESSMENT_SOURCE_LIMIT = 10;
+export const SIGNUP_SOURCE_LIMIT = 10;
+/** Too many from one place: what the form, the assessment and sign-up say. */
+export const FROM_ONE_PLACE = 'We have had a lot of these from where you are in a short time, so this one was not sent. Please wait a few minutes, or email contact@caprebate.co.uk.';
 const WINDOW_MS = 15 * 60 * 1000;
 
 function windowStart(nowIso: string, windowMs: number = WINDOW_MS): string {
@@ -159,6 +169,11 @@ function countHit(d: Deps, bucket: string, windowMs: number = WINDOW_MS): number
 
 export function rateLimit(d: Deps, bucket: string, limit: number): boolean {
   return countHit(d, bucket) <= limit;
+}
+
+/** The same, counted over a window of its own (Phase 161n1c: the enquiry emails, an hour). */
+export function rateLimitOver(d: Deps, bucket: string, limit: number, windowMs: number): boolean {
+  return countHit(d, bucket, windowMs) <= limit;
 }
 
 /* ------------------------------------------------------------------ *

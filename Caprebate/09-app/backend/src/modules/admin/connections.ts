@@ -40,7 +40,7 @@ import { POSTCODE_CHECK } from '../../integrations/index.ts';
 import { FILE_SOURCES, decodeRegisterFile, importRegisterFile, RegisterFileError, type FileSourceId } from '../../integrations/index.ts';
 import { singleFile } from '../../core/index.ts';
 import { localStamp, localPartsOf } from '../../shared/index.ts';
-import { ADDRESS_SEARCH_CAP, searchesToday } from '../../integrations/index.ts';
+import { ADDRESS_SEARCH_CAP, searchesToday, uploadScannerFor } from '../../integrations/index.ts';
 import { getMailboxReadsAtFailedById, getOutboxAtBySentAt } from '../../integrations/index.ts';
 import { listAuditLogDetailSByKindM } from '../../core/index.ts';
 
@@ -121,6 +121,10 @@ export const CONNECTIONS: readonly Connection[] = Object.freeze([
     switch_name: 'whatsappMissing', waits: 'Nothing: off on purpose. Staff export a chat on the phone and add it to the record.' },
   { id: 'CLOUDFLARE_TURNSTILE', name: 'Cloudflare Turnstile', does: 'The contact form’s check that a person, not a robot, sent it.', owner: 'CLOUDFLARE_TURNSTILE', calls: ['CLOUDFLARE_TURNSTILE'],
     switch_name: 'turnstileWhy', waits: 'Approved for testing (5 Oct 2026). For real clients: the privacy notice naming Cloudflare.' },
+  { id: 'UPLOAD_SCANNER', name: 'Virus scanning of uploads', does: 'Checks every uploaded file for viruses before it is kept (Phase 161n1c).', owner: null, calls: [],
+    switch_name: 'UPLOAD_SCANNING',
+    on: (app) => (uploadScannerFor(app.scanner) !== null ? yes : off('Switched off: no scanning service is named yet. Files are still checked for what they are, their size, macros and scripts.')),
+    waits: 'The developer picks a scanning service. Then our data protection officer approves it.' },
   { id: 'CLAUDE_DOCUMENTS', name: 'Anthropic (reading documents)', does: 'Reads clients’ documents for the facts a claim needs.', owner: 'CLAUDE_DOCUMENTS', calls: ['CLAUDE_DOCUMENTS'],
     switch_name: 'CLAUDE_SWITCHES',
     waits: 'Approved for testing (5 Oct 2026); its reading switches stay off and the key is not on the test website. For real clients: the privacy notice and the data protection officer’s retention answer.' },

@@ -28,7 +28,7 @@ export { RANGE_QUALIFIER, formatPence, formatShownRange, toPence } from './shown
 export { SIGNATURE_PAD_JS } from './signature-pad-script.ts';
 export { CLOSED_STAGE, EXITS, EXIT_KEYS, LEGACY_STAGE_TO_PROCEDURE, ON_HOLD_STAGE, PROCEDURE_KEYS, PROCEDURE_STAGES, STAGES, anyStageLabel, claimStage, clientStageFor, exitStage, nextProcedureKey, procedureIndex, procedureStage, progressFor, stage, stageIndex } from './stages.ts';
 export { LATE_AFTER_WORKING_DAYS, isLateNewLead, waitedWords, workingDaysSince } from './working-days.ts';
-export { DOCX_DOCUMENT_ENTRIES, docxParagraphTexts, listZipEntries, readZipEntry, readZipEntryFromBuffer } from './zip.ts';
+export { DOCX_DOCUMENT_ENTRIES, ZIP_ENTRY_MAX_BYTES, ZIP_MAX_RATIO, ZipEntryTooLarge, docxParagraphTexts, listZipEntries, readZipEntry, readZipEntryFromBuffer } from './zip.ts';
 export type { Job, Need, QuickAction, RecordTab, SectionContext, SectionSpec, SectionStatus, Tone } from './components.ts';
 export type { BenefitContext, EngineResult, EngineWindow, EntityKey, FeeComparison, FeeDisplay, GateDecision, NoClaimVatReading, RecommendationThreshold, SectorId, Session } from './engine.ts';
 export type { ExtractedPage, PageImage } from './extract-text.ts';

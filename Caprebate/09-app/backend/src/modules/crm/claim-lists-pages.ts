@@ -78,10 +78,18 @@ export async function handleLists(
     return 'handled';
   }
 
+  /* THE EXPORT IS A POST (Phase 161n1c, ITRoadway L-10): a file of client data, so it carries the session's form token and a
+     single-use one (src/core/form-token.ts, SENSITIVE), like every other action that should not be sent twice or from
+     elsewhere. The list's filters come in the form's `params`, exactly as the list page shows them. A GET is refused. */
   const exportMatch = /^\/staff\/(claims|leads)\/export\.csv$/.exec(path);
   if (exportMatch && method === 'GET') {
+    html(res, 405, page({ title: 'Use the button on the list', body: h`<h1>Use the button on the list</h1>
+      <p>Open the list, choose your filters, then press "Export these rows as CSV".</p>` }));
+    return 'handled';
+  }
+  if (exportMatch && method === 'POST') {
     const list: LI.ListKey = exportMatch[1] === 'leads' ? 'LEADS' : 'CLAIMS';
-    const asked = requestParams(d.app, actor, list, url.searchParams);
+    const asked = requestParams(d.app, actor, list, new URLSearchParams((await form(req)).get('params') ?? ''));
     const q = new URLSearchParams(LI.canonical(asked.params));
     const out = LI.exportList(deps, actor, list, q);
     res.writeHead(200, {
@@ -163,10 +171,12 @@ export function listControls(
       <label>Save these filters as <input name="name" required maxlength="120"></label>
       ${mayShare ? h`<label><input type="checkbox" name="shared" value="yes"> Share with everybody</label>` : raw('')}
       <button type="submit">Save view</button></form>
-    ${v.may_export ? h`<p><a href="${base}/export.csv?${v.params}">Export these ${v.rows.length} rows as CSV</a>
+    ${v.may_export ? h`<div>${list === 'LEADS'
+      ? h`<form method="post" action="/staff/leads/export.csv" class="inline"><input type="hidden" name="params" value="${v.params}"><button class="linkish" type="submit">Export these ${v.rows.length} rows as CSV</button></form>`
+      : h`<form method="post" action="/staff/claims/export.csv" class="inline"><input type="hidden" name="params" value="${v.params}"><button class="linkish" type="submit">Export these ${v.rows.length} rows as CSV</button></form>`}
       <span class="help">— only the columns you may read; the export is recorded.</span>${v.not_applied.length === 0 ? raw('') : h`
       <br><strong>The file does not apply ${notAppliedWords(list, v.not_applied)}</strong> <span class="help">— your role does not see those columns.
-      The file cannot say so, so we say it here. The export record names them too.</span>`}</p>` : raw('')}
+      The file cannot say so, so we say it here. The export record names them too.</span>`}</div>` : raw('')}
   </div>`;
 }
 

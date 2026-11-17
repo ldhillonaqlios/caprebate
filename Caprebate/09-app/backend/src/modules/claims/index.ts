@@ -77,7 +77,7 @@ export type { Business, EngagementView } from './client-engagement.ts';
 export { ENGAGEMENT_SIGNING, ENGAGEMENT_SIGNING_TEST, letterFacts, letterOptions, seedSignatureRecord, shownLetter, SIGN_WORDS, signByLink, signEngagement, signingMissing, signLinkFor } from './signing.ts';
 export * as siteAreaInputsModule from './site-area-inputs.ts';
 export * as titleByHandModule from './title-by-hand.ts';
-export { acceptClientBytes, DAMAGED_PDF, finishUpload, issuedJob, openKeptOriginal, readerFor, sweepOriginals } from './uploads.ts';
+export { acceptClientBytes, DAMAGED_PDF, finishUpload, issuedJob, openKeptOriginal, readerFor, sweepHoldingPlace, sweepOriginals } from './uploads.ts';
 export type { ControlsView, FeeControls } from './fee-controls.ts';
 export type { VouchAnswer } from './document-reading.ts';
 export type { BackupCycle, BackupCycleState, DeletionLogEntryClock, IngestionSettings, PartyLegalForm, PersonRole, RawFileRecord, RestoreApproval } from './documents/client-doc-ingestion.ts';

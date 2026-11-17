@@ -27,7 +27,7 @@ import { parseChat, type ExportMessage, type ParsedChat } from '../../integratio
 import { localDate } from '../../shared/index.ts';
 import { WHATSAPP_IMPORT_PREFIX, WHATSAPP_PREFIX, type FsObjectStore } from '../../shared/index.ts';
 import { phoneContacts } from './whatsapp.ts';
-import { listZipEntries, readZipEntryFromBuffer } from '../../shared/index.ts';
+import { ZipEntryTooLarge, listZipEntries, readZipEntryFromBuffer } from '../../shared/index.ts';
 import { getWhatsappImportLinesExistsByFingerprint, getWhatsappImportsByIdBusinessId, insertWhatsappImportLines, insertWhatsappImports, insertWhatsappMedia, insertWhatsappMessages2, listWhatsappImportLinesAttachmentByImportIdAttachment, listWhatsappImportLinesMessageIdByImportIdAttachment, updateWhatsappImportsStatusById, updateWhatsappImportsStatusUsNameById } from '../../integrations/index.ts';
 
 import { getContactsFullNameWhatsappOptinById } from '../clients/index.ts';
@@ -114,7 +114,11 @@ export async function startImport(app: App, store: FsObjectStore, actor: Actor, 
       try { names = listZipEntries(input.whole); } catch { return { ok: false, why: 'That .zip could not be opened. Export the chat again and choose the new file.' }; }
       const chatName = names.find(CHAT_TEXT);
       if (chatName === undefined) return { ok: false, why: 'That .zip has no WhatsApp chat in it. On the phone, open the chat, tap the name, then Export chat.' };
-      try { text = readZipEntryFromBuffer(input.whole, [chatName]); } catch { return { ok: false, why: 'The chat inside that .zip could not be read.' }; }
+      // M-01: the chat is unpacked no further than IMPORT_MAX_TEXT, so a zip made to unpack to gigabytes is refused.
+      try { text = readZipEntryFromBuffer(input.whole, [chatName], IMPORT_MAX_TEXT); } catch (e) {
+        if (e instanceof ZipEntryTooLarge) return { ok: false, why: 'That chat is too long to add here.' };
+        return { ok: false, why: 'The chat inside that .zip could not be read.' };
+      }
       zip = input.whole;
     } else {
       text = input.whole;
@@ -260,7 +264,7 @@ export async function saveImport(app: App, store: FsObjectStore, actor: Actor, b
     for (const f of filesToAttach) {
       const entry = inZip.find((n) => base(n) === f.name);
       if (entry === undefined) continue;
-      try { await attach(app, store, actor, f.message_id, f.name, readZipEntryFromBuffer(zip, [entry])); } catch { /* a file the zip cannot give stays waiting */ }
+      try { await attach(app, store, actor, f.message_id, f.name, readZipEntryFromBuffer(zip, [entry], IMPORT_MAX_FILE)); } catch { /* a file the zip cannot give, or one over IMPORT_MAX_FILE, stays waiting */ }
     }
   }
   app.audit.append({ at: now, kind: 'WHATSAPP_EXPORT_SAVED', outcome: 'ALLOWED', actor_id: actor.id, actor_role: actor.role,

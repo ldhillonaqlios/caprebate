@@ -4,7 +4,8 @@
  * needs it, never a whole file.
  */
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
-export { AuthError, GENERIC_AUTH_FAILURE, IDLE_CLIENT_MS, IDLE_STAFF_MS, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, changeOwnPassword, completePasswordReset, endedIdle, logout, primeTimingDefence, rateLimit, requestPasswordReset, revokeAllSessions, signOutOtherSessions } from './auth.ts';
+export { ASSESSMENT_SOURCE_LIMIT, ENQUIRY_SOURCE_LIMIT, FROM_ONE_PLACE, SIGNUP_SOURCE_LIMIT } from './auth.ts';
+export { AuthError, GENERIC_AUTH_FAILURE, IDLE_CLIENT_MS, IDLE_STAFF_MS, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, changeOwnPassword, completePasswordReset, endedIdle, logout, primeTimingDefence, rateLimit, rateLimitOver, requestPasswordReset, revokeAllSessions, signOutOtherSessions } from './auth.ts';
 export { DPO_ROLE_SWITCH, NotAuthorised, PREDICATES, REGISTERED_ACTIONS, actionOwner, authorise, builtInHolds, can, registerActions } from './authz.ts';
 export { IMAGE_LIMITS, PHOTO_HEADERS, clearPhoto, photoFor, readPhoto, setPhoto } from './avatar.ts';
 export { AuditLog, GENESIS, _canonical, screenDetail } from './audit.ts';
