@@ -54,6 +54,10 @@ Every name is in `Caprebate/09-app/backend/secrets.example.env`, with what it is
 
 **The rest** (email, Companies House, Didit, Homedata and so on): a missing one leaves that service "not set up", which the Connections page shows, as on the test website. Add `CAPREBATE_REFERENCE_DB_URL` and `CAPREBATE_REFERENCE_DB_TOKEN` (section 10), and the four `BACKUP_S3_*` settings (section 7). **`CAPREBATE_LEGAL_PAGES=on` only once every legal page is approved** (board item "Legal pages approved").
 
+**The contact form's security check is required on the live website** (Phase 161n1c, ITRoadway M-04). Set `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` (Cloudflare dashboard, Turnstile, a widget for `caprebate.co.uk`; the developer's to set), and the data protection officer must have approved the transfer to Cloudflare (it is on the outside services list). Without both, the live website refuses every enquiry with "Our security check is not working just now" and an email address; it never keeps one unchecked, as the test website still does. The enquiry form, the assessment's submit and a client's sign-up are also limited to 10 from one network address in 15 minutes, a hidden field drops what a robot fills in, and at most 30 thank-you emails go out an hour.
+
+**Virus scanning of uploads** (Phase 161n1c, M-03) is a hook with no service behind it (`UPLOAD_SCANNING` in `src/integrations/connectors/upload-scanner.ts`, off). Which service is the developer's choice, as they host, and the data protection officer approves it before any file is sent. Wire it by writing an adapter of the `UploadScanner` shape that calls the service through `src/integrations/connectors/http.ts`, and give it to the app (`App.scanner`); then every upload is sent to it before it is stored, and only a clean answer goes on. Until then, every upload is still checked for what it is, its size, a PDF's end, and macros or scripts (refused in plain words). The Connections page shows the row.
+
 **Never in the live project** (the start stops if one is there): `CAPREBATE_TEST_PASSWORD`, `CAPREBATE_ALLOW_SEED`, `CAPREBATE_SIGNING_TEST`, `CAPREBATE_COST_MODEL_TEST`, `CAPREBATE_LIVE_SMOKE`, `CAPREBATE_LOCAL_EMAIL`, `CAPREBATE_LOCAL_WHATSAPP`, `CAPREBATE_LOCAL_ZOOM`, `CAPREBATE_LOOKUPS_HERE`, `CAPREBATE_TEST_LOOKUP_LOG`.
 
 ## 4. The live database (once)
@@ -126,7 +130,7 @@ It writes new files only and says whether the tables are complete and the audit 
 
 | Job | When (UTC) | What |
 |---|---|---|
-| `/hooks/timer/every-five-minutes` | every 5 minutes | Read email replies (at most every two minutes); clear photo, video and piece uploads never finished; try again emails that could not be sent at the moment they were saved (only those safe to try again, for 24 hours). |
+| `/hooks/timer/every-five-minutes` | every 5 minutes | Read email replies (at most every two minutes); clear photo, video and piece uploads never finished; clear the documents' holding place (`quarantine/`) of anything past its hour, each one written to the audit log, and the run marked not ok if it found any, because one found means an upload went wrong (Phase 161n1c, ITRoadway M-08); try again emails that could not be sent at the moment they were saved (only those safe to try again, for 24 hours). |
 | `/hooks/timer/nightly` | 01:30 | The clean-up jobs (kept originals; messages and closed enquiries once the data protection officer sets their periods) and the audit chain checked end to end. |
 | `/hooks/timer/backup` | 02:00 | The nightly backup (section 7). |
 

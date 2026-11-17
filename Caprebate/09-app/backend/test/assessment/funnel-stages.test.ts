@@ -15,6 +15,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../../src/app/server.ts';
+import { ASSESSMENT_SOURCE_LIMIT, FROM_ONE_PLACE, rateLimit } from '../../src/core/auth.ts';
+import { hashToken } from '../../src/core/users.ts';
 import { SITE_CSS } from '../../src/shared/assets.ts';
 import { fixtureTransport, type Fixture } from '../../src/integrations/connectors/http.ts';
 import { secretsFromValues } from '../../src/core/secrets.ts';
@@ -589,5 +591,31 @@ describe('"Find my address" (Homedata)', () => {
       await c2.post('/assessment/details', { ...DETAILS, b0_line1: '9 Typed Road', b0_address_pick: 'none' });
       assert.match((await c2.req('/assessment/figure')).body, /Building 1 · Care home, 9 Typed Road, Hinckley, LE10 1DA/);
     } finally { made.app.outside = was.outside; made.app.secrets = was.secrets; }
+  });
+});
+
+/* PHASE 161n1c (ITRoadway M-04): the assessment's submit is limited from one network address, counted only when an
+   enquiry would really be made. Last in the file: it fills the address's count, then empties it again. */
+describe('161n1c · the assessment\'s submit from one network address', () => {
+  test(`a person correcting the form is not counted; past ${String(ASSESSMENT_SOURCE_LIMIT)} real submits, the next is refused in words and nothing is made`, async () => {
+    const bucket = 'assessment-from:' + hashToken('127.0.0.1');
+    try {
+      const c = client();
+      await toDetails(c, 'yes');
+      await c.post('/assessment/details', DETAILS);
+      const counted = () => made.app.db.get<{ n: number }>('SELECT COALESCE(SUM(hits), 0) AS n FROM rate_limit_hits WHERE bucket = ?', [bucket])?.n ?? 0;
+      const before = counted();
+      for (let i = 0; i < 20; i++) assert.equal((await c.post('/assessment/close', { first_name: '' })).status, 400, 'an answer missing');
+      assert.equal(counted(), before, 'none of those counted');
+      made.app.db.run('DELETE FROM rate_limit_hits WHERE bucket = ?', [bucket]);
+      for (let i = 0; i < ASSESSMENT_SOURCE_LIMIT; i++) rateLimit(made.app.deps, bucket, ASSESSMENT_SOURCE_LIMIT);
+      const leads = made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM leads')?.n ?? 0;
+      const r = await c.post('/assessment/close', { first_name: 'Flo', surname: 'Invented', job_role: 'owner_director', channel: 'email', email: 'flo.f4@example.invalid' });
+      assert.equal(r.status, 429);
+      assert.ok(r.body.includes(FROM_ONE_PLACE.slice(0, 40)));
+      assert.equal(made.app.db.get<{ n: number }>('SELECT COUNT(*) AS n FROM leads')?.n, leads, 'nothing made');
+    } finally {
+      made.app.db.run('DELETE FROM rate_limit_hits WHERE bucket = ?', [bucket]);
+    }
   });
 });

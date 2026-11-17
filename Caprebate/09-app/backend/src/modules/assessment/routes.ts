@@ -188,11 +188,15 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
       html(res, 200, closePage(draft, actor, undefined, publicSlots(d.app.db, now())));
       return 'handled';
     }
-    // PHASE 161n1c (M-04): the assessment's submit, limited from one network address. The answers so far stay saved.
-    if (method === 'POST' && !rateLimit(d.app.deps, 'assessment-from:' + hashToken(clientIp(req)), ASSESSMENT_SOURCE_LIMIT)) {
+    /* PHASE 161n1c (M-04): the assessment's submit, limited from one network address. Counted only when an enquiry
+       would really be made (the answers checked), so a person correcting the form is not counted; the answers so far
+       stay saved either way. */
+    const flooded = (): boolean => {
+      if (rateLimit(d.app.deps, 'assessment-from:' + hashToken(clientIp(req)), ASSESSMENT_SOURCE_LIMIT)) return false;
       d.app.audit.append({ at: now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'assessment_submit_from_one_address' } });
-      html(res, 429, simple('Your assessment was not sent', FROM_ONE_PLACE)); return 'handled';
-    }
+      html(res, 429, simple('Your assessment was not sent', FROM_ONE_PLACE));
+      return true;
+    };
     if (method === 'POST' && isFunnel4(draft.state) && !allGated(draft.state as unknown as Record<string, unknown>)) {
       /* THE FOUR-STAGE CLOSE. First name, surname, position; then telephone (a time and the number),
          video call (a time and an email address) or email. One organisation per business that owns a building, each
@@ -203,6 +207,7 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
       const err = applyReach(s, f, FUNNEL.ROLES as readonly (readonly [string, string])[], (ch, v) => contactValueProblem(ch, v));
       saveDraft(d.app.db, draft, now);
       if (err !== undefined) { html(res, 400, f4FigurePage(draft, actor, publicSlots(d.app.db, now()), err)); return 'handled'; }
+      if (flooded()) return 'handled';
       const out = submitEnquiry(d.app.db, draft, now, newId);
       let booked: { booked_at: string | null; booking_id: string | null } = { booked_at: null, booking_id: null };
       out.parts.forEach((p, k) => {
@@ -239,6 +244,7 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
         return 'handled';
       }
       saveDraft(d.app.db, draft, now);
+      if (flooded()) return 'handled';
       if (isGatedExit(draft.state)) {
         /* THE CALL FROM THE REASONED NEGATIVE — the gated-exit repair. There is no
            property and no sector, so `submit()` cannot run and must not: it would

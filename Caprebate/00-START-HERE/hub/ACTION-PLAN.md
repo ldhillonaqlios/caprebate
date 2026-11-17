@@ -1365,6 +1365,16 @@ read their answer on review item 13533383676 first, theirs may change it): the b
 35 days, no delete right, a restore user, AWS root two-step) are the
 DEVELOPER's; this phase writes them into the pack and the runbook.
 
+CARRIED FROM PHASES 161n1a, 161n1b AND 161n1c (16 and 17 Nov 2026): the paid
+gate in front of the test website (Vercel Deployment Protection, which needs
+Pro on the test project; review H-01 step 1) was not built. On 17 Nov 2026
+review item 13533383676 still held only Lakhbir's 12 Nov request: ITRoadway
+had not answered his 16 Nov reply. When their answer is on that item, ask
+Lakhbir in chat whether he still wants it; if yes and he buys Pro, he switches
+it on in caprebate-test > Settings > Deployment Protection, and this phase
+notes it in KEYS-AND-SWITCHES.md. If their answer is still not there, carry
+this paragraph to Phase 161n1e.
+
 BUILD
 1. M-10: a timer_runs table (job, at, ok, line; a migration); a run not ok
    queues an email to the admin and the developer with the job name and

@@ -124,7 +124,7 @@ export const CONNECTIONS: readonly Connection[] = Object.freeze([
   { id: 'UPLOAD_SCANNER', name: 'Virus scanning of uploads', does: 'Checks every uploaded file for viruses before it is kept (Phase 161n1c).', owner: null, calls: [],
     switch_name: 'UPLOAD_SCANNING',
     on: (app) => (uploadScannerFor(app.scanner) !== null ? yes : off('Switched off: no scanning service is named yet. Files are still checked for what they are, their size, macros and scripts.')),
-    waits: 'The developer choosing a scanning service for the live website, and the data protection officer approving it.' },
+    waits: 'The developer picks a scanning service. Then our data protection officer approves it.' },
   { id: 'CLAUDE_DOCUMENTS', name: 'Anthropic (reading documents)', does: 'Reads clients’ documents for the facts a claim needs.', owner: 'CLAUDE_DOCUMENTS', calls: ['CLAUDE_DOCUMENTS'],
     switch_name: 'CLAUDE_SWITCHES',
     waits: 'Approved for testing (5 Oct 2026); its reading switches stay off and the key is not on the test website. For real clients: the privacy notice and the data protection officer’s retention answer.' },

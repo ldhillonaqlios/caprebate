@@ -295,15 +295,10 @@ describe('161n1c · 4 · M-04: the public forms cannot be flooded', () => {
     }
   });
 
-  test(`the assessment's submit and a client's sign-up: ${String(ASSESSMENT_SOURCE_LIMIT)} and ${String(SIGNUP_SOURCE_LIMIT)} from one address, then refused in words`, async () => {
+  // The assessment's own test is in test/assessment/funnel-stages.test.ts, where a complete assessment is made.
+  test(`a client's sign-up: ${String(SIGNUP_SOURCE_LIMIT)} from one address, then refused in words (the assessment's: ${String(ASSESSMENT_SOURCE_LIMIT)}, in its own suite)`, async () => {
     const b = await boot();
     try {
-      const start = await fetch(`${b.base}/assessment`, { redirect: 'manual' });
-      const cookie = (start.headers.getSetCookie()[0] ?? '').split(';')[0] ?? '';
-      for (let i = 0; i < ASSESSMENT_SOURCE_LIMIT; i++) assert.notEqual((await post(b.base, '/assessment/close', '', { cookie })).status, 429);
-      const a = await post(b.base, '/assessment/close', '', { cookie });
-      assert.equal(a.status, 429);
-      assert.ok((await a.text()).includes(FROM_ONE_PLACE.slice(0, 40)));
       for (let i = 0; i < SIGNUP_SOURCE_LIMIT; i++) assert.notEqual((await post(b.base, '/account/create', 'offer=nothing')).status, 429);
       const s = await post(b.base, '/account/create', 'offer=nothing');
       assert.equal(s.status, 429);
@@ -363,7 +358,7 @@ async function boot() {
     const upload = (bytes: Uint8Array, name: string) => {
       const fd = new FormData();
       fd.append('type_code', 'LEASE');
-      fd.append('file', new Blob([bytes]), name);
+      fd.append('file', new Blob([new Uint8Array(bytes)]), name);
       return req('/portal/documents', { method: 'POST', body: fd });
     };
     return { req, upload };

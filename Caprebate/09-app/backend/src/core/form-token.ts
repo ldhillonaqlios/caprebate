@@ -124,11 +124,11 @@ export const SENSITIVE: readonly { readonly match: RegExp; readonly why: string 
   /* Phase 161n1c (ITRoadway's second review, L-10): money and actions that cannot be undone, which a double click or the
      back button could send twice (a second break-fee invoice), and the bulk export of client data. */
   { match: /^\/staff\/finance\/claims\/[^/]+\/break-fee$/, why: 'money: a break fee invoiced' },
-  { match: /^\/staff\/introducer-fees\/[^/]+\/(settled|disclosure)$/, why: 'money: an introducer\'s commission settled, or its disclosure recorded' },
-  { match: /^\/staff\/introducers\/[^/]+\/(merge|terms-signed)$/, why: 'two introducers merged (it cannot be undone), or an introducer\'s terms recorded as signed' },
+  { match: /^\/staff\/introducer-fees\/[^/]+\/(settled|disclosure)$/, why: 'money: a fee to an introducer marked paid, or told to the client' },
+  { match: /^\/staff\/introducers\/[^/]+\/(merge|terms-signed)$/, why: 'two introducers made one (it cannot be undone), or their terms marked signed' },
   { match: /^\/staff\/clients\/[^/]+\/engagement\/send$/, why: 'the engagement letter sent to a client' },
   { match: /^\/portal\/letter\/sign$/, why: 'the client signs the engagement letter' },
-  { match: /^\/staff\/(claims|leads)\/export\.csv$/, why: 'the claims or leads list exported as a file of client data' },
+  { match: /^\/staff\/(claims|leads)\/export\.csv$/, why: 'the claims or leads list saved as a file of client data' },
   { match: /^\/staff\/users\/(create|[^/]+\/(role|disable|temporary-password|reset-two-factor))$/, why: 'a staff login made, its role changed, switched off, or its password or second step reset' },
   { match: /^\/staff\/admin\/roles(\/[^/]+(\/retire)?)?$/, why: 'what a role may do' },
   { match: /^\/staff\/admin-settings\//, why: 'a setting or switch' },
