@@ -6,7 +6,7 @@
  *
  *   1. The postcode table, with the ingest the postcode module already has (it reads the CSV you downloaded; it makes no
  *      network call):
- *        node 04-phase-work/phase9/caprebate-postcode-authority-ingest.ts --csv NSPL_<month>_<year>_UK.csv \
+ *        node tools/postcode-ingest.ts --csv NSPL_<month>_<year>_UK.csv \
  *             --names LAD_names_and_codes.csv --release <MONTH_YEAR> --sqlite postcodes.sqlite
  *   2. This command adds Ordnance Survey's OSTN15 grid to a copy of that file and checks both:
  *        node tools/build-reference-db.ts --postcodes postcodes.sqlite --ostn15 OSTN15_OSGM15_DataFile.txt \

@@ -11005,7 +11005,7 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
 ## Ad-hoc, 1 October 2026 — why no email went out (Opus, Mac copy)
 
- Lakhbir, from the test website: "Admin User, to lakhbir.s.dhillon@icloud.com · Today, 10:31 · Not sent: The mail server refused it: 0 the connection closed — check why i cant sent and receive emails".
+ Lakhbir, from the test website: "Admin User, to [Lakhbir's personal address] · Today, 10:31 · Not sent: The mail server refused it: 0 the connection closed — check why i cant sent and receive emails".
 
 -  **Found, by signing in to IONOS and out again from the Mac with nothing sent:** (1) the key file names port 587, which starts in plain text and turns secure with STARTTLS; the adapter opened every port as 465, so IONOS hung up before its greeting ("wrong version number"); (2) `IONOS_SMTP_USER` names another mailbox — IONOS answers 535; the same password with `contact@caprebate.co.uk` (the IMAP user) answers 235.
 -  **Fixed in code:** `smtpProvider` speaks STARTTLS on any port but 465 (never a password in plain text; a server that will not go secure is refused), says why a connection dropped, and has `check()` — sign in and out, sending nothing. Checked live on 587 with the right user: accepted. `test/smtp-starttls.test.ts`, two tests, three mutations red; `npm run check` 1916 pass (109 files); drift (`--expect 1279,439,403,1916`), fold (five §4 references moved), plain words, brand, register, analytics green.
@@ -14647,6 +14647,54 @@ NOT DONE      Vercel Deployment Protection on the test project - BLOCKED on ITRo
                 database is theirs to make) - the pack's Part 6.
 NOTHING LEFT  beyond those lines: every buildable part is built. The one "Ready - Claude can build" row is Phase
               161n1e (no orphan).
+```
+
+**Claim cleared** in the commit that carries this record.
+
+## Phase 161n1e — Repository, build and release: personal emails out, private once the developer has access, lock file, pinned Actions, protected live branch — 17 November 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES (as on the run sheet).** Phase 161n1e, 17 Nov 2026 (repository, build and release: ITRoadway's second review, H-02, M-05, L-07, L-08, L-09, L-11, L-13, D12, D15, and the migration fault carried from 161n1a). A migration that rebuilds a table now goes to Turso in one piece, so it no longer stops the way the test website's rebuild did on 16 Nov; it is proved on a stand-in, and a tool proves it on the real database when Lakhbir runs it with the test database's details. The four personal email addresses are out of the repository. Both websites now install exactly the committed list of packages; the GitHub Actions are pinned, with Dependabot proposing updates; each deploy carries only the application, not the hub or the papers. The release workflow is ready for the live-branch rule and Lakhbir's approval, which he switches on later, with the steps in the runbook. The page's calculator figure is built as elements, and a check stops any new HTML-from-strings. PR 115, for Lakhbir to merge. 5,813 checks across the four suites. Next: Phase 161n2 (go-live), whose gate now carries the Turso proof, the branch protection, the private repository and Deployment Protection.
+
+- **Claim.** hub/CLAIM.md, the tracker row and board item 13556689508 (Working on it, Claimed by "MacBookPro (Lakhbir's Mac)"), pushed first on branch `claude/phase-161n1e` from main at 6aaf51d4 (PR 114 merged; not stacked).
+- **ITRoadway's answer.** Review item 13533383676 read again on 17 Nov 2026: only Lakhbir's 12 Nov request. Built as put to them (the repository stays public until their engineer's username; no history rewrite). The Deployment Protection paragraph goes to Phase 161n2's gate, line 14(d).
+- **Lakhbir's answers in chat (17 Nov 2026).** The comments archive's three addresses: "Yes, replace them". The hub: "Keep it in git for now". The two GitHub settings for the live branch: "Not yet" (built and written; he switches them on). The Turso proof: "Later".
+- **Premise re-derived (step 8).** At 6aaf51d4: personal addresses at four places only (COMMENTS-ARCHIVE.md three times, PHASE-HISTORY.md once; the review's examples); no root lock file; Actions pinned by tag; the sshd feature on "latest"; includeFiles `Caprebate/**`; the postcode tool in 04-phase-work. Two corrections to the prompt: **the 27 innerHTML uses are not in engine/src** (it has none, and verify-page already forbids DOM access there); they are in the page's own script, 8 of them in the part the website can serve and 19 in the in-page assessment the website drops; and the **run sheet's 161n1e prompt carried item 9 and an ACCEPT line that ACTION-PLAN.md lacked** (Phase 161n1a's follow-up wrote one place only): both now carry them.
+- **Item 9 (the migration fault, src/core/db.ts).** On a remote database a file that runs its own transaction is sent as ONE batch (its pragma, BEGIN, the body, its schema_migrations row, COMMIT, the closing pragma), so "foreign keys off" holds for the body; the row's two literals are a file name matched against `MIGRATION_NAME` and Date's ISO form, nothing typed. On any database `PRAGMA foreign_key_check` runs before such a file commits: a body that would leave a reference pointing at nothing is rolled back (on a file), or stops the start saying to restore (remote, after the batch). New `test/core/migrations-on-turso.test.ts` (6 tests) uses a stand-in engine that resets foreign keys on every request, as Turso did: the old way fails exactly as the test website did ("FOREIGN KEY constraint failed"); migrate() now applies every real migration through it. `tools/turso-migration-proof.ts` does the same on a real database (refuses an address with "live" in it; drops what it made). LIVE-RUNBOOK.md section 6 says what to do if a release stops at a migration.
+- **H-02.** The four addresses replaced with "[Lakhbir's work address]" and "[Lakhbir's personal address]" (backups `.bak-phase161n1e` by cat); a grep for personal domains finds only invented ones. The root README and package.json no longer call the repository private (the backend README already said public). The hub stays tracked; the repository goes private the day ITRoadway send the username (161n2 line 14(c)).
+- **M-05.** The root `package-lock.json` (npm install --package-lock-only) committed (allow-listed in .gitignore); vercel.ts installs with `npm ci --omit=dev`; checks.yml installs and audits that lock instead of one made on the fly. `.github/dependabot.yml`: npm at the root and in the back end, and github-actions, weekly, as pull requests (the Anthropic SDK's major version ignored until its planned move).
+- **L-08.** actions/checkout and actions/setup-node pinned to the v4.4.0 commits (11d5960a…, 49933ea5…) with the version in a comment, in both workflows; the devcontainer's sshd feature pinned to 1.1.0 (the option "latest" removed).
+- **L-11.** The release job runs in the environment `live`; the check counts only a check run by GitHub's own Actions app. The ruleset on refs/heads/live and the environment's required reviewers are written in LIVE-RUNBOOK.md section 5 and the go-live checklist (line 4a) for Lakhbir to switch on.
+- **L-13.** includeFiles is `{Caprebate site.html,Caprebate/09-app/**,node_modules/**}`: nothing in src/ or api/ reads outside 09-app (tools/lint-paths.cjs). The deploy test: a preview of the branch on caprebate-test built with `npm ci --omit=dev` and the narrowed bundle; /api/health answered {"ok":true}, and the home page and /login loaded.
+- **L-09.** @vercel/blob 2.9.0 (root and back end), @types/node 26.6.6; the Anthropic SDK 1.x move is a parked item, made on the board first (13569144192), for after go-live.
+- **D12 and D15.** The postcode refresh tool moved by git mv to `backend/tools/postcode-ingest.ts`, now reading the application's own postcode code; the runbook's section 10, build-reference-db.ts and the OneDrive refresh procedure point at it. `.github/CODEOWNERS` names the owner for `architecture/`, the boundary check and `.github/` (the engineer added with the username).
+- **L-07.** The page's served figure and notes (the hero) are built with createElement and textContent (`node`, `showRange`), and two boxes cleared with replaceChildren: **27 to 20** innerHTML uses, and the script the website can serve now holds one (it reads the page's own template, as a file only). Checked in the browser pane on a copy of the page: the range, its "to", the notes' bold phrases, both the ordinary and the supported-living branch, and the slider, with no console error. verify-page.cjs section 7 fails on any new innerHTML (in the page above 20, or any in the engine), with two self-test cases. The 19 left in the in-page assessment, which the website does not serve and whose output the site harness reads through innerHTML, are a parked item, made on the board first (13569231899), with its trigger.
+- **Tests and checks.** Re-derived on 17 Nov 2026: site harness 1,428 / 0 / 3 xfail in both modes, phase3 71, phase9 29, back end **4,285** pass / 0 fail over 256 tracked test files (`npm run check`: audit, lint-sql, lint-paths, the boundary check, lint-copies, lint-backups, typecheck, tests); **5,813** in all (5,807 before: 6 new tests). The planted fault for item 9 (the batch sent the old way) turns 4 tests red. verify-page.cjs: 20 checks, self-test 20 of 20. The drift checker GREEN (exit 0, nothing asserted wrongly); its negative control exits 1 as it should. Plain-words (screens and guide), brand, tracker (and --self-test) and CRM fold checks GREEN; the Developer Spec's line references re-derived (the page's six moved by 7 lines). Two older tests changed to follow the work: fresh-copy-checks (the pinned checkout, npm ci and the audit of the lock) and site-files-inside-app (the bundle is 09-app only).
+
+**For Lakhbir.**
+1. **Merge PR 115** once GitHub's check is green.
+2. **Later, with Claude** (Phase 161n2's gate, line 14): the Turso proof (paste the test database's details into a Terminal tab); the live-branch rule and your approval in GitHub (runbook section 5); the repository private once ITRoadway send the username.
+
+```
+DONE          Item 9: a table-rebuilding migration sent to Turso as one batch, checked for broken references,
+              proved on a stand-in that fails the old way; the proof tool for the real database. H-02: the four
+              addresses out; the READMEs agree. M-05: the lock committed, npm ci, the audit of it, Dependabot.
+              L-08: Actions and the sshd feature pinned. L-11: the release in the live environment, the check by
+              GitHub Actions only, the settings written. L-13: the bundle carries the app only. L-09: two updates.
+              D12: the postcode tool moved. D15: CODEOWNERS. L-07: the served figure as elements (27 to 20), a check
+              against any new one. 6 new tests; planted faults red; 5,813 across the four suites. PR 115.
+NOT DONE      The migration proof on the test website's Turso - BLOCKED on Lakhbir pasting the test database's
+                details (he chose "later") - Phase 161n2's gate, line 14(a).
+              The ruleset on the live branch and the live environment's reviewers - BLOCKED on Lakhbir (his GitHub
+                settings; he chose "later") - Phase 161n2's gate, line 14(b), and the go-live checklist line 4a.
+              The repository private, the engineer invited and named in CODEOWNERS - BLOCKED on ITRoadway's GitHub
+                username - Phase 161n2's gate, line 14(c).
+              Vercel Deployment Protection on the test project - BLOCKED on ITRoadway's answer and Pro - Phase
+                161n2's gate, line 14(d).
+              The Anthropic SDK 1.x move - parked on purpose until after go-live - tracker row and board item
+                13569144192.
+              The 19 innerHTML uses in the unserved in-page assessment - parked on purpose, trigger: that assessment
+                served again - tracker row and board item 13569231899; the check stops any new one meanwhile.
+NOTHING LEFT  beyond those lines. No "Ready - Claude can build" row is left without a phase (the list is empty).
 ```
 
 **Claim cleared** in the commit that carries this record.

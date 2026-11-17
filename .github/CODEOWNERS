@@ -1,0 +1,6 @@
+# Phase 161n1e (ITRoadway's second review, D15): a change to the structure's rules needs a named review. The module and
+# table maps and the boundary baseline (any --lower or --moved) are the structure's ratchet. Add the ITRoadway engineer's
+# GitHub username beside the owner's on each line once they send it (the repository goes private the same day).
+/Caprebate/09-app/backend/architecture/ @ldhillonaqlios
+/Caprebate/09-app/backend/tools/boundaries.cjs @ldhillonaqlios
+/.github/ @ldhillonaqlios

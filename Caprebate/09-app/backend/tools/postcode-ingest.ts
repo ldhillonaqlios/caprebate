@@ -7,7 +7,7 @@
  * human step, and that is the design, not a gap in it.
  *
  * Run:
- *   node --experimental-strip-types caprebate-postcode-authority-ingest.ts \
+ *   node --experimental-strip-types tools/postcode-ingest.ts \
  *        --csv NSPL_AUG_2026.csv --names LAD_names_and_codes.csv \
  *        --release AUG_2026 --sqlite cb-ons-postcode-authority.sqlite
  *
@@ -23,13 +23,17 @@
  * deployment holds the table. Every other Phase 9 table follows the same rule
  * for licence reasons — this one follows it for size and hygiene reasons, and
  * the rule is the same either way.
+ *
+ * Phase 161n1e (ITRoadway D12): moved here from 04-phase-work/phase9, so the quarterly refresh no longer depends on a
+ * draft folder. It now reads the application's own postcode code (src/integrations/postcodes/), which Phase 161d moved
+ * unchanged.
  */
 
 import { createReadStream, readFileSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { DatabaseSync } from 'node:sqlite';
-import { createNsplIngest, NSPL_COLUMNS_VERIFIED, ONS_LICENCE, attributionFor } from './caprebate-postcode-authority.ts';
-import { buildSqliteStore, type SqliteOpen } from './caprebate-postcode-store.ts';
+import { createNsplIngest, NSPL_COLUMNS_VERIFIED, ONS_LICENCE, attributionFor } from '../src/integrations/postcodes/postcode-authority.ts';
+import { buildSqliteStore, type SqliteOpen } from '../src/integrations/postcodes/postcode-store.ts';
 
 const openSqlite: SqliteOpen = (path, opts) =>
   new DatabaseSync(path, { readOnly: opts.readOnly }) as never;

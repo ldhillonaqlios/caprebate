@@ -8,6 +8,7 @@ _Phase 161h, 7 November 2026. This is the gate of Phase 161n2 ("Go live"; 161n w
 2. [ ] **The ICO registration number** received and written into the privacy policy (Word question 287).
 3. [ ] **Every legal page approved** by the data protection officer (no solicitor, Lakhbir 11 Nov 2026), recorded at `/staff/legal` (board item "Legal pages approved"). Only then `CAPREBATE_LEGAL_PAGES=on` in the live project.
 4. [ ] **Where the live website keeps data agreed** by the developer and the data protection officer: Vercel in London, Turso in Ireland (or London), the document store in London, the backup bucket in London (Word question 291). The privacy policy's lines match (`src/integrations/outside-services.ts`).
+4a. [ ] **The live branch protected** (runbook section 5, Phase 161n1e): the ruleset on `refs/heads/live` and the `live` environment's required reviewers switched on by Lakhbir; a direct push to `live` refused.
 5. [ ] **The backup store chosen and set up** with Versioning, Object Lock (Governance, 35 days), the website's user able to add and read only, and a separate read-only restore user outside Vercel (runbook section 7, Phase 161n1d), (Amazon S3 in London recommended), its lifecycle rule set to 35 days, its four settings in the live project (Word question 155 answered: the holding place is left out).
 6. [ ] **Everyone who can change the live website named** (Word question 157), each with two-step sign-in on Vercel and GitHub. LIVE-RUNBOOK.md section 8 lists them.
 

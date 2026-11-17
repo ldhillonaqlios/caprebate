@@ -335,7 +335,20 @@ export function pendingMigrations(db: Db, dir: string): string[] {
  *     runs outside, the body AND the record run in one transaction, and the closing pragma always runs after.
  * Anything else - two BEGINs, a COMMIT with no BEGIN, a transaction statement in a plain file, anything but the one
  * pragma around a file's own transaction - is REFUSED with a sentence, never guessed at.
+ *
+ * ON A REMOTE DATABASE (Turso) A FILE THAT RUNS ITS OWN TRANSACTION GOES AS ONE BATCH (Phase 161n1e, carried from
+ * 161n1a). Sent the way above, its "PRAGMA foreign_keys = OFF" and its body travel as separate requests, and the pragma
+ * did not hold for the body: the 16 Nov 2026 rebuild of the test database stopped at 049 with "FOREIGN KEY constraint
+ * failed". So on a remote database the whole file - the pragma, BEGIN, the body, its schema_migrations row, COMMIT, the
+ * closing pragma - is sent in one exec, which the database runs in order on one connection. The row's two values are
+ * written into that batch as literals (a batch takes no parameters): the file name only after it has matched
+ * MIGRATION_NAME, the time only as Date's own ISO form, so nothing a person types can reach it.
+ * AND ON ANY DATABASE, BEFORE IT COMMITS, the file's own transaction is checked with PRAGMA foreign_key_check: a body
+ * that left a reference pointing at nothing is rolled back, with a sentence, rather than recorded as done. Here that is
+ * inside the transaction; in the remote batch it is the first thing after it, and a fault there stops the start.
  */
+/** What a migration file's name may be: three digits, a dash, then lower-case words. */
+export const MIGRATION_NAME = /^[0-9]{3}-[a-z0-9][a-z0-9-]*\.sql$/;
 const OWN_BEGIN = /^BEGIN;[ \t]*$/gm;
 const OWN_COMMIT = /^COMMIT;[ \t]*$/gm;
 const TXN_STATEMENT = /^[ \t]*(?:BEGIN(?:[ \t]+(?:TRANSACTION|IMMEDIATE|DEFERRED|EXCLUSIVE))?[ \t]*;|COMMIT\b|ROLLBACK\b|SAVEPOINT\b|RELEASE\b|END[ \t]+TRANSACTION\b)/im;
@@ -363,6 +376,12 @@ export function splitMigration(filename: string, sql: string): { pre: string; bo
   return { pre, body, post };
 }
 
+/** The schema_migrations row of a file sent as one batch: a checked name and an ISO time, as SQL literals. */
+function recordStatement(filename: string, at: string): string {
+  if (!MIGRATION_NAME.test(filename) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(at)) throw new Error('a migration record with an unexpected name or time');
+  return ['INSERT INTO schema_migrations (filename, applied_at) VALUES (', `'${filename}'`, ', ', `'${at}'`, ');'].join('');
+}
+
 export function migrate(db: Db, dir: string): string[] {
   db.execDdl(
     'CREATE TABLE IF NOT EXISTS schema_migrations (' +
@@ -381,10 +400,22 @@ export function migrate(db: Db, dir: string): string[] {
     };
     if (parts === null) {
       db.tx(() => { db.execDdl(sql); record(); });
+    } else if (db.kind === 'remote') {
+      if (!MIGRATION_NAME.test(f)) throw new Error(`Migration ${f} was not run: its name is not three digits, a dash and lower-case words. Nothing from it was applied.`);
+      const at = new Date().toISOString();
+      // One batch, one connection (see above). The two literals are a checked file name and Date's ISO form.
+      db.execDdl([parts.pre, 'BEGIN;', parts.body, recordStatement(f, at), 'COMMIT;', parts.post].join('\n'));
+      const broken = db.all('PRAGMA foreign_key_check');
+      if (broken.length > 0) throw new Error(`Migration ${f} left ${String(broken.length)} reference(s) pointing at nothing. Restore the database from before this release and fix the file.`);
     } else {
       db.execDdl(parts.pre);
       try {
-        db.tx(() => { db.execDdl(parts.body); record(); });
+        db.tx(() => {
+          db.execDdl(parts.body);
+          const broken = db.all('PRAGMA foreign_key_check');
+          if (broken.length > 0) throw new Error(`Migration ${f} was not run: it would leave ${String(broken.length)} reference(s) pointing at nothing. Nothing from it was applied.`);
+          record();
+        });
       } finally {
         db.execDdl(parts.post);
       }

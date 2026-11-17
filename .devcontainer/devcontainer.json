@@ -1,10 +1,10 @@
 {
   "name": "Cap Rebate — test demo (invented data only)",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
+  // Phase 161n1e (ITRoadway's second review, L-08): the sshd feature pinned to one release, not "latest". It is what
+  // lets "gh codespace ssh" reach the demo. Dependabot does not update devcontainer features: move it by hand.
   "features": {
-    "ghcr.io/devcontainers/features/sshd:1": {
-      "version": "latest"
-    }
+    "ghcr.io/devcontainers/features/sshd:1.1.0": {}
   },
   "postCreateCommand": "cd Caprebate/09-app/backend && npm ci",
   "forwardPorts": [

@@ -987,10 +987,16 @@ function paintSlider(){
 }
 slider.addEventListener('input',()=>{ state.value=+slider.value; paintSlider(); compute(); });
 
+/* Phase 161n1e (ITRoadway L-07): the figure and its notes are built as elements, never as HTML from strings, so no
+   later change can turn a value into markup. node(tag, cls, parts): parts are strings (text) or elements. */
+function node(tag,cls,parts){ const e=document.createElement(tag); if(cls) e.className=cls;
+  (parts||[]).forEach(p=>e.appendChild(typeof p==='string'?document.createTextNode(p):p)); return e; }
+function strong(t){ return node('strong',null,[t]); }
+function showRange(el,from,to){ el.replaceChildren(document.createTextNode(from),node('span','to',['to']),document.createTextNode(to)); }
 let curLo=0,curHi=0,tgtLo=0,tgtHi=0,raf=null;
 function tick(){ curLo+=(tgtLo-curLo)*0.2; curHi+=(tgtHi-curHi)*0.2;
   if(Math.abs(tgtLo-curLo)<40&&Math.abs(tgtHi-curHi)<40){ curLo=tgtLo; curHi=tgtHi; raf=null; }
-  const el=document.getElementById('figval'); if(el) el.innerHTML=gbp(curLo)+'<span class="to">to</span>'+gbp(curHi);
+  const el=document.getElementById('figval'); if(el) showRange(el,gbp(curLo),gbp(curHi));
   if(raf!==null) raf=requestAnimationFrame(tick);
 }
 function animateTo(lo,hi){ tgtLo=lo; tgtHi=hi; if(raf===null) raf=requestAnimationFrame(tick); }
@@ -998,22 +1004,23 @@ function animateTo(lo,hi){ tgtLo=lo; tgtHi=hi; if(raf===null) raf=requestAnimati
 let mode=null;
 function shell(m){ if(m===mode) return; mode=m; if(raf){cancelAnimationFrame(raf);raf=null;}
   const res=document.getElementById('result');
-  if(m==='supported'){ res.innerHTML='<div class="reslabel">Pre-diligence ceiling — communal areas only, sometimes nil</div><div class="figure" id="figval"></div>'
-    +'<p class="resnote">In supported living the homes are let to tenants, so they don\u2019t qualify — but <strong>shared communal and staff areas can</strong>. The upper figure is a <strong>pre-diligence ceiling</strong> built from a communal-share assumption that is <strong>assessed, not independently calibrated</strong> (Rulebook I, awaiting chartered tax adviser review). If you\u2019re a company that bought land that was already contaminated, and you didn\u2019t cause it, a separate relief may be worth checking \u2014 it has strict tests of its own. This is the one sector where we\u2019d rather under-promise.</p>';
+  const fig=()=>{ const f=node('div','figure'); f.id='figval'; return f; };
+  if(m==='supported'){ res.replaceChildren(node('div','reslabel',['Pre-diligence ceiling — communal areas only, sometimes nil']), fig(),
+    node('p','resnote',['In supported living the homes are let to tenants, so they don\u2019t qualify — but ', strong('shared communal and staff areas can'), '. The upper figure is a ', strong('pre-diligence ceiling'), ' built from a communal-share assumption that is ', strong('assessed, not independently calibrated'), ' (Rulebook I, awaiting chartered tax adviser review). If you\u2019re a company that bought land that was already contaminated, and you didn\u2019t cause it, a separate relief may be worth checking \u2014 it has strict tests of its own. This is the one sector where we\u2019d rather under-promise.']));
     curLo=curHi=tgtLo=tgtHi=0;
-  } else { res.innerHTML='<div class="reslabel">Pre-diligence ceiling</div><div class="figure" id="figval"></div>'
-    +'<p class="resnote">in income or corporation tax relief. This is a <strong>pre-diligence ceiling, not an estimate of your claim</strong> — the top of what the sector band allows before anything about your property has been checked. It is built from sector yield bands that are <strong>assessed, not independently calibrated</strong> (Rulebook I, awaiting chartered tax adviser review). Your actual claim is established by survey, apportionment and verification of your own circumstances, and can be materially lower — in some cases nil.</p>';
+  } else { res.replaceChildren(node('div','reslabel',['Pre-diligence ceiling']), fig(),
+    node('p','resnote',['in income or corporation tax relief. This is a ', strong('pre-diligence ceiling, not an estimate of your claim'), ' — the top of what the sector band allows before anything about your property has been checked. It is built from sector yield bands that are ', strong('assessed, not independently calibrated'), ' (Rulebook I, awaiting chartered tax adviser review). Your actual claim is established by survey, apportionment and verification of your own circumstances, and can be materially lower — in some cases nil.']));
     curLo=curHi=tgtLo=tgtHi=0;
   }
 }
 function compute(){
   const band=YIELD[state.sector], [rLo,rHi]=RATE[state.biz];
   if(band===null){ shell('supported'); const hi=state.value*0.08*rHi;
-    const el=document.getElementById('figval'); if(el) el.innerHTML='From nil <span class="to">to</span>'+gbp(hi); return; }
+    const el=document.getElementById('figval'); if(el) showRange(el,'From nil ',gbp(hi)); return; }
   shell('number');
   const qMid=(band[0]+band[1])/2, lo=state.value*band[0]*rLo, hi=state.value*qMid*rHi;
   if(curLo===0&&curHi===0){ curLo=lo;curHi=hi;tgtLo=lo;tgtHi=hi;
-    document.getElementById('figval').innerHTML=gbp(lo)+'<span class="to">to</span>'+gbp(hi); }
+    showRange(document.getElementById('figval'),gbp(lo),gbp(hi)); }
   else animateTo(lo,hi);
 }
 paintSlider(); compute();
@@ -1050,7 +1057,7 @@ function buildAssessDoc(){
 function launchAssessment(sector){
   if(!document.getElementById('assessTpl')){ location.href='/assessment'; return; }
   var ov=document.getElementById('assessOverlay'), host=document.getElementById('assessHost');
-  host.innerHTML='';
+  host.replaceChildren();
   var f=document.createElement('iframe');
   f.className='assess-frame'; f.title='Capital allowances assessment';
   if(sector){ f.setAttribute('data-sector', sector); }
@@ -1064,7 +1071,7 @@ function launchAssessment(sector){
 function closeAssessment(){
   var ov=document.getElementById('assessOverlay');
   ov.classList.remove('open'); ov.setAttribute('aria-hidden','true');
-  document.getElementById('assessHost').innerHTML='';
+  document.getElementById('assessHost').replaceChildren();
   document.documentElement.style.overflow='';
 }
 /* PHASE 133j: no inline handlers. A link marked data-assess opens the in-page tool when the page is a file, and is
