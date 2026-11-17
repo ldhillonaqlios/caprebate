@@ -1570,9 +1570,22 @@ BUILD
    section 10); CODEOWNERS naming the engineer for architecture/*.json.
 8. L-07: textContent and createElement in place of innerHTML in engine/src
    (npm run page), and verify-page.cjs fails on a new innerHTML use.
+9. CARRIED FROM PHASE 161n1a (17 Nov 2026): migrations that rebuild a table
+   fail on Turso. The 16 Nov rebuild of the test database stopped at 049
+   ("FOREIGN KEY constraint failed"): their "PRAGMA foreign_keys = OFF" line
+   did not hold on Turso (reproduced locally by skipping it). The test
+   database was rebuilt by copy instead (tools/test-website-people.ts,
+   copyDatabase). The deploy's build step (prepare-lasting.mjs) and the live
+   release (prepareLiveDatabase) still migrate on Turso, so the next
+   table-rebuilding migration will stop there. Make migrate() keep foreign
+   keys off on a remote database (one statement batch per migration, or
+   checking PRAGMA foreign_keys reads 0 before the body and refusing if
+   not), prove it on the test website with a throwaway table-rebuild
+   migration, and say in LIVE-RUNBOOK.md what to do if a release stops.
 
 ACCEPT
 - No personal address left in the tracked tree (the grep in the record).
+- A table-rebuilding migration applies on the test website's Turso.
 - Vercel builds the test website with npm ci from the committed lock.
 - A direct push to live is refused (once the ruleset is on).
 - All four suites pass.
