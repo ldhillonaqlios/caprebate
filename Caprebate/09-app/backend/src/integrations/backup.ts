@@ -16,9 +16,16 @@
  * base64), which only the live project's settings and the password manager hold. The second place stores bytes it cannot
  * read, and a file changed there fails to open (GCM's tag) rather than restoring something altered.
  *
- * HOW LONG IT IS KEPT: BACKUP_KEEP_DAYS. A night's database file is deleted by the bucket's own lifecycle rule after that
- * many days (LIVE-RUNBOOK.md sets it). A document deleted from the website is deleted from the backup once it has been
- * gone that long (the state file counts the days), so a deletion we promise reaches the backup within that time.
+ * HOW LONG IT IS KEPT: BACKUP_KEEP_DAYS. THE WEBSITE NEVER DELETES A BACKUP (Phase 161n1d, ITRoadway's second review,
+ * M-09): its bucket user may only add and read, so leaked settings or a bad release cannot wipe the backups in the same
+ * incident as the live data. The bucket keeps every version (Versioning, and Object Lock in Governance mode for
+ * BACKUP_KEEP_DAYS), so a document damaged on the live store and copied at 02:00 does not lose its good copy: that one
+ * becomes the older version, kept that many days. The bucket's own lifecycle rules do the deleting (LIVE-RUNBOOK.md
+ * section 7): a night's database file after BACKUP_KEEP_DAYS, and any older version after BACKUP_KEEP_DAYS.
+ * A DOCUMENT DELETED FROM THE WEBSITE: the next night writes a small marker (GONE_MARKER, locked like every file) over
+ * its backup copy, which needs no delete right. The real copy becomes the older version and the lifecycle rule removes
+ * it after BACKUP_KEEP_DAYS, so a deletion we promise still reaches the backup within that time. The state file moves it
+ * to `gone`, and the restore skips it.
  *
  * SWITCHED OFF UNTIL SET UP: with no key, or nowhere to copy to, nothing is copied and the line says which setting is
  * missing (names only). Nothing here prints a key, an address or a file's contents.
@@ -143,44 +150,51 @@ export function snapshotDatabase(src: DatabaseSource): Buffer {
 
 /* ------------------------------------------------------------------ the documents */
 
-type DocState = { last_run_at: string | null; objects: Record<string, string>; missing: Record<string, string> };
+type DocState = { last_run_at: string | null; objects: Record<string, string>; missing?: Record<string, string>; gone?: Record<string, string> };
+
+/** What a deleted document's backup copy is overwritten with (then locked): no data, and it says what it is. */
+export const GONE_MARKER = 'cbbk-gone: this document was deleted from the website; its older version expires in the bucket';
 const STATE_NAME = 'documents/state.json.cbbk';
 const docName = (key: string): string => `documents/${key}.cbbk`;
 const left = (key: string): boolean => backupLeavesOut().some((p) => key.startsWith(p));
 
 async function readState(target: BackupTarget, key: Buffer): Promise<DocState> {
   const got = await target.get(STATE_NAME);
-  if (got === null) return { last_run_at: null, objects: {}, missing: {} };
+  if (got === null) return { last_run_at: null, objects: {}, gone: {} };
   return JSON.parse(unlockBackup(got, key).toString('utf8')) as DocState;
 }
 
-export type DocumentsRun = { copied: number; unchanged: number; removed: number; left_out: number; unfinished: number };
+export type DocumentsRun = { copied: number; unchanged: number; gone: number; left_out: number; unfinished: number };
 
-/** Copies what is new or changed; deletes the copy of anything gone for BACKUP_KEEP_DAYS. Stops starting copies after `budgetMs`. */
+/**
+ * Copies what is new or changed; marks the copy of anything deleted from the website (GONE_MARKER written over it, never a
+ * delete). Stops starting copies after `budgetMs`.
+ */
 export async function backupDocuments(store: FsObjectStore, target: BackupTarget, key: Buffer, now: string, budgetMs = BACKUP_TIME_BUDGET_MS): Promise<DocumentsRun> {
   const started = Date.now();
   const state = await readState(target, key);
   const all = await store.listObjects();
   const keep = all.filter((o) => !left(o.key));
-  const r: DocumentsRun = { copied: 0, unchanged: 0, removed: 0, left_out: all.length - keep.length, unfinished: 0 };
+  const r: DocumentsRun = { copied: 0, unchanged: 0, gone: 0, left_out: all.length - keep.length, unfinished: 0 };
+  const gone = state.gone ?? {};
+  delete state.missing; // the count of days kept before Phase 161n1d; the bucket's lifecycle rule keeps them now
   for (const o of keep) {
     if (state.objects[o.key] === o.written_at) { r.unchanged++; continue; }
     if (Date.now() - started > budgetMs) { r.unfinished++; continue; }
     await target.put(docName(o.key), lockBackup(await store.readStored(o.key), key));
     state.objects[o.key] = o.written_at;
+    delete gone[o.key];
     r.copied++;
   }
   const present = new Set(keep.map((o) => o.key));
-  const limit = Date.parse(now) - BACKUP_KEEP_DAYS * 86_400_000;
   for (const k of Object.keys(state.objects)) {
-    if (present.has(k)) { delete state.missing[k]; continue; }
-    state.missing[k] ??= now;
-    if (Date.parse(state.missing[k] as string) <= limit) {
-      await target.remove(docName(k));
-      delete state.objects[k]; delete state.missing[k];
-      r.removed++;
-    }
+    if (present.has(k)) continue;
+    await target.put(docName(k), lockBackup(Buffer.from(GONE_MARKER, 'utf8'), key));
+    delete state.objects[k];
+    gone[k] = now;
+    r.gone++;
   }
+  state.gone = gone;
   state.last_run_at = now;
   await target.put(STATE_NAME, lockBackup(Buffer.from(JSON.stringify(state), 'utf8'), key));
   return r;
@@ -203,7 +217,7 @@ export async function runNightlyBackup(d: BackupDeps, env: Readonly<Record<strin
   return {
     ok: docs.unfinished === 0,
     why: `the database (${Math.round(snapshot.length / 1024)} KB) and ${docs.copied} new or changed document${docs.copied === 1 ? '' : 's'} copied to ${t.target.where}, ` +
-      `${docs.unchanged} unchanged, ${docs.removed} deleted after ${BACKUP_KEEP_DAYS} days gone, ${docs.left_out} in the holding places left out` +
+      `${docs.unchanged} unchanged, ${docs.gone} deleted from the website marked gone (the bucket expires their copies after ${BACKUP_KEEP_DAYS} days), ${docs.left_out} in the holding places left out` +
       (docs.unfinished === 0 ? '' : `; ${docs.unfinished} not reached tonight, copied on the next run`),
   };
 }
@@ -221,7 +235,7 @@ export async function restoreDatabase(target: BackupTarget, key: Buffer, date: s
   return plain.length;
 }
 
-/** Every document the state file lists, put back into `store` exactly as it was stored. Returns how many. */
+/** Every document the state file lists, put back into `store` exactly as it was stored; one marked gone is skipped. Returns how many. */
 export async function restoreDocuments(target: BackupTarget, key: Buffer, store: FsObjectStore): Promise<number> {
   const state = await readState(target, key);
   let n = 0;

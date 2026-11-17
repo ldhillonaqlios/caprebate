@@ -186,6 +186,7 @@
   "terms_agreements": "compliance",
   "thread_reads": "clients",
   "time_blocks": "clients",
+  "timer_runs": "core",
   "title_by_hand": "claims",
   "upload_pieces": "core",
   "user_photos": "core",

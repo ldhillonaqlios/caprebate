@@ -20,7 +20,7 @@ import { AuditLog } from '../../src/core/audit.ts';
 import { SECRET_KEYS, secretsFromValues, forgetRegisteredSecretsForTest } from '../../src/core/secrets.ts';
 import { signS3, s3EncodePath, s3LoginFrom, s3Target } from '../../src/integrations/connectors/s3-backup.ts';
 import {
-  BACKUP_KEEP_DAYS, backupDocuments, folderTarget, lockBackup, restoreDatabase, restoreDocuments, runNightlyBackup, unlockBackup,
+  BACKUP_KEEP_DAYS, GONE_MARKER, backupDocuments, folderTarget, lockBackup, restoreDatabase, restoreDocuments, runNightlyBackup, unlockBackup,
 } from '../../src/integrations/backup.ts';
 import { FsObjectStore } from '../../src/shared/objectstore.ts';
 import { rowsToRetry, timerJobOf, timerWordRefusal, TIMER_SCHEDULES, TIMER_JOBS } from '../../src/app/timers.ts';
@@ -60,7 +60,7 @@ function liveEnv(dbFile: string, more: Record<string, string> = {}): Record<stri
   return {
     CAPREBATE_PRODUCTION: '1', CAPREBATE_DB_URL: dbFile, CAPREBATE_DB_TOKEN: 'invented-database-token-161h-0001',
     CAPREBATE_BLOB_TOKEN: 'invented-blob-token-161h', CAPREBATE_MFA_KEY: randomBytes(32).toString('base64'),
-    CRON_SECRET: WORD, CAPREBATE_BACKUP_KEY: KEY_B64, CAPREBATE_PUBLIC_ORIGIN: 'https://caprebate.co.uk',
+    CRON_SECRET: WORD, CAPREBATE_BACKUP_KEY: KEY_B64, CAPREBATE_PUBLIC_ORIGIN: 'https://caprebate.co.uk', CAPREBATE_ALERT_EMAILS: 'alerts@example.invalid',
     CAPREBATE_UPLOAD_LINK_KEY: randomBytes(32).toString('base64'), ...more,
   };
 }
@@ -326,19 +326,30 @@ describe('161h · 5 · the nightly backup, locked, and restored on a copy', () =
     } finally { made.close(); }
   });
 
-  test(`a document deleted from the website leaves the backup once it has been gone ${BACKUP_KEEP_DAYS} days`, async () => {
+  test(`a document deleted from the website: the backup never deletes it, but marks it gone (Phase 161n1d, M-09); the bucket expires the copy after ${BACKUP_KEEP_DAYS} days`, async () => {
     const dir = mkdtempSync(join(tmpdir(), 'cb-161h-keep-'));
     const store = new FsObjectStore({ root: join(dir, 'docs') });
-    const target = folderTarget(join(dir, 'b'));
+    const real = folderTarget(join(dir, 'b'));
+    let removes = 0;
+    const target = { ...real, put: real.put.bind(real), get: real.get.bind(real), exists: real.exists.bind(real), remove: async (n: string) => { removes++; await real.remove(n); } };
     const key = Buffer.from(KEY_B64, 'base64');
     await store.putText('durable/gone', 'deleted later');
+    await store.putText('durable/kept', 'still here');
     await backupDocuments(store, target, key, '2026-11-01T02:00:00.000Z');
     assert.equal(await target.exists('documents/durable/gone.cbbk'), true);
     await store.delete('durable/gone');
-    assert.equal((await backupDocuments(store, target, key, '2026-11-02T02:00:00.000Z')).removed, 0);
-    assert.equal((await backupDocuments(store, target, key, '2026-12-06T02:00:00.000Z')).removed, 0, 'removed too early');
-    assert.equal((await backupDocuments(store, target, key, '2026-12-07T02:00:00.000Z')).removed, 1);
-    assert.equal(await target.exists('documents/durable/gone.cbbk'), false);
+    assert.equal((await backupDocuments(store, target, key, '2026-11-02T02:00:00.000Z')).gone, 1);
+    assert.equal((await backupDocuments(store, target, key, '2026-12-07T02:00:00.000Z')).gone, 0, 'marked once');
+    assert.equal(removes, 0, 'the website never deletes a backup');
+    const marked = await target.get('documents/durable/gone.cbbk');
+    assert.ok(marked !== null);
+    assert.equal(unlockBackup(marked, key).toString('utf8'), GONE_MARKER, 'its copy now holds the marker; the real one is the older version');
+    const store2 = new FsObjectStore({ root: join(dir, 'restored') });
+    assert.equal(await restoreDocuments(target, key, store2), 1, 'the restore skips it');
+    await assert.rejects(store2.readStored('durable/gone'));
+    assert.equal(Buffer.from(await store2.readStored('durable/kept')).toString(), 'still here');
+    const src = readFileSync(join(import.meta.dirname, '..', '..', 'src', 'integrations', 'backup.ts'), 'utf8');
+    assert.ok(!/\.remove\(/.test(src), 'backup.ts calls no remove');
   });
 
   test('the restore command opens a night\u2019s database into a new file, checks it, and puts the documents back', async () => {

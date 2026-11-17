@@ -42,7 +42,7 @@ import { singleFile } from '../../core/index.ts';
 import { localStamp, localPartsOf } from '../../shared/index.ts';
 import { ADDRESS_SEARCH_CAP, searchesToday, uploadScannerFor } from '../../integrations/index.ts';
 import { getMailboxReadsAtFailedById, getOutboxAtBySentAt } from '../../integrations/index.ts';
-import { listAuditLogDetailSByKindM } from '../../core/index.ts';
+import { listAuditLogDetailSByKindM, timerHealth } from '../../core/index.ts';
 
 /** One outside service as the page shows it. */
 export type Connection = {
@@ -264,6 +264,12 @@ export function connectionsPage(app: App, actor: Actor, nav: Safe, done: string 
           <td data-label="Waits on">${r.c.waits}</td></tr>`)}</tbody></table>
       <p class="help">Testing only means the test website uses it, with made-up clients. Each one has a written yes from the owner.
         ${lookupsWaivedHere() ? '' : 'This copy is not the test website, so the free lookups are off here.'}</p>
+      <h2 id="timers">The live website's timers</h2>
+      <p class="help">Each job's last run, and its last good run (Phase 161n1d). A run that is not ok emails the alert addresses (<code>CAPREBATE_ALERT_EMAILS</code>). On the test website the timers do not run, so these stay empty.</p>
+      <table class="stack dash-table"><thead><tr><th>Job</th><th>Last run</th><th>Last good run</th></tr></thead><tbody>${
+        timerHealth(app.db).map((t) => h`<tr id="timer-${t.job}"><td data-label="Job"><code>${t.job}</code></td>
+          <td data-label="Last run">${t.last === null ? h`<span class="help">Never</span>` : h`${localStamp(t.last.at, now)}: ${t.last.ok ? 'ok' : h`<strong>not ok</strong>`}`}</td>
+          <td data-label="Last good run">${t.last_good === null ? h`<span class="help">Never</span>` : localStamp(t.last_good, now)}</td></tr>`)}</tbody></table>
       <p class="help">For the developer: <a href="${SWITCHES_PATH}">the parts that are built but switched off</a>, as data. Only Admin can open it.</p>`,
   });
 }

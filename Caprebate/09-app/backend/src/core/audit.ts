@@ -56,6 +56,9 @@ export type AuditKind =
      document id and how long it was held); and an upload refused for what it carries (macros, a script in a PDF, or
      the virus scanner), by kind only. */
   | 'QUARANTINE_SWEPT' | 'UPLOAD_REFUSED_ACTIVE_CONTENT'
+  /* PHASE 161n1d (ITRoadway M-10): an alert emailed about the live website's timers (which one, and to how many
+     addresses, never an address): a run not ok, no good backup in 26 hours, or the database past its size. */
+  | 'TIMER_ALERT_SENT'
   /** A role the super admin made, changed, or tried to make and was refused (src/modules/admin/role-editor.ts). */
   | 'ROLE_CREATED' | 'ROLE_CHANGED' | 'ROLE_REFUSED'
   | 'DOCUMENT_ACCESSED'

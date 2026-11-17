@@ -607,7 +607,7 @@ describe('161n1b · 8 · L-15: upload links on the live website have their own k
 function liveEnv(more: Record<string, string> = {}): Record<string, string> {
   return {
     CAPREBATE_PRODUCTION: '1', CAPREBATE_DB_URL: '/tmp/invented-161n1b.db', CAPREBATE_DB_TOKEN: 'invented-database-token-161n1b',
-    CAPREBATE_BLOB_TOKEN: 'invented-blob-token-161n1b', CAPREBATE_MFA_KEY: B64(), CRON_SECRET: 'x'.repeat(40),
+    CAPREBATE_BLOB_TOKEN: 'invented-blob-token-161n1b', CAPREBATE_MFA_KEY: B64(), CRON_SECRET: 'x'.repeat(40), CAPREBATE_ALERT_EMAILS: 'alerts@example.invalid',
     CAPREBATE_BACKUP_KEY: B64(), CAPREBATE_PUBLIC_ORIGIN: 'https://caprebate.co.uk', CAPREBATE_UPLOAD_LINK_KEY: B64(), ...more,
   };
 }
