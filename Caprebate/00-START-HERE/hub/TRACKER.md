@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 2 |
+| Ready - Claude can build | 1 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 377 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1519,7 +1519,7 @@
 
 ### Phase 161n1d - Alerts, backups and headers: an email when a job fails, backups the website cannot delete, HSTS, the load test (ITRoadway second review, 16 Nov 2026)
 
-`13556691306` · **Ready - Claude can build** · owner Claude
+`13556691306` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: M-10, M-09 (code part; the bucket settings are the developer's), L-01, L-14 (code part).
