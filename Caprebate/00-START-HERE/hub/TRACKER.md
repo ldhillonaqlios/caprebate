@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 4 |
+| Ready - Claude can build | 3 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 375 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1519,7 +1519,7 @@
 
 ### Phase 161n1b - Sign-in and sessions: no lockout by strangers, sign out everywhere, idle time-out, reset links, key changes without an outage (ITRoadway second review, 16 Nov 2026)
 
-`13556698259` · **Ready - Claude can build** · owner Claude
+`13556698259` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: M-02, M-06, L-02 (keep Lax, correct the code), L-03, L-04, L-05, L-12, L-15 (code part).
