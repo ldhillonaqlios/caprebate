@@ -88,6 +88,14 @@ describe('161n1b · 1 · M-02: nobody can lock another person out of their login
     assert.equal(r.kind, 'STEP', 'and it goes on to the second step, as ever');
   });
 
+  test('the same for a client with no second step: 10 wrong tries from A, the right password from B signs straight in', async () => {
+    const { a } = await app();
+    const c = await seededClient(a);
+    for (let i = 0; i < 10; i++) await assert.rejects(verifyPassword(a.deps, c.email, 'a wrong guess', '198.51.100.7'), (e) => failed(e));
+    const r = await beginSignIn(a, c.email, c.password, '203.0.113.20');
+    assert.equal(r.kind, 'SESSION');
+  });
+
   test('from address A past the limit, a right password with a second step goes on to that step, and its five wrong codes still end it', async () => {
     const { a, make, giveApp } = await app();
     const u = make('admin.one@invented.test', 'ADMIN');

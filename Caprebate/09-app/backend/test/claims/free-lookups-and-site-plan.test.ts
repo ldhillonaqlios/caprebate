@@ -265,6 +265,12 @@ async function req(who: string, path: string, init: RequestInit = {}) {
   const r = await fetch(base + path, { redirect: 'manual', ...init, headers: { ...(init.headers as Record<string, string> ?? {}), ...(cookie ? { cookie } : {}) } });
   for (const s of r.headers.getSetCookie()) { const f = s.split(';')[0] ?? ''; const k = f.split('=')[0]; cookie = [...cookie.split('; ').filter((x) => x && x.split('=')[0] !== k), f].join('; '); }
   jars.set(who, cookie);
+  // Phase 161n1b (ITRoadway L-03): this suite moves its clock on by hours while a browser holds a session, so the session
+  // ends for being idle. A person would sign in again; so does the test, once, and the request goes again.
+  if (r.status === 303 && (r.headers.get('location') ?? '').startsWith('/login?ended=idle')) {
+    await req(who, '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: `${who}@example.invalid`, password: PASSWORD }).toString() });
+    return req(who, path, init);
+  }
   return { status: r.status, body: await r.text(), location: r.headers.get('location'), csp: r.headers.get('content-security-policy') ?? '' };
 }
 const post = (who: string, path: string, form: Record<string, string>) => req(who, path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form).toString() });

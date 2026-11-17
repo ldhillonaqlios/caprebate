@@ -328,12 +328,19 @@ You cannot turn off your own login. You cannot turn off the last Admin either. I
 new one.
 
 **Too many tries, and you must wait.** The sign-in page says: "After too many tries you must wait a while. If sign-in
-fails, we do not say why." Too many tries for one address in a short time are refused. The message is just as vague. On
-the demo, the sixth quick sign-in as admin was refused. Once you sign in, you stay signed in for eight hours at most.
+fails, we do not say why." We refuse a login tried too often from one place. The message is
+just as vague. Tries from somewhere else do not count, so a stranger cannot lock you out. If your login has a second
+step, the right password still takes you to it. When one login gets more than 50 tries in an hour, every Admin gets an
+email. Once you sign in, you stay signed in for eight hours at most. If you leave it unused, staff are signed out after
+30 minutes, and clients after 2 hours. The sign-in page then says why.
 
 **A forgotten password.** On the sign-in page, press **Forgotten your password?** Type your email address. We email you a
-link. It works once, for 30 minutes. The page says the same thing for any address, so nobody can use it to find out who
-has a login.
+link. It works once, for 30 minutes. Only the newest link works: if you ask again, the older ones stop. The page says
+the same thing for any address, so nobody can use it to find out who has a login.
+
+**Your password, and your other devices.** Open **Your account**. When you change your password, you are signed out on
+every other device. This one stays signed in. To sign out everywhere else and keep your password, press **Sign out of
+all other devices**.
 
 **The second step.** Every staff login needs one, each time you sign in. After your password, you give a six-number code.
 It comes from an authenticator app on your phone, or in an email. You choose which the first time. A client may turn it

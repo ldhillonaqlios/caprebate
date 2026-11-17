@@ -161,8 +161,8 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'BACKUP_S3_ACCESS_KEY_ID', owner: 'BACKUPS', secret: false, phase: '161h', what: 'the id of the backup user\u2019s access key; the user may only add and read files in that one bucket' },
   { name: 'BACKUP_S3_SECRET_ACCESS_KEY', owner: 'BACKUPS', secret: true, phase: '161h', what: 'that access key\u2019s secret' },
   { name: 'CAPREBATE_REFERENCE_DB_URL', owner: 'REFERENCE_DB', secret: false, phase: '161h', what: 'the address of the reference database (the postcode table and the OSTN15 grid), libsql://...; or the path of the same file on this computer' },
-  { name: 'CAPREBATE_UPLOAD_LINK_KEY', owner: 'UPLOAD_LINKS', secret: true, phase: '161n1b', what: 'the key that signs each upload link on the live website: 32 random bytes, as base64 (openssl rand -base64 32). Its own key, apart from the database token (ITRoadway L-15). Changing it ends upload links issued in the last 15 minutes' },
   { name: 'CAPREBATE_REFERENCE_DB_TOKEN', owner: 'REFERENCE_DB', secret: true, phase: '161h', what: 'a token that can only read the reference database. Make it with: turso db tokens create <name> --read-only' },
+  { name: 'CAPREBATE_UPLOAD_LINK_KEY', owner: 'UPLOAD_LINKS', secret: true, phase: '161n1b', what: 'the key that signs each upload link on the live website: 32 random bytes, as base64 (openssl rand -base64 32). Its own key, apart from the database token (ITRoadway L-15). Changing it ends upload links issued in the last 15 minutes' },
 ]);
 
 export type SecretsState = 'LOADED' | 'NO_FILE' | 'REFUSED_INSIDE_REPOSITORY' | 'UNREADABLE';
