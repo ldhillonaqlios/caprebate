@@ -131,6 +131,15 @@ test('161b: every route that changes something refuses a signed-in request with 
   } finally { t.close(); }
 });
 
+test('161n1c (L-10): every route that raises an invoice, records or settles money, or cannot be undone needs a single-use token', () => {
+  // Found from the source the same way as above; the words say what money and the irreversible look like in an address.
+  const MONEY = /\/staff\/finance\/.*\/(received|sent|cancel|credit-in-full|credit-clause-13|raise|break-fee|void)$|\/staff\/introducer-fees\/.*\/(settled|disclosure)$|\/staff\/introducers\/.*\/(merge|terms-signed)$|\/engagement\/send$|^\/portal\/letter\/sign$|\/export\.csv$/;
+  const found = routesInSource().filter((p) => MONEY.test(p));
+  assert.ok(found.length >= 8, `money routes found in the source: ${found.join(', ')}`);
+  const loose = found.filter((p) => !isSensitive(p));
+  assert.deepEqual(loose, [], 'a route that moves money or cannot be undone, with no single-use token');
+});
+
 test('161b: no token, a wrong one and another session\'s are refused; the right one goes through', async () => {
   const t = await start();
   try {

@@ -7,6 +7,7 @@
 export { ga4MeasurementId, sitePageFor } from './analytics.ts';
 export { ADDRESS_LOOKUP, ADDRESS_SEARCH_CAP, addressLookupMissing, findAddresses, searchesToday } from './connectors/address-lookup.ts';
 export { DORMANT_WORDS, isDormant } from './connectors/companies-house.ts';
+export { SCAN_REFUSED, UPLOAD_SCANNING, uploadScannerFor, type ScanVerdict, type UploadScanner } from './connectors/upload-scanner.ts';
 export { COMPANY_SEARCH, COMPANY_TYPE_FROM_REGISTER, accountsTypeWords, companySearchOffered, entityFromCompanyType, searchCompanies } from './connectors/company-search.ts';
 export { amount } from './connectors/hmlr-title.ts';
 export { preferHomedataPlanning, supersededPlanning } from './connectors/homedata-planning.ts';

@@ -17,7 +17,7 @@
  */
 
 import type { Deps } from '../../core/index.ts';
-import { rateLimit } from '../../core/index.ts';
+import { rateLimit, rateLimitOver } from '../../core/index.ts';
 import { hashToken } from '../../core/index.ts';
 // The property types and the inbox the enquiry waits in are the CRM's (src/modules/crm/enquiries.ts); the table is the
 // client record's (website_enquiries, src/modules/clients/data.ts).
@@ -29,6 +29,18 @@ import { localStamp } from '../../shared/index.ts';
 
 /** Per address, per rate window. Generous for a person, useless for a script. */
 export const ENQUIRY_LIMIT = 5;
+/**
+ * PHASE 161n1c (ITRoadway's second review, M-04). The form could be flooded: its limit was per email address, so a
+ * new address got past it. Now also per network address (as complaints are, COMPLAINT_SOURCE_LIMIT), the same for the
+ * assessment's submit and a client's sign-up; a hidden field only robots fill (HONEYPOT_FIELD); and at most
+ * ENQUIRY_THANKS_PER_HOUR thank-you emails an hour from the whole website, so a flood that gets through cannot send
+ * mail in our name to hundreds of addresses. Past the cap the enquiry is still kept, and staff are still told.
+ */
+export { ASSESSMENT_SOURCE_LIMIT, ENQUIRY_SOURCE_LIMIT, FROM_ONE_PLACE, SIGNUP_SOURCE_LIMIT } from '../../core/index.ts';
+export const ENQUIRY_THANKS_PER_HOUR = 30;
+/** The field on the home page's form that a person never sees (class c-hp) and a robot fills. */
+export const HONEYPOT_FIELD = 'website';
+
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -122,7 +134,11 @@ export function receiveEnquiry(auth: Deps, newId: () => string, f: URLSearchPara
   if (notify !== undefined) {
     const site = (notify.origin ?? process.env['CAPREBATE_PUBLIC_ORIGIN'] ?? 'http://localhost:8103').trim().replace(/\/+$/, '');
     const thanks = brandedEmail(enquiryReceivedEmail(name), { publicOrigin: site });
-    notify.email.send({ to_email: email, kind: 'NOTIFICATION', subject: thanks.subject, body: thanks.text, html: thanks.html });
+    if (rateLimitOver(auth, 'enquiry-thanks', ENQUIRY_THANKS_PER_HOUR, 60 * 60 * 1000)) {
+      notify.email.send({ to_email: email, kind: 'NOTIFICATION', subject: thanks.subject, body: thanks.text, html: thanks.html });
+    } else {
+      auth.audit.append({ at, kind: 'RATE_LIMITED', outcome: 'REFUSED', object_type: 'website_enquiry', object_id: id, detail: { what: 'enquiry_thank_you_email' } });
+    }
     const staff = brandedEmail(staffNewEnquiryEmail({ firm, sector: ptype, received_at: at, backOfficeLink: `${site}/staff/enquiries` }), { publicOrigin: site });
     for (const u of listUsersIdEmailByRoleDisabledAt<{ id: string; email: string }>(auth.db)) {
       notify.email.send({ to_email: u.email, kind: 'NOTIFICATION', subject: staff.subject, body: staff.text, html: staff.html });

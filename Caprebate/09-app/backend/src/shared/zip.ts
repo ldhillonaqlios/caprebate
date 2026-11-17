@@ -26,6 +26,20 @@ import { readFileSync } from 'node:fs';
 import { inflateRawSync } from 'node:zlib';
 
 /**
+ * THE MOST ONE ENTRY MAY UNPACK TO, unless the caller says less (ITRoadway's second review, M-01: a 299 KB zip unpacked
+ * to 300 MB with nothing to stop it, and a big enough one takes the whole website down, since one process serves
+ * everybody). Every caller gets a cap: an uploaded Word file goes through here too (docxDocumentXml).
+ */
+export const ZIP_ENTRY_MAX_BYTES = 25 * 1024 * 1024;
+/** A deflated entry that claims to unpack to more than this many times its own size is refused unread. */
+export const ZIP_MAX_RATIO = 100;
+
+/** Why a zip entry was refused for its size: thrown, so the caller's own words are what a person reads. */
+export class ZipEntryTooLarge extends Error {
+  constructor(message: string) { super(message); this.name = 'ZipEntryTooLarge'; }
+}
+
+/**
  * Read one entry out of a zip held in memory.
  *
  * THROWS RATHER THAN RETURNING NULL, and the callers differ on purpose. The
@@ -34,7 +48,7 @@ import { inflateRawSync } from 'node:zlib';
  * client's file and a malformed one is an ordinary event, so the extractor
  * catches and returns the unreadable marker — never an empty page.
  */
-export function readZipEntryFromBuffer(buf: Buffer, names: readonly string[]): Buffer {
+export function readZipEntryFromBuffer(buf: Buffer, names: readonly string[], maxBytes: number = ZIP_ENTRY_MAX_BYTES): Buffer {
   // End of central directory: signature 0x06054b50, scanned from the tail.
   let eocd = -1;
   for (let i = buf.length - 22; i >= 0 && i > buf.length - 66_000; i--) {
@@ -51,6 +65,7 @@ export function readZipEntryFromBuffer(buf: Buffer, names: readonly string[]): B
     }
     const method = buf.readUInt16LE(p + 10);
     const compSize = buf.readUInt32LE(p + 20);
+    const declared = buf.readUInt32LE(p + 24);
     const nameLen = buf.readUInt16LE(p + 28);
     const extraLen = buf.readUInt16LE(p + 30);
     const commentLen = buf.readUInt16LE(p + 32);
@@ -65,8 +80,22 @@ export function readZipEntryFromBuffer(buf: Buffer, names: readonly string[]): B
       const lExtraLen = buf.readUInt16LE(localOff + 28);
       const start = localOff + 30 + lNameLen + lExtraLen;
       const raw = buf.subarray(start, start + compSize);
-      if (method === 0) return Buffer.from(raw);
-      if (method === 8) return inflateRawSync(raw);
+      // M-01, three locks: what the entry says it unpacks to, how many times its own size that is, and a hard cap on
+      // the inflating itself, which holds even when the declared size lies.
+      if (declared > maxBytes) throw new ZipEntryTooLarge(`${name} unpacks to more than the ${String(maxBytes)} bytes allowed`);
+      if (method === 0) {
+        if (raw.length > maxBytes) throw new ZipEntryTooLarge(`${name} is more than the ${String(maxBytes)} bytes allowed`);
+        return Buffer.from(raw);
+      }
+      if (method === 8) {
+        if (declared > Math.max(1, compSize) * ZIP_MAX_RATIO) throw new ZipEntryTooLarge(`${name} unpacks to more than ${String(ZIP_MAX_RATIO)} times its size`);
+        try {
+          return inflateRawSync(raw, { maxOutputLength: maxBytes });
+        } catch (e) {
+          if ((e as { code?: string }).code === 'ERR_BUFFER_TOO_LARGE') throw new ZipEntryTooLarge(`${name} unpacks to more than the ${String(maxBytes)} bytes allowed`);
+          throw e;
+        }
+      }
       throw new Error(`unsupported zip compression method ${method} for ${name}`);
     }
     p += 46 + nameLen + extraLen + commentLen;

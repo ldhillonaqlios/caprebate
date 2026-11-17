@@ -3,10 +3,10 @@
  * the enquiry form. The router shell (src/app/router.ts) asks each function at the point where its addresses have
  * always been matched, so the order in which every address is tried is unchanged.
  */
-import { clientIp, cookie, form, html, nav, redirect, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';
+import { clientIp, cookie, form, hashToken, html, isProduction, nav, rateLimit, redirect, type Actor, type WebRequest, type WebResult } from '../../core/index.ts';
 import { CSS_HEADERS, HTML_HEADERS, h, localDate, page, registryGate, ukDate, why } from '../../shared/index.ts';
 import { TURNSTILE_FIELD, checkTurnstile, ga4MeasurementId, refusalWords, sitePageFor, turnstileSiteKey, withSiteKey } from '../../integrations/index.ts';
-import { receiveEnquiry } from './enquiries.ts';
+import { ENQUIRY_SOURCE_LIMIT, FROM_ONE_PLACE, HONEYPOT_FIELD, receiveEnquiry } from './enquiries.ts';
 import { HOME_PAGE_HEADERS, fontFile, gsapScript, homeEdition, isSectorSlug, sectorEdition } from './home-site.ts';
 import { CONSENT_COOKIE, COOKIE_BANNER_CSS, consentChoice, consentSetCookie, draftLine, legalPageHtml, optionalAllowed } from './legal-pages.ts';
 import { currentApprovals, safeBack } from '../compliance/index.ts';
@@ -167,11 +167,36 @@ export async function publicSiteEnquiry(w: WebRequest): Promise<WebResult | unde
   const { d, req, res, method, path, actor, newId } = w;
   if (path === '/enquiry' && method === 'POST') {
     const posted = await form(req);
+    const thanksPage = (): string => page({ title: 'Thank you', nav: nav(actor),
+      body: h`<h1>Thank you — that is with us.</h1><p>One of our team will reply within one working day, to the address you gave.</p>
+        <p>If you would like a figure now, <a href="/assessment">start the free assessment</a>. It takes a few minutes.</p>
+        <p><a href="/">Back to the website</a></p>` });
+    /* PHASE 161n1c (M-04). A form with the hidden field filled was sent by a robot: it is kept nowhere and answered
+       exactly as a real one is, so the robot learns nothing. Then the limit from one network address. */
+    if ((posted.get(HONEYPOT_FIELD) ?? '').trim() !== '') {
+      d.app.audit.append({ at: d.app.now(), kind: 'WEBSITE_ENQUIRY_REFUSED', outcome: 'REFUSED', actor_id: null, actor_role: null, detail: { why: 'hidden_field_filled' } });
+      html(res, 200, thanksPage()); return 'handled';
+    }
+    if (!rateLimit(d.app.deps, 'enquiry-from:' + hashToken(clientIp(req)), ENQUIRY_SOURCE_LIMIT)) {
+      d.app.audit.append({ at: d.app.now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'website_enquiry_from_one_address' } });
+      html(res, 429, page({ title: 'Your enquiry was not sent', nav: nav(actor),
+        body: h`<h1>Your enquiry was not sent</h1><p class="err">${FROM_ONE_PLACE}</p><p><a href="/#contact">Go back to the form</a></p>` }));
+      return 'handled';
+    }
     /* THE SECURITY CHECK, ON THE SERVER (src/integrations/connectors/turnstile.ts). Without a secret key, or before
        the transfer to Cloudflare is approved, nothing is checked and the enquiry is kept as before. With both, an answer
        that is missing, rejected or unanswered refuses the enquiry: nothing is kept, and the audit says which. */
     const check = await checkTurnstile({ audit: d.app.audit, now: d.app.now, transport: d.app.outside, secrets: d.app.secrets,
       ...(d.app.turnstilePolicy === undefined ? {} : { policy_override: d.app.turnstilePolicy }) }, posted.get(TURNSTILE_FIELD), clientIp(req));
+    /* ON THE LIVE WEBSITE THE CHECK IS REQUIRED (M-04): an enquiry the check did not pass is refused, never "kept as
+       before". The test website and a computer keep the older rule, so they work without Cloudflare's keys. */
+    if (check.state === 'NOT_CHECKED' && isProduction(process.env)) {
+      d.app.audit.append({ at: d.app.now(), kind: 'WEBSITE_ENQUIRY_REFUSED', outcome: 'REFUSED', actor_id: null, actor_role: null,
+        detail: { why: 'security_check_required', reason: check.reason } });
+      html(res, 503, page({ title: 'Your enquiry was not sent', nav: nav(actor),
+        body: h`<h1>Your enquiry was not sent</h1><p class="err">${CHECK_REQUIRED}</p><p><a href="/#contact">Go back to the form</a></p>` }));
+      return 'handled';
+    }
     if (check.state === 'FAILED') {
       d.app.audit.append({ at: d.app.now(), kind: 'WEBSITE_ENQUIRY_REFUSED', outcome: 'REFUSED', actor_id: null, actor_role: null,
         detail: { why: 'security_check', reason: check.reason, codes: [...check.codes] } });
@@ -185,14 +210,14 @@ export async function publicSiteEnquiry(w: WebRequest): Promise<WebResult | unde
         body: h`<h1>Your enquiry was not sent</h1><p class="err">${r.why}</p><p><a href="/#contact">Go back to the form</a></p>` }));
       return 'handled';
     }
-    html(res, 200, page({ title: 'Thank you', nav: nav(actor),
-      body: h`<h1>Thank you — that is with us.</h1><p>One of our team will reply within one working day, to the address you gave.</p>
-        <p>If you would like a figure now, <a href="/assessment">start the free assessment</a>. It takes a few minutes.</p>
-        <p><a href="/">Back to the website</a></p>` }));
+    html(res, 200, thanksPage());
     return 'handled';
   }
   return undefined;
 }
+
+/** On the live website, when the security check could not be made at all (its keys, or the transfer, not set). */
+export const CHECK_REQUIRED = 'Our security check is not working just now, so your enquiry was not sent. Please email contact@caprebate.co.uk, and we will reply.';
 
 function home(actor: Actor | undefined): string {
   const gate = registryGate();

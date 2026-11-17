@@ -7,7 +7,7 @@
 export { fontFile, gsapScript, HOME_PAGE_HEADERS, homeEdition, isSectorSlug, sectorEdition } from './home-site.ts';
 export { SITE_JS_HEADERS, SITE_PAGE_CSP, SITE_PAGE_HEADERS, siteEdition } from './public-site.ts';
 export { CONSENT_COOKIE, consentChoice, consentSetCookie, COOKIE_BANNER_CSS, cookieBanner, draftLine, legalPageHtml, optionalAllowed, wantsBanner } from './legal-pages.ts';
-export { receiveEnquiry } from './enquiries.ts';
+export { ASSESSMENT_SOURCE_LIMIT, ENQUIRY_SOURCE_LIMIT, ENQUIRY_THANKS_PER_HOUR, FROM_ONE_PLACE, HONEYPOT_FIELD, SIGNUP_SOURCE_LIMIT, receiveEnquiry } from './enquiries.ts';
 export { sweepEnquiries } from './enquiry-retention.ts';
 export { noticesEdition, noticesForLiveSite, receiveComplaintForm } from './notices-site.ts';
 // Its addresses, asked by the router shell; they reach other modules, so they load last.

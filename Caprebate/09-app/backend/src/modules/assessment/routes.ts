@@ -4,7 +4,8 @@
  * where its addresses have always been matched, so the order in which every address is tried is unchanged.
  */
 import type { ServerResponse } from 'node:http';
-import { JSON_HEADERS, clockOf, cookie, form, html, nav, redirect, setCookie, simple, type Actor, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
+import { JSON_HEADERS, clientIp, clockOf, cookie, form, hashToken, html, nav, rateLimit, redirect, setCookie, simple, type Actor, type WebDeps, type WebRequest, type WebResult } from '../../core/index.ts';
+import { ASSESSMENT_SOURCE_LIMIT, FROM_ONE_PLACE, SIGNUP_SOURCE_LIMIT } from '../../core/index.ts';
 import { BOOKING, FRONTDOOR, FUNNEL, HTML_HEADERS, formatPence, formatShownRange, h, localWhen, noticeAtAddress, page, raw, registryGate, toPence, why, zoneNotice, type Safe } from '../../shared/index.ts';
 import { brandedEmail, type EmailContent } from '../../integrations/index.ts';
 import { ADDRESS_LOOKUP, COMPANY_SEARCH, EMAIL_SENDING, POSTCODE_CHECK, addressLookupMissing, checkPostcode, companySearchOffered, findAddresses, mailWhere, normalisePostcode, postcodeCheckMissing, searchCompanies, searchesToday, sendingOn, smtpLoginFromKeyFile } from '../../integrations/index.ts';
@@ -35,6 +36,11 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
   const { currentTermsVersions } = termsParts();
   /* ------------------------------------------ a client's own login */
   if (path === '/account/create' && method === 'POST') {
+    // PHASE 161n1c (M-04): sign-up is limited from one network address too, beside its limit per offer.
+    if (!rateLimit(d.app.deps, 'signup-from:' + hashToken(clientIp(req)), SIGNUP_SOURCE_LIMIT)) {
+      d.app.audit.append({ at: now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'client_signup_from_one_address' } });
+      html(res, 429, simple('Your login was not created', FROM_ONE_PLACE)); return 'handled';
+    }
     const r = await requestSignup(d.app, d.publicOrigin ?? 'http://localhost:8103', await form(req), legalServed ? currentTermsVersions() : null);
     if (!r.ok) { html(res, 400, simple('Your login was not created', r.why)); return 'handled'; }
     html(res, 200, simple('Check your email',
@@ -181,6 +187,11 @@ export async function assessmentRoutes(w: WebRequest): Promise<WebResult | undef
     if (method === 'GET') {
       html(res, 200, closePage(draft, actor, undefined, publicSlots(d.app.db, now())));
       return 'handled';
+    }
+    // PHASE 161n1c (M-04): the assessment's submit, limited from one network address. The answers so far stay saved.
+    if (method === 'POST' && !rateLimit(d.app.deps, 'assessment-from:' + hashToken(clientIp(req)), ASSESSMENT_SOURCE_LIMIT)) {
+      d.app.audit.append({ at: now(), kind: 'RATE_LIMITED', outcome: 'REFUSED', detail: { what: 'assessment_submit_from_one_address' } });
+      html(res, 429, simple('Your assessment was not sent', FROM_ONE_PLACE)); return 'handled';
     }
     if (method === 'POST' && isFunnel4(draft.state) && !allGated(draft.state as unknown as Record<string, unknown>)) {
       /* THE FOUR-STAGE CLOSE. First name, surname, position; then telephone (a time and the number),

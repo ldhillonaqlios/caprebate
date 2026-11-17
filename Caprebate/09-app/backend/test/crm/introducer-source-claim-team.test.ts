@@ -981,12 +981,12 @@ describe('the defects the guide found by running every exercise on the demo', ()
       const list = await accounting.get('/staff/claims?stage=SURVEY&owner=none');
       assert.equal(list.status, 200);
       assert.match(list.body, /The file does not apply owner or stage/);
-      assert.equal((await accounting.get('/staff/claims/export.csv?stage=SURVEY')).status, 200);
+      assert.equal((await accounting.post('/staff/claims/export.csv', { params: 'stage=SURVEY' })).status, 200); // a POST since Phase 161n1c (L-10)
       const line = db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'LIST_EXPORTED' ORDER BY seq DESC LIMIT 1");
       assert.deepEqual((JSON.parse(line?.detail ?? '{}') as { not_applied?: string[] }).not_applied, ['stage']);
       const admin = await h.signIn('admin');
       assert.equal((await admin.get('/staff/claims?stage=SURVEY')).body.includes('The file does not apply'), false, 'ADMIN reads the stage');
-      assert.equal((await admin.get('/staff/claims/export.csv?stage=SURVEY')).status, 200);
+      assert.equal((await admin.post('/staff/claims/export.csv', { params: 'stage=SURVEY' })).status, 200);
       assert.deepEqual((JSON.parse(db.get<{ detail: string }>("SELECT detail FROM audit_log WHERE kind = 'LIST_EXPORTED' ORDER BY seq DESC LIMIT 1")?.detail ?? '{}') as { not_applied?: string[] }).not_applied, []);
 
       const hits = async (c: Client, q: string): Promise<string[]> =>

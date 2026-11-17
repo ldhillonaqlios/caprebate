@@ -378,11 +378,11 @@ describe('the property and organisation pages — documents panels, a link form,
       if (doc !== undefined) assert.equal((await surveyor.post(`/staff/properties/${prop.id}/documents/link`, { document_id: doc.id })).status, 403);
       const sv = await surveyor.get(`/staff/properties/${prop.id}/view.json`);
       assert.equal(sv.status, 200);
-      assert.equal((await surveyor.get(`/staff/claims/export.csv`)).status, 403);
+      assert.equal((await surveyor.post(`/staff/claims/export.csv`, { params: '' })).status, 403); // a POST since Phase 161n1c (L-10)
 
       const accounting = await signIn('ACCOUNTING');
       assert.equal((await accounting.get(`/staff/properties/${prop.id}`)).status, 403);
-      const csv = await accounting.get('/staff/claims/export.csv');
+      const csv = await accounting.post('/staff/claims/export.csv', { params: '' });
       assert.equal(csv.status, 200);
       assert.equal(csv.body.split('\r\n')[0], 'Company,Opened,Reference');
     } finally { made.close(); }

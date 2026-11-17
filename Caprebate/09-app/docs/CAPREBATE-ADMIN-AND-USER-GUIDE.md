@@ -3058,7 +3058,7 @@ property, with "searched, the ones your own survey jobs reach".
 ### Training — `B42` lists, saved views and export
 
 **Where things are on the page.** On Claims and Leads, there is a panel called **Filter, sort and save**. It sits
-beside the list, or above it on a phone. It holds the saved views and the export link. Some column headings are
+beside the list, or above it on a phone. It holds the saved views and the export button. Some column headings are
 underlined. Press one for a quicker way to choose the order. It keeps every filter and changes only the order. The
 heading in use says "— sorted".
 
@@ -3078,7 +3078,7 @@ Address: `/staff/claims` · `/staff/leads` · export: `/staff/claims/export.csv`
 2. Choose filters. You can use **Owner**, **Stage**, **Where it stands**, **Source**, **Sector** or **Jurisdiction**. You can use the opened dates. Admin and Sales can also use **Estimated value at least, £**. Choose an **Order**.
 3. Press **Show**. The line under the form says how many of the rows you may read are shown.
 4. To keep it, type a name in **Save these filters as** and press **Save view**. It appears under **Saved views**; **Retire** removes it.
-5. Click **Export these N rows as CSV**. The file has only your columns, and the export is recorded.
+5. Press **Export these N rows as CSV**. The file has only your columns, and the export is recorded.
 
 **What it will refuse, and why**
 - A filter or order the list does not offer is ignored. The page names it. For a filter it says "colour: not a filter this list offers, so it was not applied". For an order it says "Sort: not one of the orders offered".

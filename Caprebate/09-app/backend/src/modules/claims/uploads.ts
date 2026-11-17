@@ -31,12 +31,14 @@ import type { RateLimiter, Transport, GateSnapshot } from '../../integrations/in
 import { createHash } from 'node:crypto';
 import type { SecretStore } from '../../core/index.ts';
 import { CLAUDE_SWITCHES, claudeReadiness, readScannedPages, type ClaudeContext, type ClaudeSwitches } from '../../integrations/index.ts';
+import { SCAN_REFUSED, type UploadScanner } from '../../integrations/index.ts';
 import { prepareClaudeModel, type ModelRead } from './document-reader-claude.ts';
 import type { EgressEntry } from './documents/document-pipeline.ts';
 import type { ClientDocDiscriminants } from './documents/client-doc-ingestion.ts';
+import { INGESTION_BOUNDARY, QUARANTINE_TTL_MINUTES, recordQuarantineDischarge, sweepQuarantine, type QuarantineObject } from './documents/client-doc-ingestion.ts';
 import { discriminantsFor, recordReading, VOUCHED_FIELDS } from './document-reading.ts';
 import {
-  UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, pdfLooksComplete, quarantineKeyFor,
+  UPLOAD_LIMITS, UploadHandlerError, sniffAccepted, pdfLooksComplete, activeContent, ACTIVE_CONTENT_REFUSED, quarantineKeyFor,
   issueUploadUrl, recordUploadComplete, processUpload, openTransparency, runExtraction, writeClaims,
   assertContractCovered, FAIL_CLOSED_SETTINGS, DOC_SPECS, HUMAN_READ_ONLY_TYPES, durableKeyFor,
   type AuditEvent, type AuditSink, type DocType, type DocTypeClassifier,
@@ -171,6 +173,11 @@ export type UploadDeps = {
    * false). The snapshot below is recorded on the call's audit row and decides nothing.
    */
   reading?: UploadReading;
+  /**
+   * PHASE 161n1c (M-03): the virus scanner, from `uploadScannerFor(app.scanner)`. Null or absent: no scan (the switch
+   * is off and no service is named). Given: every file goes to it before it is stored, and only CLEAN goes on.
+   */
+  scanner?: UploadScanner | null;
 };
 
 /**
@@ -372,6 +379,24 @@ export async function acceptClientBytes(
   // A PDF with no end is damaged — cut off, or saved wrongly — and is refused before it is written.
   if (sniffAccepted(args.bytes) === 'pdf' && !pdfLooksComplete(args.bytes)) {
     return { ok: false, status: 400, why: DAMAGED_PDF };
+  }
+  /* PHASE 161n1c (M-03): what the file carries. Macros in a Word or Excel file, or a script, launch action or hidden file
+     in a PDF, are refused before anything is written, said plainly, and audited by kind. Then the virus scanner, when
+     there is one. Both answer 422, and their words are for the person. */
+  const carries = activeContent(args.bytes);
+  if (carries !== null) {
+    d.audit?.append({ at: d.now(), kind: 'UPLOAD_REFUSED_ACTIVE_CONTENT', outcome: 'REFUSED', object_type: 'document', object_id: args.doc_id,
+      detail: { what: carries } });
+    return { ok: false, status: 422, why: ACTIVE_CONTENT_REFUSED[carries] };
+  }
+  if (d.scanner !== undefined && d.scanner !== null) {
+    let verdict: 'CLEAN' | 'FOUND' | 'FAILED';
+    try { verdict = (await d.scanner.scan(args.bytes)).result; } catch { verdict = 'FAILED'; }
+    if (verdict !== 'CLEAN') {
+      d.audit?.append({ at: d.now(), kind: 'UPLOAD_REFUSED_ACTIVE_CONTENT', outcome: 'REFUSED', object_type: 'document', object_id: args.doc_id,
+        detail: { what: verdict === 'FOUND' ? 'VIRUS_FOUND' : 'SCAN_FAILED', service: d.scanner.service } });
+      return { ok: false, status: 422, why: SCAN_REFUSED[verdict] };
+    }
   }
 
   await d.store.putClientBytes(key, args.bytes);
@@ -713,6 +738,38 @@ export async function sweepOriginals(
     });
   }
   return due.length;
+}
+
+/**
+ * THE HOLDING PLACE, SWEPT (Phase 161n1c, ITRoadway's second review, M-08). An upload is written to quarantine/ and
+ * stripped in the same request; if that request dies part-way (the function's time limit, a crash, a delete that
+ * failed), the unredacted file stays there, and nothing looked at it again: the backup leaves quarantine/ out on
+ * purpose. This deletes every object in quarantine/ older than QUARANTINE_TTL_MINUTES (60), records each deletion the
+ * way the handler does (recordQuarantineDischarge, so an unevidenced one is refused) and writes a QUARANTINE_SWEPT
+ * audit row with the document id and how long it was held. The five-minute timer runs it (src/app/timers.ts) and marks
+ * its run not ok when it finds any, because one found means an upload went wrong; `node src/app/cli.ts
+ * sweep-quarantine` runs it by hand. A file that will not delete is counted as left and tried again next time.
+ */
+export async function sweepHoldingPlace(
+  d: { store: FsObjectStore; now: () => string; audit: AuditLog },
+  deleted_by: string,
+): Promise<{ found: number; cleared: number; left: number }> {
+  const at = d.now();
+  const objects: QuarantineObject[] = (await d.store.listObjects())
+    .filter((o) => o.key.startsWith(INGESTION_BOUNDARY.quarantine_prefix))
+    .map((o) => ({ doc_id: o.key.slice(INGESTION_BOUNDARY.quarantine_prefix.length), key: o.key, written_at: o.written_at }));
+  const overdue = sweepQuarantine(objects, at).overdue;
+  let cleared = 0;
+  for (const o of overdue) {
+    try { await d.store.delete(o.key); } catch { continue; }
+    recordQuarantineDischarge(o, at, { deleted_by, method: `ObjectStore.delete('${o.key}'), the holding place swept past ${String(QUARANTINE_TTL_MINUTES)} minutes` });
+    cleared++;
+    d.audit.append({
+      at, kind: 'QUARANTINE_SWEPT', outcome: 'ALLOWED', object_type: 'document', object_id: o.doc_id,
+      detail: { held_minutes: Math.round((Date.parse(at) - Date.parse(o.written_at)) / 60_000), by: deleted_by },
+    });
+  }
+  return { found: overdue.length, cleared, left: overdue.length - cleared };
 }
 
 /**

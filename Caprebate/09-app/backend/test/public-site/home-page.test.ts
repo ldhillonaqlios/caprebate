@@ -112,9 +112,10 @@ describe('the home page', () => {
     const body = await (await get('/')).text();
     const form = /<form class="form" id="contactform" action="\/enquiry" method="post" novalidate[\s\S]*?<\/form>/.exec(body)?.[0] ?? '';
     const names = [...form.matchAll(/\sname="([a-z]+)"/g)].map((m) => m[1]);
-    assert.deepEqual(names, ['name', 'firm', 'email', 'phone', 'ptype', 'message']);
+    // The last is the hidden field only a robot fills (class c-hp); since Phase 161n1c it is posted, and the server checks it.
+    assert.deepEqual(names, ['name', 'firm', 'email', 'phone', 'ptype', 'message', 'website']);
     assert.match(form, /<div id="c-turnstile" class="c-turnstile"><\/div>/);
-    assert.match(form, /<input id="c-website" type="text" tabindex="-1" autocomplete="off">/, 'the honeypot is missing');
+    assert.match(form, /<input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off">/, 'the honeypot is missing, or has no name (Phase 161n1c: the server checks it)');
     assert.match(await (await get('/assets/home.js')).text(), /var SITEKEY='[^']+';/);
     const r = await fetch(`${base}/enquiry`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ name: 'Home Page Person', firm: '', email: 'home.page@example.invalid', phone: '', ptype: 'Care home', message: '' }).toString() });

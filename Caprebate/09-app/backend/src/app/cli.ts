@@ -8,6 +8,7 @@
  *   node src/app/cli.ts sweep-originals   delete every kept original whose time is up (KEEP_ORIGINALS; off, so none)
  *   node src/app/cli.ts send-outbox       send every email saved while sending was on (EMAIL_SENDING; off, so none)
  *   node src/app/cli.ts read-mailbox      read new replies to contact@caprebate.co.uk, read-only (INBOUND_EMAIL; off, so none)
+ *   node src/app/cli.ts sweep-quarantine  delete every upload left in the documents' holding place past its hour
  *   node src/app/cli.ts sweep-messages    delete every chat message past its period (MESSAGE_RETENTION; off, so none)
  *   node src/app/cli.ts sweep-enquiries   delete every closed website enquiry past its period
  *   node src/app/cli.ts import-premises <CQC_CARE_DIRECTORY|NHS_ODS_DENTAL|NHS_ODS_GP> <file> --by <user id>   healthcare premises, no names
@@ -29,7 +30,7 @@ import { AuditLog, Db, MFA_KEY_NAME, MIGRATIONS_DIR, getUsersRoleByIdDisabledAt,
 import { seed } from './seed.ts';
 import { join } from 'node:path';
 import { FsObjectStore, sealKeyFromEnv } from '../shared/index.ts';
-import { openKeptOriginal, sweepOriginals } from '../modules/claims/index.ts';
+import { openKeptOriginal, sweepHoldingPlace, sweepOriginals } from '../modules/claims/index.ts';
 import { EMAIL_SENDING, auditMailConnections, dispatchOutbox, emailPlaceRefusal, smtpLoginFromKeyFile, smtpProvider } from '../integrations/index.ts';
 import { INBOUND_EMAIL, imapLoginFromKeyFile, imapMailbox } from '../integrations/index.ts';
 import { readMailbox } from '../modules/crm/index.ts';
@@ -147,6 +148,20 @@ async function main(): Promise<number> {
       const n = await sweepOriginals({ db, store, now: () => new Date().toISOString(), audit: new AuditLog(db) }, null);
       console.log(`${n} kept original${n === 1 ? '' : 's'} deleted because ${n === 1 ? 'its' : 'their'} time was up.`);
       return 0;
+    } finally {
+      db.close();
+    }
+  }
+
+  if (cmd === 'sweep-quarantine') {
+    /* Phase 161n1c (M-08): the documents' holding place on this computer, swept by hand; the live website's
+       five-minute timer does the same there. Deletes only what is past its hour, and says how many. */
+    const db = new Db(DEFAULT_DB);
+    try {
+      const store = new FsObjectStore({ root: process.env.CAPREBATE_DOCS ?? join(import.meta.dirname, '..', '..', '.documents'), sealKey: sealKeyFromEnv() });
+      const r = await sweepHoldingPlace({ store, now: () => new Date().toISOString(), audit: new AuditLog(db) }, 'cli sweep-quarantine');
+      console.log(`${r.cleared} upload${r.cleared === 1 ? '' : 's'} cleared from the holding place${r.left > 0 ? `; ${r.left} would not delete` : ''}.`);
+      return r.left > 0 ? 1 : 0;
     } finally {
       db.close();
     }
@@ -430,7 +445,7 @@ async function main(): Promise<number> {
     }
   }
 
-  console.error('usage: node src/app/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke|smoke-switched-on|zoom-call-length>');
+  console.error('usage: node src/app/cli.ts <migrate|seed|verify-audit|sweep-originals|sweep-quarantine|sweep-messages|sweep-land-boundaries|send-outbox|read-mailbox|smoke|smoke-switched-on|zoom-call-length>');
   return 1;
 }
 

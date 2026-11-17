@@ -52,6 +52,10 @@ export type AuditKind =
   /* PHASE 161n1a: the test website locked its invented logins (a count); the test database was emptied and seeded again
      on Lakhbir's word (counts by kind, never a name), by `node tools/test-website-people.ts --delete --yes`. */
   | 'SEED_LOGINS_LOCKED' | 'TEST_DATABASE_CLEARED'
+  /* PHASE 161n1c (ITRoadway M-08, M-03): an upload left in the holding place past its hour, deleted by the sweep (the
+     document id and how long it was held); and an upload refused for what it carries (macros, a script in a PDF, or
+     the virus scanner), by kind only. */
+  | 'QUARANTINE_SWEPT' | 'UPLOAD_REFUSED_ACTIVE_CONTENT'
   /** A role the super admin made, changed, or tried to make and was refused (src/modules/admin/role-editor.ts). */
   | 'ROLE_CREATED' | 'ROLE_CHANGED' | 'ROLE_REFUSED'
   | 'DOCUMENT_ACCESSED'
