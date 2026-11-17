@@ -176,7 +176,7 @@ export function watchBackups(app: App, alertBytes: number = DATABASE_ALERT_BYTES
     const bytes = pages * size;
     if (bytes > alertBytes) {
       alert(app, 'database_size', 'Cap Rebate: the database is over 200 MB',
-        `The live database is about ${String(Math.round(bytes / 1024 / 1024))} MB, past the 200 MB at which the nightly backup may no longer fit Vercel's limits. Plan the next step in the runbook (section 7).${ALERT_FOOT}`, 24);
+        `The live database is about ${String(Math.round(bytes / 1024 / 1024))} MB. Past 200 MB, the nightly backup may not fit in Vercel's limits. Plan the next step in the runbook (section 7).${ALERT_FOOT}`, 24);
       words.push(`the database is ${String(Math.round(bytes / 1024 / 1024))} MB, alerted`);
     }
   } catch (e) { words.push(`the database size could not be read (${e instanceof Error ? e.name : 'an error'})`); }

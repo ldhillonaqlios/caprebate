@@ -1362,6 +1362,16 @@ send their engineer's GitHub username, then it goes private the same day
 with them invited; NO history rewrite (their scan found no keys, and what
 was public cannot be recalled). L-07 last, as it carries no risk today.
 
+CARRIED FROM PHASES 161n1a TO 161n1d (16 and 17 Nov 2026): the paid gate in
+front of the test website (Vercel Deployment Protection, which needs Pro on the
+test project; review H-01 step 1) was not built. On 17 Nov 2026 review item
+13533383676 still held only Lakhbir's 12 Nov request: ITRoadway had not
+answered his 16 Nov reply. When their answer is on that item, ask Lakhbir in
+chat whether he still wants it; if yes and he buys Pro, he switches it on in
+caprebate-test > Settings > Deployment Protection, and this phase notes it in
+KEYS-AND-SWITCHES.md. If their answer is still not there, carry this paragraph
+to Phase 161n2.
+
 BUILD
 1. H-02: replace every personal email address in the tracked tree with a
    role address (grep @icloud, @gmail, @aqlios; COMMENTS-ARCHIVE.md is a
