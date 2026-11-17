@@ -140,6 +140,12 @@ export type ServerOptions = {
   formTokens?: FormTokens;
 };
 
+/** Phase 161n1d (L-01): the headers every answer carries. */
+export const EVERY_RESPONSE_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+});
+
 /** Phase 161n1a: why a start with the outbox page and CAPREBATE_PRODUCTION=1 is refused. */
 export const DEV_OUTBOX_REFUSED = 'NOT STARTED: the outbox page (/staff/dev-outbox) is for the demo and the test website only, never the live website (CAPREBATE_PRODUCTION=1).';
 
@@ -204,6 +210,11 @@ export async function createApp(
   // FASTER CLICKS: each request remembers its own reads until anything is written (src/core/db.ts withReadMemo).
   const server = createServer((req, res) => withReadMemo(() => {
     bindResponse(req, res);
+    /* PHASE 161n1d (ITRoadway's second review, L-01): on EVERY answer, a page, JSON or a file. HSTS keeps a browser on
+       https for a year once it has seen the site; Permissions-Policy says no page may use the camera, microphone,
+       location or payments. The video-call page alone allows its own camera and microphone, in its own headers
+       (src/modules/clients/video-calls.ts), which replace these. "preload" waits a few weeks (LIVE-RUNBOOK.md). */
+    for (const [k, v] of Object.entries(EVERY_RESPONSE_HEADERS)) res.setHeader(k, v);
     // Faster clicks, part 2: with a local copy of the lasting database, first bring in what any copy wrote since — one
     // trip. If it cannot, this click reads the copy as it stands; the next click tries again.
     try { app.db.refresh(); } catch (e) { console.error(`the local copy of the database was not brought up to date: ${e instanceof Error ? e.name : typeof e}`); }

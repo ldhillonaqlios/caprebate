@@ -47,6 +47,8 @@ export const LIVE_REQUIRED: ReadonlyArray<{ readonly names: readonly string[]; r
   { names: ['BLOB_STORE_ID', 'CAPREBATE_BLOB_TOKEN', 'BLOB_READ_WRITE_TOKEN'], what: 'the private document store (connect the London Blob store to the project)' },
   { names: ['CAPREBATE_MFA_KEY'], what: 'the key that seals each person’s authenticator app secret' },
   { names: ['CRON_SECRET'], what: 'the word the timers are called with' },
+  // Phase 161n1d (ITRoadway M-10): somebody must be told when a timer goes wrong.
+  { names: ['CAPREBATE_ALERT_EMAILS'], what: 'who is emailed when a timer goes wrong: the Admin\u2019s and the developer\u2019s addresses, separated by commas' },
   { names: ['CAPREBATE_BACKUP_KEY'], what: 'the key every backup is locked with' },
   { names: ['CAPREBATE_PUBLIC_ORIGIN'], what: 'the website’s own address, https://caprebate.co.uk, for every link in an email' },
   /* Phase 161n1b (ITRoadway L-15): upload links have their own key. They were signed with a key worked out from the
@@ -70,6 +72,9 @@ export function liveStartCheck(env: Env): StartCheck {
   for (const n of TEST_ONLY_SETTINGS) if (set(env, n)) lines.push(`${n} is set. It belongs to the test website or a computer, never the live website: delete it from the live project.`);
   if (set(env, 'CAPREBATE_PUBLIC_ORIGIN') && !/^https:\/\/[^\s/]+$/.test((env['CAPREBATE_PUBLIC_ORIGIN'] ?? '').trim())) {
     lines.push('CAPREBATE_PUBLIC_ORIGIN must be the website’s address alone, starting https:// (for example https://caprebate.co.uk).');
+  }
+  if (set(env, 'CAPREBATE_ALERT_EMAILS') && !(env['CAPREBATE_ALERT_EMAILS'] ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '').every((x) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))) {
+    lines.push('CAPREBATE_ALERT_EMAILS must be email addresses separated by commas.');
   }
   if (set(env, 'CRON_SECRET') && (env['CRON_SECRET'] ?? '').trim().length < CRON_SECRET_MIN_LENGTH) lines.push(`CRON_SECRET is shorter than ${CRON_SECRET_MIN_LENGTH} characters.`);
   if (set(env, 'CAPREBATE_BACKUP_KEY') && Buffer.from((env['CAPREBATE_BACKUP_KEY'] ?? '').trim(), 'base64').length !== 32) lines.push('CAPREBATE_BACKUP_KEY is not 32 bytes written as base64 (openssl rand -base64 32).');

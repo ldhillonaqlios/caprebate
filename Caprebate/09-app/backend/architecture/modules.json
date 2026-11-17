@@ -194,6 +194,10 @@
    "area": "core",
    "kind": "logic"
   },
+  "src/core/timer-runs.ts": {
+   "area": "core",
+   "kind": "logic"
+  },
   "src/core/totp.ts": {
    "area": "core",
    "kind": "logic"

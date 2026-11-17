@@ -26,7 +26,7 @@
  * A LOG LINE EACH RUN: "timer <job>: ..." with the same counts, so the function log shows every run and what it did.
  */
 import { randomUUID, timingSafeEqual } from 'node:crypto';
-import { AuditLog, sweepPieces } from '../core/index.ts';
+import { AuditLog, getAuditLogCountByKindObjectIdSince, getTimerRunsFirst, getTimerRunsLastGoodByJob, insertTimerRuns, sweepPieces } from '../core/index.ts';
 import { runNightlyBackup } from '../integrations/index.ts';
 import type { App, SecretStore } from '../core/index.ts';
 import type { FsObjectStore } from '../shared/index.ts';
@@ -127,8 +127,84 @@ export function rowsToRetry(db: App['db'], nowIso: string, limit = 50): { id: st
 
 export type TimerResult = { readonly ok: boolean; readonly line: string };
 
-/** Runs one job. Never throws: a step that fails is said in the line (its error's name only), and the others still run. */
+/**
+ * WHO IS TOLD WHEN A TIMER GOES WRONG (Phase 161n1d, ITRoadway's second review, M-10). A comma-separated list of email
+ * addresses in this setting (the Admin's and the developer's, Lakhbir to give them; a setting, never in the code). The
+ * live start refuses without it (src/app/live-website.ts, LIVE_REQUIRED). Each alert carries the job's name and its
+ * counts, never an address, a name or a word of an email; it goes through the outbox like every email.
+ *   a run that is not ok        at most one email an hour for each job; "audit chain: BROKEN" emails at once, every time
+ *   no good backup in 26 hours  checked by the five-minute job, once the timers have been running that long; once a day
+ *   the database past 200 MB    checked by the five-minute job; once a day (ITRoadway L-14: the backup's limits)
+ */
+export const ALERT_SETTING = 'CAPREBATE_ALERT_EMAILS';
+export const BACKUP_STALE_HOURS = 26;
+export const DATABASE_ALERT_BYTES = 200 * 1024 * 1024;
+
+export function alertAddresses(store: SecretStore): string[] {
+  return (store.forOwner('TIMERS').get(ALERT_SETTING) ?? '').split(',').map((x) => x.trim()).filter((x) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x));
+}
+
+/** Email every alert address, unless the same alert went within `quietHours`; written to the audit log by kind. */
+function alert(app: App, what: string, subject: string, text: string, quietHours: number): boolean {
+  const since = new Date(Date.parse(app.now()) - quietHours * 3_600_000).toISOString();
+  if (quietHours > 0 && (getAuditLogCountByKindObjectIdSince<{ n: number }>(app.db, ['TIMER_ALERT_SENT', what, since])?.n ?? 0) > 0) return false;
+  const to = alertAddresses(app.secrets);
+  for (const a of to) app.email.send({ to_email: a, kind: 'NOTIFICATION', subject, body: text });
+  app.audit.append({ at: app.now(), kind: 'TIMER_ALERT_SENT', outcome: to.length > 0 ? 'ALLOWED' : 'REFUSED', object_type: 'timer', object_id: what,
+    detail: { count: to.length } });
+  return true;
+}
+
+const ALERT_FOOT = '\n\nThis email is sent by the live website itself. It names the job and its counts only. The function log on Vercel has the same line.';
+
+/** The five-minute job's watch: a good backup in the last 26 hours, and the database's size. Returns its own words. */
+export function watchBackups(app: App, alertBytes: number = DATABASE_ALERT_BYTES): string {
+  const words: string[] = [];
+  const now = Date.parse(app.now());
+  const first = getTimerRunsFirst<{ at: string | null }>(app.db)?.at ?? null;
+  const good = getTimerRunsLastGoodByJob<{ at: string }>(app.db, ['backup'])?.at ?? null;
+  const stale = (iso: string | null) => iso === null || now - Date.parse(iso) > BACKUP_STALE_HOURS * 3_600_000;
+  if (first !== null && !stale(first)) words.push('the timers have run less than 26 hours, so the backup is not watched yet');
+  else if (first !== null && stale(good)) {
+    alert(app, 'no_backup', 'Cap Rebate: no good backup in 26 hours',
+      `The live website has not made a good backup in the last ${String(BACKUP_STALE_HOURS)} hours.${good === null ? ' It has not made one yet.' : ` The last good one finished at ${good}.`} Check the backup job's line in the function log, and the bucket's settings.${ALERT_FOOT}`, 24);
+    words.push('no good backup in 26 hours, alerted');
+  } else words.push(first === null ? 'nothing run yet' : 'a good backup in the last 26 hours');
+  try {
+    const pages = app.db.get<{ page_count: number }>('PRAGMA page_count')?.page_count ?? 0;
+    const size = app.db.get<{ page_size: number }>('PRAGMA page_size')?.page_size ?? 0;
+    const bytes = pages * size;
+    if (bytes > alertBytes) {
+      alert(app, 'database_size', 'Cap Rebate: the database is over 200 MB',
+        `The live database is about ${String(Math.round(bytes / 1024 / 1024))} MB. Past 200 MB, the nightly backup may not fit in Vercel's limits. Plan the next step in the runbook (section 7).${ALERT_FOOT}`, 24);
+      words.push(`the database is ${String(Math.round(bytes / 1024 / 1024))} MB, alerted`);
+    }
+  } catch (e) { words.push(`the database size could not be read (${e instanceof Error ? e.name : 'an error'})`); }
+  return words.join('; ');
+}
+
+/** Write the run down, and tell the alert addresses when it was not ok. Never throws. */
+function recordRun(app: App, job: TimerJob, r: TimerResult): void {
+  try { insertTimerRuns(app.db, [job, app.now(), r.ok ? 1 : 0, r.line.slice(0, 2000)]); } catch (e) { console.error(`timer ${job}: the run was not written down (${e instanceof Error ? e.name : 'an error'})`); }
+  if (r.ok) return;
+  try {
+    const broken = /audit chain: BROKEN/.test(r.line);
+    alert(app, broken ? 'audit_chain_broken' : `run_not_ok:${job}`,
+      broken ? 'Cap Rebate: the audit log check failed' : `Cap Rebate: the ${job} job did not finish properly`,
+      `${broken ? 'The nightly check found the audit log changed or out of order. Treat this as an incident: tell the data protection officer, and do not delete anything.' : `The ${job} job ran and at least one step did not finish.`}\n\nIts line: ${r.line}${ALERT_FOOT}`,
+      broken ? 0 : 1);
+  } catch (e) { console.error(`timer ${job}: the alert was not sent (${e instanceof Error ? e.name : 'an error'})`); }
+}
+
+/** Runs one job, writes it down (timer_runs) and alerts when it was not ok. Never throws. */
 export async function runTimerJob(d: { app: App; store: FsObjectStore }, job: TimerJob, env: Readonly<Record<string, string | undefined>> = process.env): Promise<TimerResult> {
+  const r = await runSteps(d, job, env);
+  recordRun(d.app, job, r);
+  return r;
+}
+
+/** The job's steps. A step that fails is said in the line (its error's name only), and the others still run. */
+async function runSteps(d: { app: App; store: FsObjectStore }, job: TimerJob, env: Readonly<Record<string, string | undefined>>): Promise<TimerResult> {
   const parts: string[] = [];
   let ok = true;
   const step = async (name: string, f: () => Promise<string>): Promise<void> => {
@@ -172,6 +248,9 @@ export async function runTimerJob(d: { app: App; store: FsObjectStore }, job: Ti
       const r = await retryUnsent(app, d.store);
       return r.state === 'OFF' ? 'sending is off' : `${r.tried}, sent ${r.sent}`;
     });
+    // Phase 161n1d (M-10, L-14): a good backup in the last 26 hours, and the database's size. Alerts by email; neither
+    // marks this run not ok, or it would alert every five minutes.
+    await step('backup watch:', async () => watchBackups(app));
   } else if (job === 'nightly') {
     await step('kept originals deleted:', async () => String(await sweepOriginals({ db: app.db, store: d.store, now: app.now, audit: app.audit }, null)));
     await step('messages:', async () => {

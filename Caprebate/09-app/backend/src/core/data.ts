@@ -241,6 +241,20 @@ export function getSessionsRevokedReasonRoleByTokenHash<T extends Row = Row>(db:
   return db.get<T>('SELECT s.revoked_reason, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?', params);
 }
 
+// timer_runs (Phase 161n1d, ITRoadway M-10)
+export function insertTimerRuns(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('INSERT INTO timer_runs (job, at, ok, line) VALUES (?, ?, ?, ?)', params);
+}
+export function getTimerRunsLastByJob<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT at, ok, line FROM timer_runs WHERE job = ? ORDER BY at DESC, id DESC LIMIT 1', params);
+}
+export function getTimerRunsLastGoodByJob<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT at FROM timer_runs WHERE job = ? AND ok = 1 ORDER BY at DESC, id DESC LIMIT 1', params);
+}
+export function getTimerRunsFirst<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT min(at) AS at FROM timer_runs', params);
+}
+
 // sign_in_steps
 export function getSignInStepsIdUserIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
   return db.get<T>('SELECT id, user_id, purpose, step, pending_method, pending_secret, code_hash, code_expires_at, codes_sent, attempts, expires_at, finished_at ' +

@@ -1208,103 +1208,6 @@ command that counts it, never the number.
 ---
 
 
-## PHASE 161n1d — Alerts, backups and headers: an email when a job fails, backups the website cannot delete, HSTS, the load test
-
- **Model: Opus.** Board item 13556691306. **Written 16 November 2026** from ITRoadway's second code review (findings M-10, M-09, L-01, L-14), on Lakhbir's yes. **Why:** M-09 and M-10 are must-fix before real clients: a failed backup is seen by nobody, and the website can delete its own backups. **Order:** after 161n1c, before 161n1e.
-
-```text
-═══ FIRST, BEFORE ANYTHING ELSE ═══
-This is the Caprebate build. Lakhbir pasted this phase from the monday.com
-RUN SHEET: the document on the CAPREBATE ACTION PLAN item (item 12976111942,
-board "💰 Health Capital" 18422317809, doc 18429698457). The same phase is in
-OneDrive at Caprebate/00-START-HERE/hub/ACTION-PLAN.md. The repository is
-github.com/ldhillonaqlios/caprebate. On the Mac the working copy is
-Development/, inside OneDrive: /Users/lakhbir/Library/CloudStorage/
-OneDrive-AqliosLTD/Health Capital Allowances/Business Development/Development
-(quote it: it has spaces). git pull, then git log --oneline. Read THE
-STANDING INSTRUCTION (thirteen points, AMENDMENTS 1 AND 2, the CLOSING CHECK)
-and COORDINATES in ACTION-PLAN.md first. Claim the work in hub/CLAIM.md
-(commit and push first; a claim already there stops you). Set this phase's
-board item to "Working on it" and fill "Claimed by (machine)". Work on a
-claude/... branch from main; never push to main; open the pull request
-against main (never stacked); Lakhbir merges. Retag what you touch and give
-every loose end a home.
-
-KEEP ONEDRIVE UP TO DATE, all the way through:
-- monday is where we run and track the work; OneDrive (the repository) is the
-  full copy. Every document you write or change goes in OneDrive, never only
-  on monday.
-- Every board change you make is written to hub/TRACKER.csv too
-  (node 03-app/caprebate-tracker.cjs, or load() and toCSV() together), and
-  the tracker check and --self-test pass.
-- The board is shared: no client data and no keys on it.
-- Commit and push as you go.
-
-WHEN THE PHASE IS DONE, in this order:
-1. Write the full record at the end of hub/PHASE-HISTORY.md.
-2. Add a short ACTIONS AND OUTCOMES entry at the END of the monday run sheet
-   (update_doc, add_markdown_content, no after_block_id), and the same entry
-   at the top of your PHASE-HISTORY record.
-3. DELETE THIS PHASE from both places (the run sheet and hub/ACTION-PLAN.md).
-4. Set this phase's board item to its true status (Done goes to group Z) and
-   clear "Claimed by (machine)"; write both to the tracker.
-5. Clear hub/CLAIM.md in the final commit, push, and tell Lakhbir in a few
-   plain lines what was done and what is next.
-═══════════════════════════════════
-
-WHAT IS THERE NOW: a failed timer run answers 500 and writes one log line
-(src/app/router.ts:250-262, timers.ts:177-188); Vercel Cron does not alert.
-src/integrations/backup.ts:160-186 calls target.remove for deleted
-documents, and the bucket user may DeleteObject (LIVE-RUNBOOK.md section 7).
-No HSTS or Permissions-Policy (src/shared/html.ts:164). The backup copies
-the whole database into /tmp within 200 s, never tried at size.
-
-AS PUT TO ITROADWAY in Lakhbir's reply (drafted 16 Nov 2026;
-read their answer on review item 13533383676 first, theirs may change it): the bucket settings (Versioning, Object Lock
-35 days, no delete right, a restore user, AWS root two-step) are the
-DEVELOPER's; this phase writes them into the pack and the runbook.
-
-CARRIED FROM PHASES 161n1a, 161n1b AND 161n1c (16 and 17 Nov 2026): the paid
-gate in front of the test website (Vercel Deployment Protection, which needs
-Pro on the test project; review H-01 step 1) was not built. On 17 Nov 2026
-review item 13533383676 still held only Lakhbir's 12 Nov request: ITRoadway
-had not answered his 16 Nov reply. When their answer is on that item, ask
-Lakhbir in chat whether he still wants it; if yes and he buys Pro, he switches
-it on in caprebate-test > Settings > Deployment Protection, and this phase
-notes it in KEYS-AND-SWITCHES.md. If their answer is still not there, carry
-this paragraph to Phase 161n1e.
-
-BUILD
-1. M-10: a timer_runs table (job, at, ok, line; a migration); a run not ok
-   queues an email to the admin and the developer with the job name and
-   counts only; the five-minute job alerts when no good backup ran in 26
-   hours; "audit chain BROKEN" emails at once; a last-good-run line per job
-   on Admin's Connections page. Ask Lakhbir for the two addresses; a
-   setting, never in the code.
-2. M-09: backup.ts stops deleting backups (the state file still marks them
-   so the restore skips them); LIVE-RUNBOOK.md section 7 and Part 7 of the
-   developer's pack: Versioning, Object Lock in Governance mode 35 days,
-   PutObject and GetObject only, lifecycle expiry at 35 days, a read-only
-   restore user kept out of Vercel, root two-step and no root keys.
-3. L-01: strict-transport-security max-age=31536000; includeSubDomains and
-   permissions-policy camera=(), microphone=(), geolocation=(), payment=()
-   on every response (camera and microphone allowed on the video-call page
-   only). Preload later, written in the runbook.
-4. L-14: a load test (tools/) that fills a copy with a year of invented
-   records, times the key staff pages and the backup, and writes the result
-   in the record; an alert when the database passes 200 MB. Ask the
-   developer through Lakhbir to check turso db locations for London.
-
-ACCEPT
-- A failing timer in a test queues the email and writes timer_runs.
-- A backup run in a test deletes nothing.
-- The headers are on HTML, JSON and file responses.
-- The load test's figures are in the record.
-- All four suites pass.
-- NEXT: Phase 161n1e.
-```
-
-
 ## PHASE 161n1e — Repository, build and release: personal emails out, private once the developer has access, lock file, pinned Actions, protected live branch
 
  **Model: Opus.** Board item 13556689508. **Written 16 November 2026** from ITRoadway's second code review (findings H-02, M-05, L-07, L-08, L-09, L-11, L-13; answers D12, D15), on Lakhbir's yes. **Why:** H-02 is must-fix: the repository is public, on purpose so ITRoadway can read it, and it carries personal email addresses and internal papers. **Order:** last of 161n1a to 161n1e, then 161n2.
@@ -1362,6 +1265,16 @@ send their engineer's GitHub username, then it goes private the same day
 with them invited; NO history rewrite (their scan found no keys, and what
 was public cannot be recalled). L-07 last, as it carries no risk today.
 
+CARRIED FROM PHASES 161n1a TO 161n1d (16 and 17 Nov 2026): the paid gate in
+front of the test website (Vercel Deployment Protection, which needs Pro on the
+test project; review H-01 step 1) was not built. On 17 Nov 2026 review item
+13533383676 still held only Lakhbir's 12 Nov request: ITRoadway had not
+answered his 16 Nov reply. When their answer is on that item, ask Lakhbir in
+chat whether he still wants it; if yes and he buys Pro, he switches it on in
+caprebate-test > Settings > Deployment Protection, and this phase notes it in
+KEYS-AND-SWITCHES.md. If their answer is still not there, carry this paragraph
+to Phase 161n2.
+
 BUILD
 1. H-02: replace every personal email address in the tracked tree with a
    role address (grep @icloud, @gmail, @aqlios; COMMENTS-ARCHIVE.md is a
@@ -1389,9 +1302,22 @@ BUILD
    section 10); CODEOWNERS naming the engineer for architecture/*.json.
 8. L-07: textContent and createElement in place of innerHTML in engine/src
    (npm run page), and verify-page.cjs fails on a new innerHTML use.
+9. CARRIED FROM PHASE 161n1a (17 Nov 2026): migrations that rebuild a table
+   fail on Turso. The 16 Nov rebuild of the test database stopped at 049
+   ("FOREIGN KEY constraint failed"): their "PRAGMA foreign_keys = OFF" line
+   did not hold on Turso (reproduced locally by skipping it). The test
+   database was rebuilt by copy instead (tools/test-website-people.ts,
+   copyDatabase). The deploy's build step (prepare-lasting.mjs) and the live
+   release (prepareLiveDatabase) still migrate on Turso, so the next
+   table-rebuilding migration will stop there. Make migrate() keep foreign
+   keys off on a remote database (one statement batch per migration, or
+   checking PRAGMA foreign_keys reads 0 before the body and refusing if
+   not), prove it on the test website with a throwaway table-rebuild
+   migration, and say in LIVE-RUNBOOK.md what to do if a release stops.
 
 ACCEPT
 - No personal address left in the tracked tree (the grep in the record).
+- A table-rebuilding migration applies on the test website's Turso.
 - Vercel builds the test website with npm ci from the committed lock.
 - A direct push to live is refused (once the ruleset is on).
 - All four suites pass.
