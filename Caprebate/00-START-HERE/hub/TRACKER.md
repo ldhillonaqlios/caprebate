@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
-| Done | 375 |
-| Working on it | 1 |
+| Done | 376 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1240,7 +1240,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-45 items.
+44 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1517,13 +1517,6 @@
 - Note 2026-11-12 (Lakhbir): made on the board first; the live website pack attached; update posted tagging Abdul (ITRoadway) with the GitHub link and the review scope (each audit finding and its fix, the module structure, the live start, keys, timers, backup and restore, security), plus D1-D20 and E1-E4. Email to Ayaanle Osman (cc Abdul Rahman) drafted in Outlook for Lakhbir to attach the pack and send. Hoped-for date 26 Nov 2026.
 - Note 2026-11-16 (Planning): The review came back on 13 Nov 2026 (Ayaanle, on ITRoadway's monday item): not ready to sign off, 9 must-fix items, 28 open findings (3 high, 10 medium, 15 low), D1-D20 answered, E2-E4 not answered (they did not see Part 13). Our side is Phases 161n1a to 161n1e; the developer's side (H-03, the backup bucket, the scanning service, the Turnstile keys, the database place, the upload-link key) is in Lakhbir's reply, drafted in Outlook 16 Nov 2026 for him to attach the pack and send.
 
-### Phase 161n1b - Sign-in and sessions: no lockout by strangers, sign out everywhere, idle time-out, reset links, key changes without an outage (ITRoadway second review, 16 Nov 2026)
-
-`13556698259` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: M-02, M-06, L-02 (keep Lax, correct the code), L-03, L-04, L-05, L-12, L-15 (code part).
-
 ### Phase 161n1c - Uploads and public forms: the zip cap, the holding-place sweep, macro and script refusals, the scanner hook, flood limits, single-use tokens (ITRoadway second review, 16 Nov 2026)
 
 `13556720755` · **Ready - Claude can build** · owner Claude
@@ -1560,7 +1553,7 @@
 
 ## Z · Complete / Not Applicable
 
-375 items.
+376 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3882,6 +3875,14 @@
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: H-01 (code part), M-07, L-06. Lakhbir changes the keys that were on the test website and gives the testers' names; the DPO confirms no real people on the test website.
 - Note 2026-11-16 (Phase 161n1a): Claimed on the Mac; branch claude/phase-161n1a from main (the phase prompt from PR 108 cherry-picked so the branch carries it).
 - Note 2026-11-16 (Phase 161n1a): Done: PR 109 (claude/phase-161n1a). Second step for every staff login, invented logins locked, first-admin command, only no-real-person keys read, /staff/dev-outbox, test-website-people command; 5,741 checks green. Lakhbir's steps are item 13557004853. Deployment Protection carried into 161n1b.
+
+### Phase 161n1b - Sign-in and sessions: no lockout by strangers, sign out everywhere, idle time-out, reset links, key changes without an outage (ITRoadway second review, 16 Nov 2026)
+
+`13556698259` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: M-02, M-06, L-02 (keep Lax, correct the code), L-03, L-04, L-05, L-12, L-15 (code part).
+- Note 2026-11-17 (Phase 161n1b): Done: PR 112 (claude/phase-161n1b). M-02 limit by login and address, burst email to Admins; M-06 password change ends every session, Sign out of all other devices; L-02 Lax everywhere, no GET writes; L-03 idle 30 min staff, 2 h clients; L-04 newest reset link, once; L-05 CAPREBATE_TRUSTED_PROXIES; L-12 CAPREBATE_MFA_KEY_OLD, no outage; L-15 CAPREBATE_UPLOAD_LINK_KEY. 36 new tests, 5,779 in all. Deployment Protection carried to Phase 161n1c.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
