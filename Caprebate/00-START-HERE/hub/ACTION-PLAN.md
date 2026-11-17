@@ -1309,7 +1309,9 @@ which lines are left, set this item to its true status, and stop.
         (in Caprebate/09-app/backend) on the TEST website's database, in a
         Terminal tab where Lakhbir pastes CAPREBATE_DB_URL and
         CAPREBATE_DB_TOKEN (read -rs, never saved); it must print PASS.
-        Lakhbir chose "later" on 17 Nov 2026.
+        OPEN since 17 Nov 2026: run by Lakhbir in a Terminal tab, it printed
+        "PASS: the table-rebuilding migration applied on Turso, and the
+        reference held." (exit 0; its throwaway tables dropped).
     (b) The live branch protected (LIVE-RUNBOOK.md section 5): the ruleset
         on refs/heads/live and the live environment's required reviewers.
         Lakhbir chose to switch them on later (17 Nov 2026); then a direct
