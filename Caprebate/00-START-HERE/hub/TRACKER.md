@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 15 |
-| Done | 378 |
-| Working on it | 1 |
+| Done | 379 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1241,7 +1241,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-44 items.
+43 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1518,13 +1518,6 @@
 - Note 2026-11-12 (Lakhbir): made on the board first; the live website pack attached; update posted tagging Abdul (ITRoadway) with the GitHub link and the review scope (each audit finding and its fix, the module structure, the live start, keys, timers, backup and restore, security), plus D1-D20 and E1-E4. Email to Ayaanle Osman (cc Abdul Rahman) drafted in Outlook for Lakhbir to attach the pack and send. Hoped-for date 26 Nov 2026.
 - Note 2026-11-16 (Planning): The review came back on 13 Nov 2026 (Ayaanle, on ITRoadway's monday item): not ready to sign off, 9 must-fix items, 28 open findings (3 high, 10 medium, 15 low), D1-D20 answered, E2-E4 not answered (they did not see Part 13). Our side is Phases 161n1a to 161n1e; the developer's side (H-03, the backup bucket, the scanning service, the Turnstile keys, the database place, the upload-link key) is in Lakhbir's reply, drafted in Outlook 16 Nov 2026 for him to attach the pack and send.
 
-### Phase 161n1e - Repository, build and release: personal emails out, private once the developer has access, lock file, pinned Actions, protected live branch (ITRoadway second review, 16 Nov 2026)
-
-`13556689508` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: H-02 (no history rewrite, Lakhbir 16 Nov 2026), M-05, L-07, L-08, L-09, L-11, L-13, D12, D15. Private once ITRoadway send their engineer's GitHub username.
-
 ### Phase 161n2 - Go live: once the developer has set up the live website from the pack and the gate is open, switch it on and prove it (Lakhbir, 6 and 12 Nov 2026)
 
 `13488910486` · **Ready - Lakhbir action** · owner Lakhbir
@@ -1552,7 +1545,7 @@
 
 ## Z · Complete / Not Applicable
 
-378 items.
+379 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3899,6 +3892,14 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: M-10, M-09 (code part; the bucket settings are the developer's), L-01, L-14 (code part).
 - Note 2026-11-17 (Phase 161n1d): Done: PR 114 (claude/phase-161n1d). M-10 timer_runs and alert emails (CAPREBATE_ALERT_EMAILS, required live), backup watch, timers on Connections; M-09 the backup never deletes; L-01 HSTS and Permissions-Policy; L-14 load test (18.9 MB a year, leads list 417 ms, backup 248 ms). 9 new tests, 5,807 in all. Alert addresses asked of Lakhbir. Deployment Protection carried to Phase 161n1e.
+
+### Phase 161n1e - Repository, build and release: personal emails out, private once the developer has access, lock file, pinned Actions, protected live branch (ITRoadway second review, 16 Nov 2026)
+
+`13556689508` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: H-02 (no history rewrite, Lakhbir 16 Nov 2026), M-05, L-07, L-08, L-09, L-11, L-13, D12, D15. Private once ITRoadway send their engineer's GitHub username.
+- Note 2026-11-17 (Phase 161n1e): Done: PR 115 (claude/phase-161n1e). Item 9 a table-rebuilding migration sent to Turso as one batch with a foreign-key check (6 tests; tools/turso-migration-proof.ts for the real database, gate 14(a)); H-02 four addresses out; M-05 root lock, npm ci, Dependabot; L-08 Actions pinned; L-11 release in environment live; L-13 bundle 09-app only; L-09 two updates; D12 postcode tool moved; D15 CODEOWNERS; L-07 innerHTML 27 to 20 and a check. 5,813 across the four suites. Left for 161n2 gate line 14: Turso proof, live-branch rule, repository private, Deployment Protection.
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
