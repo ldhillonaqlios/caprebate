@@ -29,12 +29,14 @@ export function vercelConfig(env: Readonly<Record<string, string | undefined>>) 
   const live = (env['CAPREBATE_PRODUCTION'] ?? '').trim() === '1';
   return {
     $schema: 'https://openapi.vercel.sh/vercel.json',
-    installCommand: 'npm install --omit=dev',
+    installCommand: 'npm ci --omit=dev',
     buildCommand: 'node Caprebate/09-app/backend/tools/prepare-lasting.mjs',
     outputDirectory: 'public',
     functions: {
       'api/index.mjs': {
-        includeFiles: '{Caprebate site.html,Caprebate/**,node_modules/**}',
+        // Phase 161n1e (ITRoadway's second review, L-13): only what the app reads (tools/lint-paths.cjs keeps src/ and
+        // api/ inside Caprebate/09-app), not the hub, the drafts or the governance papers.
+        includeFiles: '{Caprebate site.html,Caprebate/09-app/**,node_modules/**}',
         maxDuration: 300,
       },
     },

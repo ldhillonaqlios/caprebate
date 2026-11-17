@@ -50,6 +50,25 @@ function is(name, cond, detail) { cond ? ok(name) : bad(name, detail); }
 
 const FIX = "change the calculator in 09-app/engine/src/calculator/, then run `npm run page` in 09-app/engine (never edit it in the page)";
 
+/*
+ * NO NEW innerHTML (Phase 161n1e, ITRoadway's second review, L-07). Writing HTML from strings is safe only while every
+ * value in them is fixed or a formatted figure, and one later change that put typed text into such a string would be a
+ * cross-site scripting hole. The engine's calculator has none (it has no DOM access at all, section 3). The page around it
+ * has INNERHTML_KNOWN, counted on 17 Nov 2026 after this phase built the served ones as elements: one left in the script
+ * the website serves (it READS the page's own template, to open the in-page tool when the page is a file), and the rest
+ * in the in-page assessment the website drops, which only the site harness runs and whose output it reads through
+ * innerHTML. None takes anything a visitor types. The count may only go down: a new use fails here.
+ */
+const INNERHTML_KNOWN = 20;
+function innerHtmlProblems(pageText, engineText) {
+  const out = [];
+  const inPage = (pageText.match(/\.innerHTML\b/g) || []).length;
+  const inEngine = (engineText.match(/\.innerHTML\b/g) || []).length;
+  if (inPage > INNERHTML_KNOWN) out.push("the page uses innerHTML " + inPage + " times; it may not go above " + INNERHTML_KNOWN + ". Build the element with document.createElement and textContent instead.");
+  if (inEngine > 0) out.push("the engine's source uses innerHTML " + inEngine + " times; it may use none.");
+  return out;
+}
+
 /* ------------------------------------------------------------- self-test */
 function selfTest() {
   const parts = B.buildParts();
@@ -98,6 +117,14 @@ function selfTest() {
   vexpect("a new version in package.json that was never recorded is RED", Object.assign({}, st, { pkgVersion: "9.9.9" }), true);
   const twice = Object.assign({}, st.versions, { versions: st.versions.versions.concat([st.versions.versions[st.versions.versions.length - 1]]) });
   vexpect("a version listed twice is RED", Object.assign({}, st, { versions: twice }), true);
+
+  /* L-07: no new innerHTML */
+  const engineAll = B.PART_FILES.map(f => B.readSource()[f]).join("\n");
+  const red = (name, problems) => cases.push([name, problems.length > 0, problems]);
+  const green = (name, problems) => cases.push([name, problems.length === 0, problems]);
+  green("the page as it is passes the innerHTML count", innerHtmlProblems(page, engineAll));
+  red("one more innerHTML in the page is RED", innerHtmlProblems(page + "\nx.innerHTML = name;", engineAll));
+  red("an innerHTML in the engine's source is RED", innerHtmlProblems(page, engineAll + "\nel.innerHTML = q;"));
 
   /* the page writer puts it right */
   expect("writing the engine into the planted page makes it pass again", B.pageWith(planted, parts), false);
@@ -184,6 +211,13 @@ function main() {
   const vp = V.versionProblems(vs);
   is("engine " + vs.pkgVersion + ": the calculator is the one recorded for it, and CHANGELOG.md has its heading",
      vp.length === 0, vp.join("\n        "));
+
+  console.log("\n── 7. No new innerHTML (Phase 161n1e) ──\n");
+
+  [["Caprebate site.html", B.SITE], ["the back end's copy", B.SITE_COPY]].forEach(([label, file]) => {
+    const p = fs.existsSync(file) ? innerHtmlProblems(fs.readFileSync(file, "utf8"), all) : ["missing: " + file];
+    is(label + ": innerHTML no more than " + INNERHTML_KNOWN + " times, and none in the engine", p.length === 0, p.join("\n        "));
+  });
 
   console.log("\n" + "=".repeat(72));
   console.log("  " + (fails ? "FAILED " + fails + " of " + checks : "verified — " + checks + " checks, 0 failures"));

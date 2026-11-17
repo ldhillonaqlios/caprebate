@@ -15,6 +15,7 @@
 !/api/
 !/vercel.ts
 !/package.json
+!/package-lock.json
 !/Caprebate site.html
 !/Caprebate/
 /Caprebate/*

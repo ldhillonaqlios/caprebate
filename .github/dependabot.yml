@@ -1,0 +1,24 @@
+# Phase 161n1e (ITRoadway's second review, M-05, L-08, L-09): updates come as pull requests to review, never by
+# themselves. The root package (what Vercel installs, from its committed lock), the back end's, and the Actions the
+# workflows use (pinned to commits). Each pull request is checked by "A fresh copy passes every check" like any other,
+# and Lakhbir merges.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /Caprebate/09-app/backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      # The Anthropic SDK's 1.x is a planned move after go-live (the tracker row "Move the Anthropic SDK to 1.x").
+      - dependency-name: "@anthropic-ai/sdk"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

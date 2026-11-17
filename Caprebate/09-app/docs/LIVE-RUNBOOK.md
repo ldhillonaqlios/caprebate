@@ -79,11 +79,18 @@ Make a second one the same way for **Preview** (`caprebate-live-preview`). Leave
 3. Vercel builds it. The build log says `build (live website): the live database's tables are up to date`. **If the build step fails, the release fails** and the website stays on the release before.
 4. Check: `https://caprebate.co.uk/api/health` answers `{"ok":true}`; the function log's first lines say `live website: started` and which keys were read (names only).
 
+**Protecting the live branch (Phase 161n1e, ITRoadway's second review, L-11). Two GitHub settings, switched on by Lakhbir** (he chose to do these later, 17 Nov 2026; the workflow is ready for them):
+- **A ruleset on the live branch:** GitHub, the repository, Settings, Rules, Rulesets, New branch ruleset. Target `refs/heads/live`. Turn on "Restrict updates", "Restrict deletions" and "Block force pushes". Bypass list: the **GitHub Actions** app only. Then only the release workflow can move `live`, and a direct push is refused.
+- **An approval before each release:** Settings, Environments, `live` (the workflow has already made it), "Required reviewers": Lakhbir, and the ITRoadway engineer once their GitHub username is in. Every release then waits for an approval before anything moves.
+The workflow also counts the check only when GitHub's own Actions app ran it (`app.slug == "github-actions"`), so a check of the same name from anything else cannot pass a release. Its Actions are pinned to commits, and `.github/dependabot.yml` proposes updates as pull requests. `.github/CODEOWNERS` names who reviews a change to the structure's rules (`architecture/`, the boundary check) and to `.github/`; turning on "Require review from Code Owners" in the main branch's rule makes that review required.
+
 ## 6. Roll back
 
 Vercel, the live project, **Deployments**: open the release before, **Instant Rollback**. It is back in seconds. Then fix the fault on `main` and release again (section 5). The release workflow refuses to move `live` backwards, so a rollback is always Vercel's button, never a branch push.
 
 Table changes (migrations) are not undone by a rollback. Every migration only adds (a new table or column), so the release before still runs on the newer tables. Keep it that way: a migration that removes or renames something needs its own plan, written before it is released.
+
+**If a release stops at a migration** (the build log names the file and says why). Since Phase 161n1e a migration that rebuilds a table is sent to Turso as one batch, so its "foreign keys off" holds (it did not on 16 Nov 2026, and the test website's rebuild stopped at 049; `tools/turso-migration-proof.ts` proves it on a database). A file that runs its own transaction either lands whole with its record or not at all. If the build says a migration "left N reference(s) pointing at nothing", it did land: restore the database from before the release (Turso's point-in-time restore, or section 7), fix the file, and release again. In every other case nothing from the file landed: fix it on `main` and release again. The website stays on the release before throughout.
 
 ## 7. Backups, and restoring one
 
@@ -153,7 +160,7 @@ Each call carries `Authorization: Bearer <CRON_SECRET>`; without it the answer i
 The Office for National Statistics publishes the postcode file (NSPL) each quarter, free; Ordnance Survey's OSTN15 grid file is free and rarely changes. On a computer, outside the code folder:
 
 ```bash
-node Caprebate/04-phase-work/phase9/caprebate-postcode-authority-ingest.ts --csv NSPL_<MONTH>_<YEAR>_UK.csv \
+node Caprebate/09-app/backend/tools/postcode-ingest.ts --csv NSPL_<MONTH>_<YEAR>_UK.csv \
      --names LAD_names_and_codes.csv --release <MONTH>_<YEAR> --sqlite ~/ref/postcodes.sqlite
 node Caprebate/09-app/backend/tools/build-reference-db.ts --postcodes ~/ref/postcodes.sqlite \
      --ostn15 ~/ref/OSTN15_OSGM15_DataFile.txt --out ~/ref/caprebate-reference-2027q1.db

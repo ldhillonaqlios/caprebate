@@ -14234,7 +14234,7 @@ Updated following your answers on the decision queue. Phases 1 and 7 now use the
 
 ### 28 August 2026, 09:51:46 · Lakhbir Dhillon · comment 5499443948
 
-Second update pass. Phase 4 gained two more tasks: Homedata Scotland-coverage research (sequenced ahead of running the trial, not alongside it) and a fee-scaling rate card for Saddique to approve. OneDrive migration now has a confirmed target account (lakhbir.dhillon@aqlios.co.uk) — which also surfaced a new open question about whether aqlios.co.uk is the final public domain, now on the intake doc. Cross-references section updated with the full mapping.
+Second update pass. Phase 4 gained two more tasks: Homedata Scotland-coverage research (sequenced ahead of running the trial, not alongside it) and a fee-scaling rate card for Saddique to approve. OneDrive migration now has a confirmed target account ([Lakhbir's work address]) — which also surfaced a new open question about whether aqlios.co.uk is the final public domain, now on the intake doc. Cross-references section updated with the full mapping.
 
 ### 28 August 2026, 10:01:23 · Lakhbir Dhillon · comment 5499457373
 
@@ -17259,7 +17259,7 @@ What you need to do: work §6 in order — about half a day, and step 2 (downloa
 
 ### 28 August 2026, 13:42:14 · Lakhbir Dhillon · comment 5499910911
 
-Phase 4: OneDrive migration v2 attached (Document 2), redrafted for lakhbir.dhillon@aqlios.co.uk and superseding the Phase 10 Google Drive plan. Key findings: the working folder is already in OneDrive but on the IT Roadway tenant, so this is a tenant-to-tenant move with the governance consequences set out at §3; 397 MB of the 403 MB folder is a packaged Electron app that should not be synced; the second working-set copy is a proven strict subset and can be archived wholesale; and the July funnel fork is now confirmed never merged — all four named features exist in the fork and none in the live app.
+Phase 4: OneDrive migration v2 attached (Document 2), redrafted for [Lakhbir's work address] and superseding the Phase 10 Google Drive plan. Key findings: the working folder is already in OneDrive but on the IT Roadway tenant, so this is a tenant-to-tenant move with the governance consequences set out at §3; 397 MB of the 403 MB folder is a packaged Electron app that should not be synced; the second working-set copy is a proven strict subset and can be archived wholesale; and the July funnel fork is now confirmed never merged — all four named features exist in the fork and none in the live app.
 
 ### 4 September 2026, 17:56:39 · Lakhbir Dhillon · comment 5521476328
 
@@ -17267,7 +17267,7 @@ WHERE THIS LANDED, 28 August 2026. This single update replaces the two notes pos
 
 OneDrive, not Google Drive. The migration list drafted earlier assumed Google Drive and was redrafted. The item title was corrected to match.
 
-The account is lakhbir.dhillon@aqlios.co.uk, which gave the migration a concrete target rather than an assumption.
+The account is [Lakhbir's work address], which gave the migration a concrete target rather than an assumption.
 
 Two follow-ups came out of it, and both mattered more than the move itself:
 • Which OneDrive — a personal Microsoft 365 mailbox, or a proper SharePoint-backed business OneDrive. The answer affects access control and retention settings, so it needed a specific answer rather than an assumption.

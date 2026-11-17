@@ -11005,7 +11005,7 @@ Claimed 45ee047. Every file changed has a `.bak-phase151m` sibling (`CLAIM.md`'s
 
 ## Ad-hoc, 1 October 2026 — why no email went out (Opus, Mac copy)
 
- Lakhbir, from the test website: "Admin User, to lakhbir.s.dhillon@icloud.com · Today, 10:31 · Not sent: The mail server refused it: 0 the connection closed — check why i cant sent and receive emails".
+ Lakhbir, from the test website: "Admin User, to [Lakhbir's personal address] · Today, 10:31 · Not sent: The mail server refused it: 0 the connection closed — check why i cant sent and receive emails".
 
 -  **Found, by signing in to IONOS and out again from the Mac with nothing sent:** (1) the key file names port 587, which starts in plain text and turns secure with STARTTLS; the adapter opened every port as 465, so IONOS hung up before its greeting ("wrong version number"); (2) `IONOS_SMTP_USER` names another mailbox — IONOS answers 535; the same password with `contact@caprebate.co.uk` (the IMAP user) answers 235.
 -  **Fixed in code:** `smtpProvider` speaks STARTTLS on any port but 465 (never a password in plain text; a server that will not go secure is refused), says why a connection dropped, and has `check()` — sign in and out, sending nothing. Checked live on 587 with the right user: accepted. `test/smtp-starttls.test.ts`, two tests, three mutations red; `npm run check` 1916 pass (109 files); drift (`--expect 1279,439,403,1916`), fold (five §4 references moved), plain words, brand, register, analytics green.

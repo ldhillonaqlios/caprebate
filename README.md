@@ -1,4 +1,4 @@
-# Cap Rebate — the platform (private test repository)
+# Cap Rebate — the platform (the test repository: public while ITRoadway review the code, private once they have signed it off)
 
 The public website, the free assessment, the client portal and the back office are one Node application
 (`Caprebate/09-app/backend`), with the estimate engine in `Caprebate/09-app/engine`. There is no WordPress

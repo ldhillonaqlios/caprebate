@@ -29,9 +29,9 @@ jobs:
     env:
       TZ: Europe/London
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (L-08: pinned to its commit; Dependabot proposes updates)
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: npm
@@ -76,13 +76,10 @@ jobs:
         working-directory: Caprebate/04-phase-work/phase9
         run: node --test
 
-      # The root package.json is what Vercel installs for the test website. It has no lock file, so npm audit cannot
-      # read it as it is: work one out in a scratch copy, then audit that. (Whether to commit a root lock file is
-      # Lakhbir's question in the Word questions document.)
-      - name: The root package - npm audit (high and above)
+      # The root package.json is what Vercel installs for both websites. Since Phase 161n1e (ITRoadway's second
+      # review, M-05) its lock file is committed and Vercel installs exactly it (npm ci --omit=dev, vercel.ts), so this
+      # audits the very lock the websites are built from, installed the same way.
+      - name: The root package - npm ci and npm audit (high and above), from the committed lock
         run: |
-          scratch="$(mktemp -d)"
-          cp package.json "$scratch/"
-          cd "$scratch"
-          npm install --package-lock-only --no-fund --no-audit
-          npm audit --audit-level=high
+          npm ci --omit=dev --no-fund --no-audit
+          npm audit --omit=dev --audit-level=high
