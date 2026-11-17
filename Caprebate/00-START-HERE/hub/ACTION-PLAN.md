@@ -1366,6 +1366,16 @@ read their answer on review item 13533383676 first, theirs may change it): the s
 choice, as they host; this phase builds the hook and the refusals, off until
 a scanner is named. The Turnstile keys are the developer's to set.
 
+CARRIED FROM PHASE 161n1a, THEN 161n1b (16 and 17 Nov 2026): the paid gate in
+front of the test website (Vercel Deployment Protection, which needs Pro on the
+test project; review H-01 step 1) was not built. On 17 Nov 2026 review item
+13533383676 still held only Lakhbir's 12 Nov request: ITRoadway had not
+answered his 16 Nov reply. When their answer is on that item, ask Lakhbir in
+chat whether he still wants it; if yes and he buys Pro, he switches it on in
+caprebate-test > Settings > Deployment Protection, and this phase notes it in
+KEYS-AND-SWITCHES.md. If their answer is still not there, carry this paragraph
+to Phase 161n1d.
+
 BUILD
 1. M-01: readZipEntryFromBuffer takes maxBytes; refuse on the declared size,
    a ratio over 100, or past the cap (inflateRawSync maxOutputLength);

@@ -57,7 +57,9 @@ export type SecretOwner =
   /** The nightly backup - its encryption key and the second place it is copied to (src/integrations/backup.ts). */
   | 'BACKUPS'
   /** The reference database - the ONS postcode table and Ordnance Survey's OSTN15 grid (src/integrations/postcodes/reference-db.ts). */
-  | 'REFERENCE_DB';
+  | 'REFERENCE_DB'
+  /** Phase 161n1b (ITRoadway L-15): the key that signs upload links on the live website (src/app/live-website.ts). */
+  | 'UPLOAD_LINKS';
 
 export type SecretKey = {
   readonly name: string;
@@ -133,6 +135,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'DIDIT_WEBHOOK_SECRET', owner: 'DIDIT_IDV', secret: true, phase: '151f', what: 'the Didit webhook secret that signs its results' },
   { name: 'DIDIT_WORKFLOW_ID', owner: 'DIDIT_IDV', secret: false, phase: '151f', what: 'the id of the check set up in the Didit console (not secret)' },
   { name: 'CAPREBATE_MFA_KEY', owner: 'SIGN_IN', secret: true, phase: '151k', what: 'the key that seals each person’s authenticator app secret: 32 random bytes, as base64 (src/core/mfa-seal.ts)' },
+  { name: 'CAPREBATE_MFA_KEY_OLD', owner: 'SIGN_IN', secret: true, phase: '161n1b', what: 'during a change of CAPREBATE_MFA_KEY only: the key being replaced, so nobody is locked out while the secrets move to the new one (src/core/mfa-seal.ts; LIVE-RUNBOOK.md section 8). Empty at all other times' },
   { name: 'TURNSTILE_SITE_KEY', owner: 'CLOUDFLARE_TURNSTILE', secret: false, phase: 'turnstile', what: 'the Cloudflare Turnstile site key for the home page’s contact form (public: it is printed in the page)' },
   { name: 'TURNSTILE_SECRET_KEY', owner: 'CLOUDFLARE_TURNSTILE', secret: true, phase: 'turnstile', what: 'the Cloudflare Turnstile secret key, which the server sends to Cloudflare to check the form’s answer' },
   { name: 'ZOOM_ACCOUNT_ID', owner: 'ZOOM', secret: false, phase: 'zoom', what: 'the Zoom account id, from the Server-to-Server OAuth app in the Zoom App Marketplace (not secret)' },
@@ -158,6 +161,7 @@ export const SECRET_KEYS: readonly SecretKey[] = Object.freeze([
   { name: 'BACKUP_S3_ACCESS_KEY_ID', owner: 'BACKUPS', secret: false, phase: '161h', what: 'the id of the backup user\u2019s access key; the user may only add and read files in that one bucket' },
   { name: 'BACKUP_S3_SECRET_ACCESS_KEY', owner: 'BACKUPS', secret: true, phase: '161h', what: 'that access key\u2019s secret' },
   { name: 'CAPREBATE_REFERENCE_DB_URL', owner: 'REFERENCE_DB', secret: false, phase: '161h', what: 'the address of the reference database (the postcode table and the OSTN15 grid), libsql://...; or the path of the same file on this computer' },
+  { name: 'CAPREBATE_UPLOAD_LINK_KEY', owner: 'UPLOAD_LINKS', secret: true, phase: '161n1b', what: 'the key that signs each upload link on the live website: 32 random bytes, as base64 (openssl rand -base64 32). Its own key, apart from the database token (ITRoadway L-15). Changing it ends upload links issued in the last 15 minutes' },
   { name: 'CAPREBATE_REFERENCE_DB_TOKEN', owner: 'REFERENCE_DB', secret: true, phase: '161h', what: 'a token that can only read the reference database. Make it with: turso db tokens create <name> --read-only' },
 ]);
 

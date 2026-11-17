@@ -144,8 +144,13 @@ export function insertPasswordResetTokens(db: Db, params: readonly Param[] = [])
   return db.run('INSERT INTO password_reset_tokens (id, user_id, token_hash, created_at, expires_at, used_at) ' +
     'VALUES (?, ?, ?, ?, ?, NULL)', params);
 }
-export function updatePasswordResetTokensUsedAtById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
-  return db.run('UPDATE password_reset_tokens SET used_at = ? WHERE id = ?', params);
+/* Phase 161n1b (ITRoadway L-04): a link is taken only while it is unused, in the one statement, so two at once give one;
+   and a new link voids the person's older unused ones. */
+export function updatePasswordResetTokensUsedAtByIdUnused(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE password_reset_tokens SET used_at = ? WHERE id = ? AND used_at IS NULL', params);
+}
+export function updatePasswordResetTokensUsedAtByUserIdUnused(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE password_reset_tokens SET used_at = ? WHERE user_id = ? AND used_at IS NULL', params);
 }
 
 // rate_limit_hits
@@ -227,6 +232,14 @@ export function updateSessionsRevokedAtRevokedReasonByIdRevokedAt(db: Db, params
 export function updateSessionsRevokedAtRevokedReasonByUserIdRevokedAt(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE user_id = ? AND revoked_at IS NULL', params);
 }
+/* Phase 161n1b (ITRoadway M-06): "Sign out of all other devices" - every session of the person but this one. */
+export function updateSessionsRevokedAtRevokedReasonByUserIdOthers(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE sessions SET revoked_at = ?, revoked_reason = ? WHERE user_id = ? AND id <> ? AND revoked_at IS NULL', params);
+}
+/* Phase 161n1b (ITRoadway L-03): why a session in a browser's hand ended, and whose it was, so the login page can say. */
+export function getSessionsRevokedReasonRoleByTokenHash<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
+  return db.get<T>('SELECT s.revoked_reason, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?', params);
+}
 
 // sign_in_steps
 export function getSignInStepsIdUserIdById<T extends Row = Row>(db: Db, params: readonly Param[] = []): T | undefined {
@@ -248,6 +261,13 @@ export function updateSignInStepsCodeHashCodeExpiresAtById(db: Db, params: reado
 }
 export function updateSignInStepsFinishedAtById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE sign_in_steps SET finished_at = ? WHERE id = ?', params);
+}
+/* Phase 161n1b (ITRoadway L-12): a set-up in progress keeps its app's secret here too, so a change of key moves it. */
+export function listSignInStepsIdUserIdPendingSecretOpen<T extends Row = Row>(db: Db, params: readonly Param[] = []): T[] {
+  return db.all<T>('SELECT id, user_id, pending_secret FROM sign_in_steps WHERE pending_secret IS NOT NULL AND finished_at IS NULL', params);
+}
+export function updateSignInStepsPendingSecretByIdPendingSecret(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
+  return db.run('UPDATE sign_in_steps SET pending_secret = ? WHERE id = ? AND pending_secret = ?', params);
 }
 export function updateSignInStepsPendingMethodPendingSecretById(db: Db, params: readonly Param[] = []): { changes: number; lastInsertRowid: number } {
   return db.run('UPDATE sign_in_steps SET pending_method = ?, pending_secret = ?, code_hash = NULL, code_expires_at = NULL, attempts = 0 WHERE id = ?', params);

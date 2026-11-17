@@ -60,7 +60,8 @@ function liveEnv(dbFile: string, more: Record<string, string> = {}): Record<stri
   return {
     CAPREBATE_PRODUCTION: '1', CAPREBATE_DB_URL: dbFile, CAPREBATE_DB_TOKEN: 'invented-database-token-161h-0001',
     CAPREBATE_BLOB_TOKEN: 'invented-blob-token-161h', CAPREBATE_MFA_KEY: randomBytes(32).toString('base64'),
-    CRON_SECRET: WORD, CAPREBATE_BACKUP_KEY: KEY_B64, CAPREBATE_PUBLIC_ORIGIN: 'https://caprebate.co.uk', ...more,
+    CRON_SECRET: WORD, CAPREBATE_BACKUP_KEY: KEY_B64, CAPREBATE_PUBLIC_ORIGIN: 'https://caprebate.co.uk',
+    CAPREBATE_UPLOAD_LINK_KEY: randomBytes(32).toString('base64'), ...more,
   };
 }
 

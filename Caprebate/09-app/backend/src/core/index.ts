@@ -4,7 +4,7 @@
  * needs it, never a whole file.
  */
 // Files that reach no other business module load first, so a loop back through a front door finds them ready.
-export { AuthError, GENERIC_AUTH_FAILURE, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, changeOwnPassword, completePasswordReset, logout, primeTimingDefence, rateLimit, requestPasswordReset, revokeAllSessions } from './auth.ts';
+export { AuthError, GENERIC_AUTH_FAILURE, IDLE_CLIENT_MS, IDLE_STAFF_MS, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, changeOwnPassword, completePasswordReset, endedIdle, logout, primeTimingDefence, rateLimit, requestPasswordReset, revokeAllSessions, signOutOtherSessions } from './auth.ts';
 export { DPO_ROLE_SWITCH, NotAuthorised, PREDICATES, REGISTERED_ACTIONS, actionOwner, authorise, builtInHolds, can, registerActions } from './authz.ts';
 export { IMAGE_LIMITS, PHOTO_HEADERS, clearPhoto, photoFor, readPhoto, setPhoto } from './avatar.ts';
 export { AuditLog, GENESIS, _canonical, screenDetail } from './audit.ts';
@@ -38,7 +38,7 @@ export { WELCOME_JOBS, dismissWelcome, welcomeShown } from './welcome.ts';
 export { MIGRATIONS_DIR, STUBS } from './app.ts';
 export { addTokensToPages, formTokenRefusal, refuseForm } from './form-token-check.ts';
 export { formToken, formTokensMode, onceToken } from './form-token.ts';
-export { MFA_KEY_NAME, mfaKeyFrom, resealSecrets, sealTextSecrets } from './mfa-seal.ts';
+export { MFA_KEY_NAME, MFA_OLD_KEY_NAME, keyBytes, mfaKeyFrom, resealSecrets, sealTextSecrets } from './mfa-seal.ts';
 export { defaultHasher } from './password.ts';
 export { RECOVERY_CODES_LOW } from './recovery-codes.ts';
 export { refillForm, typedValues } from './refill.ts';

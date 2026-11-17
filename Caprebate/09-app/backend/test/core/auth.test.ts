@@ -76,12 +76,12 @@ describe('login', () => {
     app.close();
   });
 
-  test('the cookie is httpOnly, secure and sameSite', async () => {
+  test('the cookie is httpOnly, secure and SameSite=Lax (Phase 161n1b, L-02: the header was always Lax)', async () => {
     const { app, u } = await appWithUser();
     const r = await login(app.deps, u.email, PW);
     assert.equal(r.cookie.httpOnly, true);
     assert.equal(r.cookie.secure, true);
-    assert.equal(r.cookie.sameSite, 'Strict');
+    assert.equal(r.cookie.sameSite, 'Lax');
     app.close();
   });
 });

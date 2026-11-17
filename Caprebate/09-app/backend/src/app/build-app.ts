@@ -58,7 +58,11 @@ export async function buildApp(opts: BuildOptions = {}): Promise<App> {
 
   await primeTimingDefence(hasher);
 
-  const deps: Deps = { db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF' : 'STAFF' };
+  const deps: Deps = {
+    db, audit, hasher, now, twoFactor: opts.twoFactor === 'off' ? 'OFF' : 'STAFF',
+    // Phase 161n1b: the sign-in's own alert (many tries at one login), to each Admin through the outbox.
+    alert: (to_email, subject, text) => { email.send({ to_email, kind: 'NOTIFICATION', subject, body: text }); },
+  };
   made = { db, audit, hasher, email, signature, secrets, outside, now, deps, close: () => db.close() };
   return made;
 }

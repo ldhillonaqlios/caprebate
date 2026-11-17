@@ -29,7 +29,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { AuthError, GENERIC_AUTH_FAILURE, JSON_HEADERS, NotAuthorised, PIECE_BYTES, RECOVERY_CODES_LOW, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, clientIp, completePasswordReset, cookie, form, html, inContext, logout, nav, navContext, putPiece, readBody, redirect, requestPasswordReset, simple, singleFile, startPieces, sweepPieces, toActor } from '../core/index.ts';
+import { AuthError, GENERIC_AUTH_FAILURE, IDLE_CLIENT_MS, IDLE_STAFF_MS, JSON_HEADERS, endedIdle, NotAuthorised, PIECE_BYTES, RECOVERY_CODES_LOW, SESSION_COOKIE_NAME, TEMPORARY_PASSWORD_EXPIRED, authenticate, clientIp, completePasswordReset, cookie, form, html, inContext, logout, nav, navContext, putPiece, readBody, redirect, requestPasswordReset, simple, singleFile, startPieces, sweepPieces, toActor } from '../core/index.ts';
 import type { Actor, App, LoginResult, WebDeps, WebRequest, WebResult } from '../core/index.ts';
 import * as SI from '../core/index.ts'; // the sign-in steps (src/core/sign-in.ts), through the core's door
 import { SITE_CSS, CSS_HEADERS, PNG_HEADERS } from '../shared/index.ts';
@@ -156,8 +156,19 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
     return 'handled';
   }
 
-  const session = authenticate(d.app.deps, cookie(req, SESSION_COOKIE_NAME));
+  const rawSession = cookie(req, SESSION_COOKIE_NAME);
+  const session = authenticate(d.app.deps, rawSession);
   const actor: Actor | undefined = session ? toActor(session.user) : undefined;
+
+  /* PHASE 161n1b (ITRoadway L-03): A SESSION LEFT IDLE HAS ENDED (src/core/auth.ts, authenticate). The browser still
+     holding it is sent to the login page, which says why, and the cookie is cleared, so it is said once. */
+  if (session === undefined && rawSession !== undefined && /^\/(staff|portal)(\/|$)/.test(path)) {
+    const idle = endedIdle(d.app.deps, rawSession);
+    if (idle !== undefined) {
+      res.setHeader('set-cookie', `${SESSION_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`);
+      redirect(res, `/login?ended=${idle.role === 'CLIENT' ? 'idle-client' : 'idle-staff'}`); return 'handled';
+    }
+  }
   const w: WebRequest = { d, req, res, url, path, method, actor, session, newId, now, legalServed };
   let mine: WebResult | undefined; // a module's answer, once one takes the request
 
@@ -292,7 +303,7 @@ export async function handleWeb(d: WebDeps, req: IncomingMessage, res: ServerRes
   if (path === '/login' && method === 'GET') {
     // The website's "Log in" button, pressed by somebody already signed in, goes straight to their home.
     if (actor !== undefined) { redirect(res, mayEnterBackOffice(actor) ? '/staff' : '/portal'); return 'handled'; }
-    html(res, 200, loginPage(undefined)); return 'handled';
+    html(res, 200, loginPage(undefined, undefined, idleWords(url.searchParams.get('ended')))); return 'handled';
   }
   if (path === '/login' && method === 'POST') {
     const f = await form(req);
@@ -615,6 +626,17 @@ export const STEP_LOST_ON_MEMORY = 'This website keeps its records in memory. Ea
 export function stepGoneWhy(app: { db: { kind: string }; storageWhy?: string }): string | undefined {
   if (app.db.kind !== 'memory') return undefined;
   return app.storageWhy === undefined ? STEP_LOST_ON_MEMORY : `${STEP_LOST_ON_MEMORY} ${storageReason(app.storageWhy)}`;
+}
+
+/** What the login page says after a session ended for being left idle (L-03), by whose it was. */
+export function idleWords(ended: string | null): string | undefined {
+  const words = (ms: number): string => {
+    const min = Math.round(ms / 60000);
+    return min % 60 === 0 ? `${String(min / 60)} hour${min === 60 ? '' : 's'}` : `${String(min)} minutes`;
+  };
+  if (ended === 'idle-staff') return `You were signed out after ${words(IDLE_STAFF_MS)} without activity. Sign in again to carry on.`;
+  if (ended === 'idle-client') return `You were signed out after ${words(IDLE_CLIENT_MS)} without activity. Sign in again to carry on.`;
+  return undefined;
 }
 
 function loginPage(error: string | undefined, note?: string, why?: string): string {

@@ -288,6 +288,7 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
   const key = mfaKeyFrom(app.secrets);
   const stored = method === 'APP' ? (row.step === 'SETUP' ? row.pending_secret : s.mfa_secret) : null;
   let secret: string | null = null;
+  let resealed: string | null = null; // L-12: opened with the key being replaced, sealed again with the new one
   if (stored !== null) {
     const opened = openSecret(key, user.id, stored);
     if (!opened.ok) {
@@ -296,6 +297,7 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
       return { kind: 'ERROR', why: opened.why };
     }
     secret = opened.secret;
+    if (opened.old === true) { const again = sealSecret(key, user.id, opened.secret); if (again.ok) resealed = again.stored; }
   }
   const over = countTry(app, row, user);
   if (over !== null) return over;
@@ -311,7 +313,7 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
     if (appStep === null) return { kind: 'ERROR', why: WRONG_CODE };
   }
   if (row.step === 'SETUP') {
-    updateUsersMfaMethodMfaSecretById(app.db, [method, method === 'APP' ? row.pending_secret : null, appStep, app.now(), user.id]);
+    updateUsersMfaMethodMfaSecretById(app.db, [method, method === 'APP' ? (resealed ?? row.pending_secret) : null, appStep, app.now(), user.id]);
     app.audit.append({ at: app.now(), kind: 'TWO_FACTOR_SET_UP', outcome: 'ALLOWED', actor_id: user.id, actor_role: user.role,
       object_type: 'user', object_id: user.id, detail: { method, purpose: row.purpose } });
     // A new second step, new recovery codes - every old one goes, and the ten new ones are shown once.
@@ -326,6 +328,8 @@ export function submitCode(app: App, raw0: string | undefined, code: string): St
       const sealed = sealSecret(key, user.id, secret);
       if (sealed.ok) updateUsersMfaSecretById(app.db, [sealed.stored, user.id]);
     }
+    // And one sealed with the key being replaced is moved to the new key now, the same way (L-12).
+    if (resealed !== null) updateUsersMfaSecretById(app.db, [resealed, user.id]);
   }
   return advance(app, row, user, { second_factor: method });
 }
