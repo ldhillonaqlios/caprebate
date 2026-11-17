@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 1 |
+| Ready - Claude can build | 0 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 378 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1520,7 +1520,7 @@
 
 ### Phase 161n1e - Repository, build and release: personal emails out, private once the developer has access, lock file, pinned Actions, protected live branch (ITRoadway second review, 16 Nov 2026)
 
-`13556689508` · **Ready - Claude can build** · owner Claude
+`13556689508` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: H-02 (no history rewrite, Lakhbir 16 Nov 2026), M-05, L-07, L-08, L-09, L-11, L-13, D12, D15. Private once ITRoadway send their engineer's GitHub username.
