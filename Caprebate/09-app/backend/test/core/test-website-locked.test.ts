@@ -224,6 +224,42 @@ describe('161n1a · 3 · the real people in the test database: listed, then dele
     assert.match(refused.lines.join('\n'), /not the test database/);
   });
 
+  test('the copy needs no table rebuilt where it lands: every table, row, index and trigger arrives, with foreign keys on throughout', async () => {
+    const tool = (await import('../../tools/test-website-people.ts')) as Tool;
+    const { Db } = await import('../../src/core/db.ts');
+    const file = await fileDb();
+    const target = join(mkdtempSync(join(tmpdir(), 'cb-161n1a-db-')), 'copy.db');
+    const from = new Db(file); const to = new Db(target);
+    try {
+      to.execDdl('PRAGMA foreign_keys = ON');
+      const r = tool.copyDatabase(from, to);
+      assert.ok(r.tables > 150 && r.triggers > 400 && r.rows > 500, JSON.stringify(r));
+      assert.deepEqual(to.all('PRAGMA foreign_key_check'), []);
+      assert.equal(to.get<{ n: number }>('SELECT COUNT(*) AS n FROM schema_migrations')?.n, from.get<{ n: number }>('SELECT COUNT(*) AS n FROM schema_migrations')?.n);
+      assert.throws(() => tool.copyDatabase(from, to), /not empty/);
+    } finally { from.close(); to.close(); }
+  });
+
+  test('--rebuild --yes builds a part-built test database again, and refuses one whose seed finished', async () => {
+    const tool = (await import('../../tools/test-website-people.ts')) as Tool;
+    const half = join(mkdtempSync(join(tmpdir(), 'cb-161n1a-db-')), 'half.db');
+    (await createApp(half, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-161n1a-')) })).close(); // tables, no seed
+    assert.equal((await tool.run(['--file', half, '--rebuild'], {})).code, 1, 'it rebuilt without --yes');
+    const r = await tool.run(['--file', half, '--rebuild', '--yes'], {});
+    assert.equal(r.code, 0, r.lines.join('\n'));
+    assert.match(r.lines.join('\n'), /^Rebuilt: /m);
+    const made = await createApp(half, { documentRoot: mkdtempSync(join(tmpdir(), 'cb-161n1a-')) });
+    try {
+      assert.ok(made.app.db.get("SELECT id FROM users WHERE id = 'u-demo-readonly'") !== undefined);
+      assert.deepEqual(made.app.db.all('SELECT email FROM users WHERE disabled_at IS NULL'), []);
+      assert.ok(made.app.db.get("SELECT seq FROM audit_log WHERE kind = 'TEST_DATABASE_CLEARED'") !== undefined);
+      assert.equal(made.app.audit.verify().intact, true);
+    } finally { made.close(); }
+    const again = await tool.run(['--file', half, '--rebuild', '--yes'], {});
+    assert.equal(again.code, 1);
+    assert.match(again.lines.join('\n'), /finished/);
+  });
+
   test('--delete --yes empties it, builds it again from the invented seed with its logins locked, and writes the deletion to the audit log', async () => {
     const tool = (await import('../../tools/test-website-people.ts')) as Tool;
     const file = await fileDb();
