@@ -6,7 +6,7 @@
 
 | Status | Items |
 | --- | ---: |
-| Ready - Claude can build | 3 |
+| Ready - Claude can build | 2 |
 | Ready - Lakhbir action | 33 |
 | Built - awaiting sign-off | 145 |
 | Blocked - question | 0 |
@@ -15,7 +15,7 @@
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 13 |
 | Done | 376 |
-| Working on it | 0 |
+| Working on it | 1 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -1519,7 +1519,7 @@
 
 ### Phase 161n1c - Uploads and public forms: the zip cap, the holding-place sweep, macro and script refusals, the scanner hook, flood limits, single-use tokens (ITRoadway second review, 16 Nov 2026)
 
-`13556720755` · **Ready - Claude can build** · owner Claude
+`13556720755` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
 
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: M-01, M-08, M-03 (code part; the developer picks the scanning service), M-04 (code part; the developer sets the Turnstile keys), L-10.
