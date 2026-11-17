@@ -669,6 +669,7 @@
 - Document: 00-START-HERE/hub/PHASE-HISTORY.md
 - Note 2026-11-16 (Phase 161n1a): Made on the monday.com board first, which gave it this id (the tracker's add gave 13556720756, replaced here). The six steps, names only, are posted on the board item and in PHASE-HISTORY.md, Phase 161n1a. Waits on Lakhbir: the settings and keys, the count, his yes and the DPO's OK for the deletion, the testers' names and emails.
 - Note 2026-11-17 (Phase 161n1a): Count 16 Nov: 23 real-person records (16 received emails, 4 outbox emails, 1 company, 1 contact, 1 stopped address). Deleted on Lakhbir's yes and the DPO's OK (relayed 16 Nov); the rebuild stopped at migration 049 on Turso, fixed in PR 110 (build on the Mac, copy to Turso) and rebuilt 17 Nov: 197 tables, 534 rows, 12 old files deleted from the store. Left: first-admin, the testers' logins, the 27 settings and the keys.
+- Note 2026-11-17 (Phase 161n1a): 17 Nov 2026: Lakhbir's Admin login made with first-admin (the shared contact@ address, his choice), signed in and his authenticator app set up on the test website. Left: the testers' logins, the 27 settings, the keys.
 
 ---
 
