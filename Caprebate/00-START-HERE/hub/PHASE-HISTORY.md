@@ -14536,7 +14536,7 @@ NOTHING LEFT  beyond those lines: every buildable part is built. The four "Ready
 
 **For Lakhbir.**
 1. **Merge PR 112** once GitHub's check is green. Nothing changes on the test website for a person until then.
-2. **Confirm the idle limits in chat**: 30 minutes for staff, 2 hours for clients, as put to ITRoadway. A different number is one constant each (`IDLE_STAFF_MS`, `IDLE_CLIENT_MS` in src/core/auth.ts).
+2. **The idle limits: confirmed.** Lakhbir, in the chat, 17 Nov 2026: "Yes, keep them" (30 minutes for staff, 2 hours for clients, as put to ITRoadway). A change later is one constant each (`IDLE_STAFF_MS`, `IDLE_CLIENT_MS` in src/core/auth.ts).
 3. **The developer's pack has changed** (a Part 5a row for `CAPREBATE_UPLOAD_LINK_KEY`, and Part 9's key-change line). If the reply to ITRoadway drafted on 16 Nov has not gone yet, attach the pack again so they get this copy.
 
 ```
@@ -14544,7 +14544,8 @@ DONE          M-02: the limit is the login and the address together; a right pas
               it; an address past its own limit is refused unread; 50 tries an hour at one login emails every Admin.
               M-06: a password change ends every session; "Sign out of all other devices" in Settings, staff and
               portal. L-02: Lax in the type, the JSON API and the documents; a crawl proves no GET writes a record.
-              L-03: 30 minutes idle for staff, 2 hours for clients, then IDLE and the login page says why. L-04: only
+              L-03: 30 minutes idle for staff, 2 hours for clients (Lakhbir: "Yes, keep them"), then IDLE and the
+              login page says why. L-04: only
               the newest reset link, taken once inside the UPDATE. L-05: CAPREBATE_TRUSTED_PROXIES, Vercel unchanged,
               in the runbook. L-12: the old key opens during a change and the secret is resealed; the command covers
               set-ups in progress; four steps in the runbook. L-15: CAPREBATE_UPLOAD_LINK_KEY required on the live
@@ -14553,8 +14554,6 @@ DONE          M-02: the limit is the login and the address together; a right pas
 NOT DONE      Vercel Deployment Protection on the test project - BLOCKED on ITRoadway's answer to Lakhbir's 16 Nov
                 reply (not on review item 13533383676 on 17 Nov) and on Pro - carried, in terms, into Phase 161n1c's
                 prompt (both places).
-              Lakhbir's word on the idle limits (30 minutes staff, 2 hours clients, as put to ITRoadway) - BUILT at
-                those limits; asked in the chat; a change is one constant each.
               Setting CAPREBATE_UPLOAD_LINK_KEY in the live project - BLOCKED on the live project, which is the
                 developer's (Lakhbir, 12 Nov 2026) - in the developer's pack, Part 5a, and the go-live checklist item
                 10, which Phase 161n2 checks.

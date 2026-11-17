@@ -3883,6 +3883,7 @@
 - Document: 00-START-HERE/hub/ACTION-PLAN.md
 - Note 2026-11-16 (Planning): made on the board first from ITRoadway's second code review (Caprebate-Second-Code-Review.docx, 12 Nov 2026, received 13 Nov), on Lakhbir's yes in the chat ("Yes, add the phases"). Runs after 161n1 and before 161n2; the prompt is in ACTION-PLAN.md and on the run sheet. Findings: M-02, M-06, L-02 (keep Lax, correct the code), L-03, L-04, L-05, L-12, L-15 (code part).
 - Note 2026-11-17 (Phase 161n1b): Done: PR 112 (claude/phase-161n1b). M-02 limit by login and address, burst email to Admins; M-06 password change ends every session, Sign out of all other devices; L-02 Lax everywhere, no GET writes; L-03 idle 30 min staff, 2 h clients; L-04 newest reset link, once; L-05 CAPREBATE_TRUSTED_PROXIES; L-12 CAPREBATE_MFA_KEY_OLD, no outage; L-15 CAPREBATE_UPLOAD_LINK_KEY. 36 new tests, 5,779 in all. Deployment Protection carried to Phase 161n1c.
+- Note 2026-11-17 (Phase 161n1b): Idle limits confirmed by Lakhbir in the chat: "Yes, keep them" (30 minutes staff, 2 hours clients).
 
 ### Phase 161i1 - Regroup 1, part 2: data files for the core and the outside services, the notes out of the moved files, tests by feature, and the three folders left (Phase 161i, 7 Nov 2026)
 
