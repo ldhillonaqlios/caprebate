@@ -4,6 +4,7 @@
  * module, so the core's front door can offer it.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { BlockList, isIP } from 'node:net';
 import type { App } from './app.ts';
 import type { Actor } from './authz.ts';
 import type { authenticate } from './auth.ts';
@@ -192,18 +193,61 @@ export function simple(title: string, body: string): string {
 }
 
 /**
- * THE ADDRESS A SIGNATURE CAME FROM. The socket's own address; behind a host's proxy, the first address in
- * X-Forwarded-For, but only when CAPREBATE_TRUST_PROXY=1 says a proxy we trust set it — otherwise anyone could type one.
+ * THE ADDRESS A REQUEST CAME FROM: the one the sign-in limits count and a signature records.
+ *
+ *   CAPREBATE_TRUSTED_PROXIES set (Phase 161n1b, ITRoadway L-05): a comma-separated list of the proxies in front of us,
+ *     each an address or a range (10.0.0.0/8, ::1). X-Forwarded-For is read ONLY when the request reached us from one of
+ *     them, and then the right-most address in it that is not one of them: the left-hand entries are whatever the
+ *     visitor typed, and each proxy adds the address it was reached from on the right. From anywhere else the header is
+ *     ignored. This is the rule for any host other than Vercel (LIVE-RUNBOOK.md, "The visitor's address").
+ *   CAPREBATE_TRUST_PROXY=1, and no list: VERCEL ONLY, unchanged. Vercel overwrites X-Forwarded-For with the visitor's
+ *     address, so its first entry is theirs. api/index.mjs sets it on both Vercel projects.
+ *   Neither: the socket's own address. A typed header is ignored.
  */
 export function clientIp(req: IncomingMessage): string {
-  if (process.env.CAPREBATE_TRUST_PROXY === '1') {
-    const fwd = req.headers['x-forwarded-for'];
-    const first = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(',')[0]?.trim();
-    if (first !== undefined && first !== '') return first;
-  }
   /* STRESS TEST: every enquiry answered 500 on the test website, and nothing else there differs from a
      local run but the request. The address is now read so that a request with no socket cannot throw. */
-  try { return req.socket?.remoteAddress ?? 'unknown'; } catch { return 'unknown'; }
+  let own = 'unknown';
+  try { own = req.socket?.remoteAddress ?? 'unknown'; } catch { own = 'unknown'; }
+  const raw = req.headers['x-forwarded-for'];
+  const fwd = (Array.isArray(raw) ? raw.join(',') : raw ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '');
+  const list = trustedProxies(process.env.CAPREBATE_TRUSTED_PROXIES);
+  if (list !== null) {
+    if (!isListed(list, own) || fwd.length === 0) return own;
+    for (let i = fwd.length - 1; i >= 0; i--) { const a = fwd[i] ?? ''; if (!isListed(list, a)) return a; }
+    return fwd[0] ?? own;
+  }
+  if (process.env.CAPREBATE_TRUST_PROXY === '1' && fwd[0] !== undefined) return fwd[0];
+  return own;
+}
+
+/** The trusted proxies, from the setting. Empty or absent is null: no list. An entry that is not an address is skipped. */
+export function trustedProxies(setting: string | undefined): BlockList | null {
+  const entries = (setting ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '');
+  if (entries.length === 0) return null;
+  const list = new BlockList();
+  for (const e of entries) {
+    const [addr0, bits] = e.split('/');
+    const addr = plainAddress(addr0 ?? '');
+    const family = isIP(addr);
+    if (family === 0) continue;
+    const type = family === 6 ? 'ipv6' : 'ipv4';
+    if (bits === undefined) list.addAddress(addr, type);
+    else if (/^\d+$/.test(bits) && Number(bits) <= (family === 6 ? 128 : 32)) list.addSubnet(addr, Number(bits), type);
+  }
+  return list;
+}
+
+/** An IPv4 address written as IPv6 (::ffff:10.0.0.1, as Node gives a dual-stack socket's) read as the IPv4 one. */
+function plainAddress(a: string): string {
+  const m = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(a);
+  return m?.[1] ?? a;
+}
+
+function isListed(list: BlockList, a0: string): boolean {
+  const a = plainAddress(a0);
+  const family = isIP(a);
+  return family !== 0 && list.check(a, family === 6 ? 'ipv6' : 'ipv4');
 }
 
 /** One request, as the router shell has read it, for a module's routes to answer. */

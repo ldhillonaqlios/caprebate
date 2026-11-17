@@ -304,7 +304,8 @@ async function main(): Promise<number> {
   }
 
   if (cmd === 'reseal-app-secrets') {
-    /* Changing CAPREBATE_MFA_KEY. The OLD key in CAPREBATE_MFA_KEY_OLD and the NEW one in CAPREBATE_MFA_KEY,
+    /* Changing CAPREBATE_MFA_KEY, step 2 of 4 (LIVE-RUNBOOK.md section 8): run after the live project already has both
+       keys and was redeployed, so nobody is locked out meanwhile. The OLD key in CAPREBATE_MFA_KEY_OLD and the NEW one in CAPREBATE_MFA_KEY,
        each 32 bytes as base64, both from the environment of this one command; the database from CAPREBATE_DB (with
        CAPREBATE_DB_TOKEN for the live Turso database). All or nothing. Never prints a secret or a key. */
     const { resealSecrets } = await import('../core/index.ts');
@@ -317,7 +318,7 @@ async function main(): Promise<number> {
       if (!r.ok && r.would_not_open === 0) { console.error('Give the old key in CAPREBATE_MFA_KEY_OLD and the new one in CAPREBATE_MFA_KEY, each 32 bytes as base64. Nothing changed.'); return 1; }
       if (!r.ok) { console.error(`${r.would_not_open} app secret${r.would_not_open === 1 ? '' : 's'} would not open with the old key, so nothing changed.`); return 1; }
       new AuditLog(db).append({ at: new Date().toISOString(), kind: 'APP_SECRETS_SEALED', outcome: 'ALLOWED', detail: { count: r.resealed } });
-      console.log(`${r.resealed} authenticator app secret${r.resealed === 1 ? '' : 's'} moved to the new key. Now set the new key in the live project and redeploy.`);
+      console.log(`${r.resealed} authenticator app secret${r.resealed === 1 ? '' : 's'} moved to the new key (set-ups in progress included; any already moved were left). Now delete CAPREBATE_MFA_KEY_OLD from the live project and redeploy.`);
       return 0;
     } finally {
       db.close();

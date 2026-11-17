@@ -50,6 +50,7 @@ Every name is in `Caprebate/09-app/backend/secrets.example.env`, with what it is
 | `CRON_SECRET` | 32 characters or more: `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Vercel sends it with every timer call. |
 | `CAPREBATE_BACKUP_KEY` | `openssl rand -base64 32`. **Also put it in the password manager**: without it no backup can be opened. |
 | `CAPREBATE_PUBLIC_ORIGIN` | `https://caprebate.co.uk` |
+| `CAPREBATE_UPLOAD_LINK_KEY` | `openssl rand -base64 32`. Signs each upload link (Phase 161n1b, ITRoadway L-15). Its own key: until then the links were signed with a key worked out from the database token, so changing the token broke every link. The developer sets it. |
 
 **The rest** (email, Companies House, Didit, Homedata and so on): a missing one leaves that service "not set up", which the Connections page shows, as on the test website. Add `CAPREBATE_REFERENCE_DB_URL` and `CAPREBATE_REFERENCE_DB_TOKEN` (section 10), and the four `BACKUP_S3_*` settings (section 7). **`CAPREBATE_LEGAL_PAGES=on` only once every legal page is approved** (board item "Legal pages approved").
 
@@ -111,7 +112,15 @@ It writes new files only and says whether the tables are complete and the audit 
 - `CAPREBATE_DB_TOKEN`: `turso db tokens invalidate caprebate-live` after the redeploy (this ends every older token);
 - `CRON_SECRET`: nothing else; Vercel sends the new word from the next call;
 - `CAPREBATE_BACKUP_KEY`: keep the old key in the password manager for 35 days, to open the backups made with it;
-- `CAPREBATE_MFA_KEY`: **do not simply replace it**: every authenticator app secret is sealed with it, and a new key alone locks everyone out of their app. First move them, from a computer, all or nothing: `CAPREBATE_DB=<CAPREBATE_DB_URL> CAPREBATE_DB_TOKEN=<token> CAPREBATE_MFA_KEY_OLD=<old> CAPREBATE_MFA_KEY=<new> node src/app/cli.ts reseal-app-secrets` (in `Caprebate/09-app/backend`). Then set the new key in the project and Redeploy at once: between the two steps the website cannot check app codes, so do both within a few minutes, out of hours.
+- `CAPREBATE_MFA_KEY`: **do not simply replace it**: every authenticator app secret is sealed with it. Since Phase 161n1b (ITRoadway L-12) the change has no outage, in four steps:
+  1. In the live project set `CAPREBATE_MFA_KEY_OLD` to the **current** key and `CAPREBATE_MFA_KEY` to a **new** one (`openssl rand -base64 32`), both Sensitive, and **Redeploy**. From now on a secret the new key will not open is opened with the old one, and sealed again with the new one the next time that person signs in. Nobody is locked out, and new set-ups use the new key.
+  2. From a computer, move every secret at once, set-ups still in progress included, all or nothing: `CAPREBATE_DB=<CAPREBATE_DB_URL> CAPREBATE_DB_TOKEN=<token> CAPREBATE_MFA_KEY_OLD=<old> CAPREBATE_MFA_KEY=<new> node src/app/cli.ts reseal-app-secrets` (in `Caprebate/09-app/backend`). One already moved by a sign-in is left as it is. If any secret opens with neither key, nothing changes and the command says how many.
+  3. **Delete** `CAPREBATE_MFA_KEY_OLD` from the project and Redeploy.
+  4. Keep the old key in the password manager for 35 days: a backup made before the change holds secrets sealed with it (restored, set `CAPREBATE_MFA_KEY_OLD` to it again and run step 2).
+  The live start refuses a `CAPREBATE_MFA_KEY_OLD` that is not 32 bytes of base64.
+- `CAPREBATE_UPLOAD_LINK_KEY`: nothing else. Changing it ends any upload link issued in the last 15 minutes; the person asks for a new one. Nothing stored depends on it.
+
+**The visitor's address (Phase 161n1b, ITRoadway L-05).** The sign-in limits count, and a signature records, the address a request came from. On Vercel this needs nothing: `api/index.mjs` sets `CAPREBATE_TRUST_PROXY=1`, and Vercel overwrites `X-Forwarded-For` with the visitor's address, so its first entry is theirs. **On any other host, never set `CAPREBATE_TRUST_PROXY`.** Set `CAPREBATE_TRUSTED_PROXIES` instead, a comma-separated list of the addresses or ranges of the proxies in front of the website (for one proxy on the same machine, `127.0.0.1`; ranges like `10.0.0.0/8` work). `X-Forwarded-For` is then read only on a request that came from a listed proxy, and the address used is the right-most one in it that is not a listed proxy, so an address the visitor typed on the left is never used. Bind Node to `127.0.0.1` so only the proxy can reach it, and have the proxy add the address it was reached from (nginx: `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`, or `$remote_addr` to overwrite). With the list set, `CAPREBATE_TRUST_PROXY` is ignored.
 
 ## 9. The timers
 

@@ -27,7 +27,7 @@
 import type { EngagementSigning } from '../modules/claims/index.ts';
 import { handleWhatsAppImport } from '../modules/crm/index.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { AuthError, IMAGE_LIMITS, PHOTO_HEADERS, SESSION_COOKIE_NAME, WELCOME_JOBS, changeOwnPassword, clearPhoto, dismissWelcome, findById, getSessionsIdByTokenHashRevokedAt, getUsersNById, hashToken, keepSectionChoice, kpiRow, lateBadge, navContext, nobodyBadge, piecesPage, readPhoto, refillForm, setPhoto, setSubMenu, singleFile, staffHelp, typedValues, welcomeShown } from '../core/index.ts';
+import { AuthError, IDLE_CLIENT_MS, IDLE_STAFF_MS, IMAGE_LIMITS, signOutOtherSessions, PHOTO_HEADERS, SESSION_COOKIE_NAME, WELCOME_JOBS, changeOwnPassword, clearPhoto, dismissWelcome, findById, getSessionsIdByTokenHashRevokedAt, getUsersNById, hashToken, keepSectionChoice, kpiRow, lateBadge, navContext, nobodyBadge, piecesPage, readPhoto, refillForm, setPhoto, setSubMenu, singleFile, staffHelp, typedValues, welcomeShown } from '../core/index.ts';
 import type { Actor, App, StaffRequest } from '../core/index.ts';
 import { adminConfiguration, adminConnections, adminDevOutbox, adminPeopleAndKeys, adminRulesPage, adminSettingsTiles } from '../modules/admin/index.ts';
 import { financeBilling, financePages } from '../modules/finance/index.ts';
@@ -597,10 +597,9 @@ async function handleSettings(
     const session = url.searchParams.get('__never') ?? '';
     void session;
     try {
-      // A PASSWORD CHANGE IS A PRIVILEGE CHANGE. `changeOwnPassword` revokes the
-      // session in hand and issues a new one carrying `rotated_from`, so the
-      // browser has to be given the replacement or the person is signed out by
-      // their own success.
+      // A PASSWORD CHANGE ENDS EVERY SESSION (Phase 161n1b, ITRoadway M-06). `changeOwnPassword` revokes all of the
+      // person's sessions, on every device, and issues a new one for this browser carrying `rotated_from`, so the
+      // browser has to be given the replacement or the person is signed out by their own success.
       const rotated = await changeOwnPassword(
         d.app.deps, u, currentSessionId(d, req), f.get('current') ?? '', next,
       );
@@ -618,6 +617,17 @@ async function handleSettings(
       throw e;
     }
     redirect(res, `${base}?saved=password`); return 'handled';
+  }
+
+  /* "SIGN OUT OF ALL OTHER DEVICES" (Phase 161n1b, ITRoadway M-06), staff and portal alike: every session of this
+     person but the one in this browser ends, without a password change. */
+  if (path === `${base}/sign-out-others` && method === 'POST') {
+    const u = findById(db, actor.id);
+    if (u === undefined) return problem(res, actor, 'Not changed', 'That account no longer exists.', '/');
+    const here = currentSessionId(d, req);
+    if (here === '') { redirect(res, '/login'); return 'handled'; }
+    signOutOtherSessions(d.app.deps, u, here);
+    redirect(res, `${base}?saved=others`); return 'handled';
   }
 
   if (path === `${base}/working-times` && method === 'POST') {
@@ -1113,6 +1123,11 @@ const OUTBOX_KIND_WORDS: Readonly<Record<string, string>> = Object.freeze({
 /** The kinds a company's Email page lists (src/modules/crm/free-email.ts) — only these rows link there. */
 const ON_EMAIL_PAGE: readonly string[] = ['FREE_TYPED', 'TEMPLATE'];
 
+/** How long this person may leave a session unused before it ends (src/core/auth.ts, L-03), in words. */
+function idleFor(actor: Actor): string {
+  return actor.role === 'CLIENT' ? `${String(IDLE_CLIENT_MS / 3600000)} hours` : `${String(IDLE_STAFF_MS / 60000)} minutes`;
+}
+
 function settingsPage(
   d: StaffDeps, actor: Actor, base: string, saved: string | undefined, error: string | undefined,
 ): string {
@@ -1140,7 +1155,9 @@ function settingsPage(
     title: 'Your account', nav: inBackOffice ? nav(actor) : portalShell(actor),
     body: h`
       <h1>Your account</h1>
-      ${saved !== undefined ? h`<p class="help">Saved.</p>` : raw('')}
+      ${saved === 'others' ? h`<p class="help">Done. You are signed out everywhere else. This device stays signed in.</p>`
+        : saved === 'password' ? h`<p class="help">Saved. Your new password is in use, and you are signed out on every other device.</p>`
+        : saved !== undefined ? h`<p class="help">Saved.</p>` : raw('')}
       ${error !== undefined ? h`<p class="err">${error}</p>` : raw('')}
 
       <h2>You</h2>
@@ -1170,6 +1187,14 @@ function settingsPage(
         <label class="fl" for="pw-again">And again</label>
         <input class="fi" id="pw-again" type="password" name="again" autocomplete="new-password" required>
         <button class="cta" type="submit">Change the password</button>
+      </form>
+      <p class="help">Changing your password signs you out on every other device.</p>
+
+      <h2>Your devices</h2>
+      <p class="help">Signed in somewhere you no longer use, or think someone else may be? Sign out everywhere but here.
+      You are signed out after ${idleFor(actor)} without activity.</p>
+      <form method="post" action="${base}/sign-out-others">
+        <button class="cta" type="submit">Sign out of all other devices</button>
       </form>
 
       <h2>Your photograph</h2>

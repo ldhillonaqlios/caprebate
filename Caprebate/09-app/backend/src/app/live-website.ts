@@ -21,7 +21,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { SECRET_KEYS, getUsersIdByIdEmailCanonical, isProduction, mfaKeyFrom, secretsFromEnvironment, useProcessSecrets } from '../core/index.ts';
+import { SECRET_KEYS, getUsersIdByIdEmailCanonical, isProduction, keyBytes, mfaKeyFrom, secretsFromEnvironment, useProcessSecrets } from '../core/index.ts';
 import { referenceLocation } from '../integrations/index.ts';
 import { CRON_SECRET_MIN_LENGTH } from './timers.ts';
 
@@ -49,6 +49,9 @@ export const LIVE_REQUIRED: ReadonlyArray<{ readonly names: readonly string[]; r
   { names: ['CRON_SECRET'], what: 'the word the timers are called with' },
   { names: ['CAPREBATE_BACKUP_KEY'], what: 'the key every backup is locked with' },
   { names: ['CAPREBATE_PUBLIC_ORIGIN'], what: 'the website’s own address, https://caprebate.co.uk, for every link in an email' },
+  /* Phase 161n1b (ITRoadway L-15): upload links have their own key. They were signed with a key worked out from the
+     database token, so changing that token broke every link, and the two secrets could not be changed apart. */
+  { names: ['CAPREBATE_UPLOAD_LINK_KEY'], what: 'the key that signs each upload link: 32 random bytes as base64 (openssl rand -base64 32)' },
 ]);
 
 const set = (env: Env, n: string): boolean => (env[n] ?? '').trim() !== '';
@@ -71,6 +74,8 @@ export function liveStartCheck(env: Env): StartCheck {
   if (set(env, 'CRON_SECRET') && (env['CRON_SECRET'] ?? '').trim().length < CRON_SECRET_MIN_LENGTH) lines.push(`CRON_SECRET is shorter than ${CRON_SECRET_MIN_LENGTH} characters.`);
   if (set(env, 'CAPREBATE_BACKUP_KEY') && Buffer.from((env['CAPREBATE_BACKUP_KEY'] ?? '').trim(), 'base64').length !== 32) lines.push('CAPREBATE_BACKUP_KEY is not 32 bytes written as base64 (openssl rand -base64 32).');
   if (set(env, 'CAPREBATE_MFA_KEY') && mfaKeyFrom(secretsFromEnvironment(env, ['CAPREBATE_MFA_KEY'])).state !== 'KEY') lines.push('CAPREBATE_MFA_KEY is not 32 bytes written as base64.');
+  if (set(env, 'CAPREBATE_MFA_KEY_OLD') && keyBytes(env['CAPREBATE_MFA_KEY_OLD'] ?? '') === null) lines.push('CAPREBATE_MFA_KEY_OLD is set but is not 32 bytes written as base64 (it is only for a change of key; empty it otherwise).');
+  if (set(env, 'CAPREBATE_UPLOAD_LINK_KEY') && keyBytes(env['CAPREBATE_UPLOAD_LINK_KEY'] ?? '') === null) lines.push('CAPREBATE_UPLOAD_LINK_KEY is not 32 bytes written as base64 (openssl rand -base64 32).');
   const ref = referenceLocation(env);
   if (set(env, 'CAPREBATE_REFERENCE_DB_URL') && ref.kind === 'none') lines.push(`The reference database is set but not usable: ${ref.why}.`);
   return lines.length === 0
@@ -117,7 +122,7 @@ export async function startLiveWebsite(env: Env, deps: {
   const lines: string[] = [];
   const createApp = deps.createApp ?? ((await import('./server.ts')).createApp as unknown as CreateApp);
   const legalOn = (deps.legal ?? (await import('./server.ts')).legalPagesSetting as (e: Env) => boolean)(env);
-  const { uploadLinkSecret, vercelBlobClient } = await import('../shared/index.ts');
+  const { vercelBlobClient } = await import('../shared/index.ts');
   const db = liveDatabase(env);
   const token = (env['CAPREBATE_BLOB_TOKEN'] ?? '').trim() || (env['BLOB_READ_WRITE_TOKEN'] ?? '').trim();
   let client: unknown;
@@ -134,7 +139,8 @@ export async function startLiveWebsite(env: Env, deps: {
       dbAuthToken: db.authToken,
       schema: 'require-built',
       documentRoot: mkdtempSync(join(tmpdir(), 'cb-live-')),
-      sharedDocuments: { client, linkSecret: uploadLinkSecret(db.authToken) },
+      // L-15: its own key, checked above; never worked out from the database token on the live website.
+      sharedDocuments: { client, linkSecret: keyBytes(env['CAPREBATE_UPLOAD_LINK_KEY'] ?? '') ?? Buffer.alloc(0) },
       formTokens: 'on',
       publicOrigin,
       ...(legalOn ? { legal: true } : {}),

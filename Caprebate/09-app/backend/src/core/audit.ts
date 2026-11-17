@@ -46,6 +46,8 @@ export type AuditKind =
   /* Recovery codes made (a count and why, never a code), and one used (how many are left, never the code). */
   | 'RECOVERY_CODES_MADE' | 'RECOVERY_CODE_USED'
   | 'RATE_LIMITED'
+  /* Phase 161n1b (ITRoadway M-02): one login had more than LOGIN_EMAIL_ALERT tries in an hour; every Admin is emailed. */
+  | 'SIGN_IN_BURST'
   | 'USER_CREATED' | 'USER_UPDATED' | 'USER_DISABLED' | 'ROLE_ASSIGNED'
   /* PHASE 161n1a: the test website locked its invented logins (a count); the test database was emptied and seeded again
      on Lakhbir's word (counts by kind, never a name), by `node tools/test-website-people.ts --delete --yes`. */

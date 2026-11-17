@@ -293,7 +293,7 @@ export async function createApp(
        code are never guessed apart. It shares the 5 wrong codes. Signed in, POST /api/account/recovery-codes makes ten
        new ones (every unused old one thrown away) and answers them once. */
     const sessionCookie = (r: LoginResult): string =>
-      `${r.cookie.name}=${r.cookie.value}; HttpOnly; Secure; SameSite=Strict; Path=/; Expires=${new Date(r.cookie.expires).toUTCString()}`;
+      `${r.cookie.name}=${r.cookie.value}; HttpOnly; Secure; SameSite=${r.cookie.sameSite}; Path=/; Expires=${new Date(r.cookie.expires).toUTCString()}`;
     const stepAnswer = (status: number, token: string, extra: Record<string, unknown> = {}): void => {
       const v = SI.describeStep(app, token);
       if (v === undefined) return send(res, 401, { error: SI.STEP_GONE });
@@ -344,7 +344,7 @@ export async function createApp(
 
     if (path === '/api/logout' && req.method === 'POST') {
       logout(app.deps, session.session_id, session.user);
-      res.setHeader('set-cookie', `${SESSION_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`);
+      res.setHeader('set-cookie', `${SESSION_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`);
       return send(res, 200, { ok: true });
     }
 

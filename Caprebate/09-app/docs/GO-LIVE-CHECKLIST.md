@@ -16,7 +16,7 @@ _Phase 161h, 7 November 2026. This is the gate of Phase 161n2 ("Go live"; 161n w
 7. [ ] The live project made from the repository, **Production Branch `live`**, **Function Region London (`lhr1`)**, Node 24.
 8. [ ] The **London Blob store** made, private, and connected to the live project only.
 9. [ ] The **live and preview Turso databases** made (Ireland, or London if offered), both empty to start.
-10. [ ] **Every required setting** set by the developer (Lakhbir, 12 Nov 2026) in Production, each Sensitive (the runbook's table), and **none of the test-only settings**. `CAPREBATE_BACKUP_KEY` also in the password manager.
+10. [ ] **Every required setting** set by the developer (Lakhbir, 12 Nov 2026) in Production, each Sensitive (the runbook's table), and **none of the test-only settings**. `CAPREBATE_BACKUP_KEY` also in the password manager. `CAPREBATE_UPLOAD_LINK_KEY` is one of them since Phase 161n1b (its own key for upload links); `CAPREBATE_MFA_KEY_OLD` is **not** set (it is only for a change of key).
 11. [ ] The **reference database** built from the current ONS release and uploaded; its two settings set (runbook section 10).
 12. [ ] **The first release** run from GitHub ("Release to the live website"): the build log says the tables are up to date, and the function log says `live website: started`.
 
