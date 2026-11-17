@@ -14698,3 +14698,10 @@ NOTHING LEFT  beyond those lines. No "Ready - Claude can build" row is left with
 ```
 
 **Claim cleared** in the commit that carries this record.
+
+## Phase 161n2 gate line 14(a) — the Turso migration proof — 17 November 2026 (Claude Code, on the Mac's OneDrive copy)
+
+**ACTIONS AND OUTCOMES: Phase 161n2 gate line 14(a), 17 Nov 2026.** The Turso migration proof, run by Lakhbir on the test website's database in a Terminal tab (details pasted, never saved), printed PASS. A migration that rebuilds a table now applies on Turso itself, and the reference held; its throwaway tables were dropped. Gate line 14(a) is open. Lines 14(b) to (d) are still waiting.
+
+- Run from main at d957fb48 (PR 115 merged): `tools/turso-migration-proof.ts` in `09-app/backend`, through a script that read the address and token with `read -rs` and unset them after. Output: "PASS: the table-rebuilding migration applied on Turso, and the reference held." Exit 0; no note about tables left behind.
+- Written to: ACTION-PLAN.md (161n2, line 14(a)), the run sheet's 161n2 block and an entry at its end, the tracker note on 13488910486.
