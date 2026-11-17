@@ -668,6 +668,7 @@
 
 - Document: 00-START-HERE/hub/PHASE-HISTORY.md
 - Note 2026-11-16 (Phase 161n1a): Made on the monday.com board first, which gave it this id (the tracker's add gave 13556720756, replaced here). The six steps, names only, are posted on the board item and in PHASE-HISTORY.md, Phase 161n1a. Waits on Lakhbir: the settings and keys, the count, his yes and the DPO's OK for the deletion, the testers' names and emails.
+- Note 2026-11-17 (Phase 161n1a): 17 Nov 2026: the old settings deleted from caprebate-test by Claude in the browser on Lakhbir's word ('delete them'), each confirmed: none of the 27 is left (the Didit, WhatsApp and most Zoom names were already gone). Kept, 13: BLOB_STORE_ID, BLOB_WEBHOOK_PUBLIC_KEY, CAPREBATE_MFA_KEY, CAPREBATE_ORIGINALS_KEY, CAPREBATE_PUBLIC_ORIGIN, COMPANIES_HOUSE_API_KEY, CQC_SUBSCRIPTION_KEY, EPC_API_TOKEN, OS_DATA_HUB_API_KEY, TURNSTILE_SECRET_KEY, TURNSTILE_SITE_KEY, TURSO_AUTH_TOKEN, TURSO_DATABASE_URL. Left: the testers' logins and changing the keys at the six providers.
 
 ---
 
