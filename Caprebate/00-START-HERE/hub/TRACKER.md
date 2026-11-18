@@ -14,8 +14,8 @@
 | Blocked - incorporation | 0 |
 | Blocked - needs live jobs | 3 |
 | Parked - deliberate | 16 |
-| Done | 381 |
-| Working on it | 1 |
+| Done | 382 |
+| Working on it | 0 |
 
 | Owner type | Items |
 | --- | ---: |
@@ -100,6 +100,7 @@
 - File: `08-monday-doc-exports/12830181812__Pre-solicitor-research-note.md`
 - File: `08-monday-doc-exports/12830181812__Brief-to-the-solicitor.md`
 - Note 2026-09-28 (Phase 153): Its brief is the first version; the live one is v2, on the solicitor brief row 12927233337 (08-monday-doc-exports/12927233337__Brief-to-the-solicitor-v2.md).
+- Note 2026-11-17 (Phase 163): The name predates Phase 161m1 (11 Nov 2026: no solicitor; the DPO alone approves the legal pages). Left as it is because the registers quote it: the next phase that writes FOR-THE-SOLICITOR-DPO-DEVELOPER.md renames the item and its register line together.
 
 ### Appoint a chartered tax adviser to sign off the tax position
 
@@ -359,6 +360,7 @@
 `13032264597` · **Built - awaiting sign-off** · owner Solicitor/DPO
 
 - Note 2026-09-28 (Phase 153): The officer's login: Word question 44 closed on 24 Sep - no separate data protection login for now (Admin keeps these records); revisit when the officer has a login. The address is data.protection@caprebate.co.uk, live and read by Sadique Maskeen (questions 3 and 216).
+- Note 2026-11-17 (Phase 163): The name predates Phase 161m1 (11 Nov 2026: no solicitor; the DPO alone approves the legal pages). Left as it is because the registers quote it: the next phase that writes FOR-THE-SOLICITOR-DPO-DEVELOPER.md renames the item and its register line together.
 
 ### Caprebate G5 — write lawful basis / legitimate interests assessment for register lookups (third-party personal data in EPC, CQC, Companies House)
 
@@ -625,6 +627,7 @@
 
 - Document: 06-commercial-and-governance/Legal review pack (Phase 161g)/00 Cover - Legal review pack (Phase 161g).docx
 - Note 2026-11-05 (Phase 161g): Built by Phase 161g: the cover document and ten attachments (privacy policy, cookie policy and list, website terms, client portal terms, acceptable use, accessibility, disclaimer, complaint form words, outside services, the engagement letter as it is). Each approval is recorded at /staff/legal; both are needed per page version. In FOR THE SOLICITOR, THE DPO AND THE DEVELOPER.
+- Note 2026-11-17 (Phase 163): The name predates Phase 161m1 (11 Nov 2026: no solicitor; the DPO alone approves the legal pages). Left as it is because the registers quote it: the next phase that writes FOR-THE-SOLICITOR-DPO-DEVELOPER.md renames the item and its register line together.
 
 ### Choose the data protection officer who will review the legal pages pack (Phase 161g), and send it to them - no solicitor (Lakhbir, 11 Nov 2026)
 
@@ -1237,7 +1240,7 @@
 
 ## 05 · FOR DEVELOPMENT — engine, data layer, build, hosting
 
-44 items.
+43 items.
 
 ### Write the public notices page — one page, two statutory duties
 
@@ -1544,18 +1547,11 @@
 
 - Note 2026-11-17 (Phase 161n1e): Made on the board first. Phase 161n1e built the page's served uses as elements (27 to 20 innerHTML) and made verify-page.cjs fail on any new one; the 19 left in the in-page assessment are never served (the website drops it) and take nothing a visitor types. Trigger: that assessment served again.
 
-### Phase 163 - Sweep and stress-test, after Phases 161n1a to 161n1e (ITRoadway second review) and before go-live
-
-`13574531397` · **Working on it** · owner Claude · **CLAIMED BY MacBookPro (Lakhbir's Mac)**
-
-- Document: 00-START-HERE/hub/ACTION-PLAN.md
-- Note 2026-11-17 (Phase 163): Claimed: the sweep, run after 161n1a to 161n1e (code changed since the Phase 162 sweep, so 161n2 gate line 11 was closed) and before go-live, on Lakhbir's word ("run the sweep 163"). Made on the board first.
-
 ---
 
 ## Z · Complete / Not Applicable
 
-381 items.
+382 items.
 
 ### data.protection@caprebate.co.uk exists on IONOS (24 Sep) and Sadique Maskeen reads it (Word question 216, closed 24 Sep) - the four duties' papers name it
 
@@ -3972,4 +3968,12 @@
 - Note 2026-11-11 (Phase 161m2): Claimed. Lakhbir asked for professional, on-brand emails including automatic ones such as thank you for your submission; 33 were drafted (16 new, 15 restyled, 2 fixes) in 05-reports-and-templates/emails/ (emails.py is the wording; preview.html, published privately), and he said "Yes, build them in".
 - Note 2026-11-11 (Phase 161m2): Done: every email on the branded layout with the approved words; the new automatic emails; money emails built and held; three faults fixed; ~2,400 files restored into OneDrive by a scratch folder's links archived and removed on Lakhbir's yes. 5,729 checks green. PR for Lakhbir to merge.
 - Note 2026-11-12 (Phase 161m2): Merged: PR 104 into main (aafea84), 12 Nov 2026, GitHub's checks green, on Lakhbir's word ("its merged"). The test website runs it: /email/cap-rebate-logo.png answers with the logo.
+
+### Phase 163 - Sweep and stress-test, after Phases 161n1a to 161n1e (ITRoadway second review) and before go-live
+
+`13574531397` · **Done** · owner Claude
+
+- Document: 00-START-HERE/hub/ACTION-PLAN.md
+- Note 2026-11-17 (Phase 163): Claimed: the sweep, run after 161n1a to 161n1e (code changed since the Phase 162 sweep, so 161n2 gate line 11 was closed) and before go-live, on Lakhbir's word ("run the sweep 163"). Made on the board first.
+- Note 2026-11-17 (Phase 163): Done: PR 123 (claude/phase-163). Board and tracker agree; H-03 taken by no phase, now Production only (runbook, checklist, pack, a test); the payload proof's blind export half fixed and run with every check; Dependabot grouped across both folders and version comments the version alone; two items Done (root lock file, Word question 286 closed; D1-D20), four renamed or re-owned, the solicitor brief parked, the alert addresses' item 13574654010; 161n2 gate lines 10, 11, 13; the message to ITRoadway drafted in Outlook; renumbered to 164. GitHub's fresh copy green (4,287, 0 fail); the Mac's last full run not clean under load, 161n2 re-runs it.
 
