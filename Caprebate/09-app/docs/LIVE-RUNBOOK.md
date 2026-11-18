@@ -28,11 +28,11 @@ You need a Vercel login in the `ldhillonaqlios` team with two-step sign-in on (s
 
 1. **Buy Pro** for the team `ldhillonaqlios` (the developer buys it, Lakhbir 11 Nov 2026: board item "Buy Vercel Pro"). Buying needs billing rights; the developer goes back to Member afterwards (section 8).
 2. **New project** from GitHub `ldhillonaqlios/caprebate`. Framework: **Other**. Root directory: the top of the repository. Node: **24.x**. Leave the build and install commands empty: `vercel.ts` gives them.
-3. **Settings, Git: Production Branch = `live`.** A merge to `main` then never changes the live website. Previews of other branches still build, with the Preview settings (step 6).
+3. **Settings, Git: Production Branch = `live`.** A merge to `main` then never changes the live website. No other branch builds here (step 7): previews run on the test project.
 4. **Settings, Functions: Function Region = London (`lhr1`).** A region written in `vercel.ts` was not followed when we tried it (7 Nov 2026); the project's own setting is.
-5. **Storage: create a Blob store**, private, region London, and **connect it to this project only** (Production and Preview). Vercel adds `BLOB_STORE_ID` itself. Whether Preview should have a small store of its own instead is question E1 in the developer's pack (12 Nov 2026); until it is answered, never run a backup test on a preview once clients have uploaded anything.
-6. **The keys** (section 3), in Production. In **Preview** put example values and a **separate preview database** (its own Turso database, empty), so a preview never touches live records.
-7. **Settings, Deployment Protection:** keep Vercel Authentication on for previews.
+5. **Storage: create a Blob store**, private, region London, and **connect it to this project's Production only**. Vercel adds `BLOB_STORE_ID` itself. Never connect it to Preview or Development: code on a branch nobody has reviewed would then hold the token for every client document (ITRoadway's second review, H-03, and their answer to E1, 13 Nov 2026).
+6. **The keys** (section 3): tick **Production only** for every one. Vercel ticks every environment by default when a setting is added, so untick Preview and Development each time, and then check that Preview and Development hold nothing.
+7. **Settings, Git, Ignored Build Step:** `if [ "$VERCEL_ENV" = "production" ]; then exit 1; else exit 0; fi` (exit 0 skips the build), so no branch builds a preview here. **The one exception** is the proof on a preview before go-live (Phase 161n2, build item 1, and the timings in the pack's Part 6), as ITRoadway's H-03 step 4 allows: for that build only, the preview gets its own empty Blob store, its own empty Turso database (`caprebate-live-preview`, section 4), example and test keys only, and Vercel Authentication on (Settings, Deployment Protection). Afterwards put the Ignored Build Step back, disconnect and delete the preview's store, and check again that Preview holds no key.
 8. **Domains:** add `caprebate.co.uk` and `www.caprebate.co.uk` (the go-live checklist has the DNS records at IONOS).
 
 ## 3. The keys
@@ -70,7 +70,7 @@ turso db show caprebate-live --url      # -> CAPREBATE_DB_URL
 turso db tokens create caprebate-live   # -> CAPREBATE_DB_TOKEN
 ```
 
-Make a second one the same way for **Preview** (`caprebate-live-preview`). Leave both empty: the first release's build step makes the tables. The build **never** adds the test website's invented people, and the live website refuses a database that has them.
+Make a second one the same way for the one preview proof (`caprebate-live-preview`, section 2 step 7), with test data only. Leave both empty: the first release's build step makes the tables. The build **never** adds the test website's invented people, and the live website refuses a database that has them.
 
 ## 5. Release (deploy and promote)
 

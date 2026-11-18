@@ -69,8 +69,14 @@ import { addNote } from '../src/modules/claims/engaged.ts';
 
 // PHASE 151j: this proof reads what each ROLE receives once signed in; the second step is not what it proves, and it
 // signs in with a password only. test/core/sign-in-steps.test.ts proves the second step on the default application.
+// PHASE 163 (the sweep): the same for the form tokens. Outside the test runner they are on, so a write this proof
+// expects a role to be refused was refused for its missing token before the role was ever asked, and since Phase
+// 161n1c (ITRoadway L-10) the export is a POST with a single-use token, so the GET this proof sent answered 405 to
+// every role, Admin's included. With the tokens off, every refusal below is the role's. test/core/form-token*.test.ts
+// prove the tokens.
 const made = await createApp(':memory:', {
   twoFactor: 'off',
+  formTokens: 'off',
   documentRoot: mkdtempSync(join(tmpdir(), 'cb-payload-proof-')),
 });
 await new Promise<void>((r) => made.server.listen(0, '127.0.0.1', () => r()));
@@ -583,8 +589,8 @@ console.log('');
   const notesBefore = made.app.db.get<{ n: number }>('SELECT (SELECT COUNT(*) FROM internal_notes) + (SELECT COUNT(*) FROM document_links) AS n')?.n ?? -1;
   const anyDocument = made.app.db.get<{ id: string }>('SELECT id FROM logical_documents WHERE business_id = ? ORDER BY rowid LIMIT 1', [job.business_id])?.id ?? 'no-document';
   for (const route of [
-    { label: 'claims export.csv', path: '/staff/claims/export.csv', post: null },
-    { label: 'leads export.csv', path: '/staff/leads/export.csv', post: null },
+    { label: 'claims export.csv', path: '/staff/claims/export.csv', post: { params: '' } },
+    { label: 'leads export.csv', path: '/staff/leads/export.csv', post: { params: '' } },
     { label: 'a note on the property', path: `/staff/properties/${claim.property_id}/notes`, post: { body: 'a surveyor note' } },
     { label: 'link to the property', path: `/staff/properties/${claim.property_id}/documents/link`, post: { document_id: anyDocument } },
   ] as const) {
@@ -740,7 +746,9 @@ console.log('=== CAPTURED: the view-only login (READ_ONLY), on the same seed');
     '/staff/compliance/view.json', '/staff/compliance/identity', '/staff/audit', '/staff/claims/export.csv',
   ];
   for (const path of refusedRo) {
-    const r = await req(path);
+    const r = path.endsWith('/export.csv')
+      ? await req(path, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'params=' })
+      : await req(path);
     const f = found(r.body, null);
     console.log(`    ${path.replace(/[0-9a-f-]{36}/g, '<id>').padEnd(44)} HTTP ${r.status} (must be 403)  by text ${f.byText.length}`);
     if (r.status !== 403 || f.byText.length > 0) failures.push(`${path} did not refuse READ_ONLY`);
@@ -885,7 +893,7 @@ console.log('');
   const claimHits = body?.hits.filter((x) => x.kind === 'CLAIM').length ?? 0;
   console.log(`    /staff/search/view.json?q=CR- as ADMIN: HTTP ${r.status}, claim hits ${claimHits} of ${claims}, every kind searched ${body?.scope.every((x) => x.searched === 'ALL') ?? false}, by name ${found0.byName.length} of 7`);
   if (r.status !== 200 || claimHits !== Math.min(claims, 25) || found0.byName.length > 0) failures.push('search as ADMIN did not find every claim — the search check is blind');
-  const x = await req('/staff/claims/export.csv');
+  const x = await req('/staff/claims/export.csv', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'params=' });
   const header = x.body.split('\r\n')[0] ?? '';
   const g = found(x.body, null);
   console.log(`    /staff/claims/export.csv as ADMIN: HTTP ${x.status}, value column ${/Estimated value/.test(header)}, raw sealed values by text ${g.byText.length} of 7`);
